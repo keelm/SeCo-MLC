@@ -2,9 +2,6 @@ package de.tu_darmstadt.ke.seco;
 
 import de.tu_darmstadt.ke.seco.algorithm.SeCoAlgorithm;
 import de.tu_darmstadt.ke.seco.algorithm.SeCoAlgorithmFactory;
-import de.tu_darmstadt.ke.seco.models.MultiHeadRuleSet;
-import de.tu_darmstadt.ke.seco.models.RuleSet;
-import de.tu_darmstadt.ke.seco.multilabelrulelearning.MultiLabelPostProcessor;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.Weka379AdapterMultilabel;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.averaging.AveragingStrategy;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.EvaluationStrategy;
@@ -12,7 +9,6 @@ import mulan.classifier.MultiLabelLearner;
 import mulan.data.MultiLabelInstances;
 import mulan.evaluation.Evaluation;
 import mulan.evaluation.Evaluator;
-import weka.core.Instances;
 import weka.core.Utils;
 
 import java.util.Random;
