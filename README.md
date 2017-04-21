@@ -11,10 +11,10 @@ The project provides the main class `de.tu_darmstadt.ke.seco.Main` for running t
 | xml                          | Path to XML file containing labels meta-data (e.g. `/data/genbase.xml`)                                                           |
 | arff-test                    | Path to the test data set in Weka .arff format (e.g. `/data/genbase-test.arff`)                                                   |
 | remainingInstancesPercentage | The percentage of the training data set, which must not be covered for the algorithm to terminate (e.g. `0.1`)                    |
-| readAllCovered               | Whether fully-covered rules should be provided to the next separate-and-conquer iteration or not (e.g. `true`)                    |
-| skipThresholdPercentage      | The threshold, which should be used to create stopping rules. When set to a value < 0 no stopping rules are used (e.g. `0.0.1`)   |
-| predictZeroRules             | Whether zero rules (predicting absent labels) should be learned or not (e.g. `true`)                                              |
-| useMultilabelHeads           | Whether multi-label head rules should be learned or not (e.g. `true`)                                                             |
+| readAllCovered               | Whether fully-covered rules should be provided to the next separate-and-conquer iteration or not (must be `true` or `false`)      |
+| skipThresholdPercentage      | The threshold, which should be used to create stopping rules. When set to a value < 0 no stopping rules are used (e.g. `0.01`)    |
+| predictZeroRules             | Whether zero rules (predicting absent labels) should be learned or not (must be `true` or `false`)                                |
+| useMultilabelHeads           | Whether multi-label head rules should be learned or not (must be `true` or `false`)                                               |
 | averagingStrategy            | The averaging strategy to use (must be `micro-averaging`, `label-based-averaging`, `example-based-averaging` or `macro-averaging` |
 | evaluationStrategy           | The evaluation strategy to use (must be `rule-dependent` or `rule-independent`                                                    |
 
