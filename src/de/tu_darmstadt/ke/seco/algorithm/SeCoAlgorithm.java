@@ -1092,16 +1092,6 @@ public class SeCoAlgorithm implements Serializable {
         return beamWidth;
     }
 
-    private double bias = 1;
-
-    public void setBias(double bias) {
-        this.bias = bias;
-    }
-
-    public double getBias() {
-        return bias;
-    }
-
     private String evaluationStrategy = EvaluationStrategy.RULE_DEPENDENT;
 
     public void setEvaluationStrategy(String evaluationStrategy) {
@@ -1213,12 +1203,11 @@ public class SeCoAlgorithm implements Serializable {
             try {
                 int beamWidth = Integer.valueOf(getBeamWidth());
                 bestRuleOfMulti = multiclassCovering
-                        .findBestGlobalRule(examples, labelIndices, predictedLabelIndices, beamWidth, getBias());
+                        .findBestGlobalRule(examples, labelIndices, predictedLabelIndices, beamWidth);
             } catch (NumberFormatException e) {
                 float beamWidthPercentage = Float.valueOf(getBeamWidth());
                 bestRuleOfMulti = multiclassCovering
-                        .findBestGlobalRule(examples, labelIndices, predictedLabelIndices, beamWidthPercentage,
-                                getBias());
+                        .findBestGlobalRule(examples, labelIndices, predictedLabelIndices, beamWidthPercentage);
             }
 
             if (bestRuleOfMulti != null) {

@@ -48,8 +48,8 @@ public class Weka379AdapterMultilabel extends MultiLabelLearnerBase implements S
     public Weka379AdapterMultilabel(final SeCoAlgorithm seCoAlgorithm, final double remainingInstancesPercentage,
                                     final boolean readdAllCovered, final double skipThresholdPercentage,
                                     final boolean predictZeroRules, final boolean useMultilabelHeads,
-                                    final String beamWidth, final String evaluationStrategy,
-                                    final String averagingStrategy, final double bias) {
+                                    final String evaluationStrategy,
+                                    final String averagingStrategy) {
         if (seCoAlgorithm == null)
             throw new IllegalArgumentException("seCoAlgorithm must not be null.");
 
@@ -59,10 +59,8 @@ public class Weka379AdapterMultilabel extends MultiLabelLearnerBase implements S
         seCoAlgorithm.setSkipThresholdPercentage(skipThresholdPercentage);
         seCoAlgorithm.setReaddAllCovered(readdAllCovered);
         seCoAlgorithm.setUseMultilabelHeads(useMultilabelHeads);
-        seCoAlgorithm.setBeamWidth(beamWidth);
         seCoAlgorithm.setEvaluationStrategy(evaluationStrategy);
         seCoAlgorithm.setAveragingStrategy(averagingStrategy);
-        seCoAlgorithm.setBias(bias);
     }
 
     public Capabilities getCapabilities() {

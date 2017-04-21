@@ -128,19 +128,19 @@ public class MulticlassCovering {
      */
     public final MultiHeadRule findBestGlobalRule(final Instances instances, final int[] labelIndices,
                                                   final Set<Integer> predictedLabels,
-                                                  final float beamWidthPercentage, final double bias) throws Exception {
+                                                  final float beamWidthPercentage) throws Exception {
         if (beamWidthPercentage < 0)
             throw new IllegalArgumentException("Beam width must be at least 0.0");
         else if (beamWidthPercentage > 1)
             throw new IllegalArgumentException("Beam width must be at maximum 1.0");
         int numAttributes = instances.numAttributes();
         int beamWidth = Math.max(1, Math.min(numAttributes, Math.round(numAttributes * beamWidthPercentage)));
-        return findBestGlobalRule(instances, labelIndices, predictedLabels, beamWidth, bias);
+        return findBestGlobalRule(instances, labelIndices, predictedLabels, beamWidth);
     }
 
     public final MultiHeadRule findBestGlobalRule(final Instances instances, final int[] labelIndices,
                                                   final Set<Integer> predictedLabels,
-                                                  final int beamWidth, final double bias) throws
+                                                  final int beamWidth) throws
             Exception {
         if (beamWidth < 1)
             throw new IllegalArgumentException("Beam width must be at least 1");
@@ -152,7 +152,7 @@ public class MulticlassCovering {
         boolean improved = true;
 
         while (improved) { // Until no improvement possible
-            improved = refineRule(instances, labelIndices, predictedLabels, bestClosures, bias);
+            improved = refineRule(instances, labelIndices, predictedLabels, bestClosures);
 
             if (improved && DEBUG_STEP_BY_STEP_V)
                 System.out.println(
@@ -167,7 +167,7 @@ public class MulticlassCovering {
     }
 
     private boolean refineRule(final Instances instances, final int[] labelIndices, final Set<Integer> predictedLabels,
-                               final Queue<Closure> closures, final double bias) throws
+                               final Queue<Closure> closures) throws
             Exception {
         boolean improved = false;
 
@@ -192,7 +192,7 @@ public class MulticlassCovering {
                             Closure refinedClosure = new Closure(refinedRule,
                                     closure != null ? closure.metaData : null);
                             refinedClosure.addCondition(i, condition);
-                            refinedClosure = findBestHead(instances, labelIndices, refinedClosure, bias);
+                            refinedClosure = findBestHead(instances, labelIndices, refinedClosure);
 
                             if (refinedClosure != null) {
                                 improved |= closures.offer(refinedClosure);
@@ -231,15 +231,13 @@ public class MulticlassCovering {
 
     }
 
-    private Closure findBestHead(final Instances instances, final int[] labelIndices, final Closure closure,
-                                 final double bias) throws
+    private Closure findBestHead(final Instances instances, final int[] labelIndices, final Closure closure) throws
             Exception {
         closure.rule.setHead(null);
         Characteristic characteristic = multiLabelEvaluation.getCharacteristic();
 
         if (characteristic == Characteristic.DECOMPOSABLE) {
-            return bias <= 1 ? decomposite(instances, labelIndices, closure) :
-                    decomposite(instances, labelIndices, closure, bias);
+            return decomposite(instances, labelIndices, closure);
         } else if (characteristic == Characteristic.ANTI_MONOTONOUS) {
             return prunedSearch(instances, labelIndices, closure, null, new LinkedList<>());
         } else {
@@ -290,62 +288,6 @@ public class MulticlassCovering {
                     } else if (currentClosure.compareTo(result) > 0) {
                         result = currentClosure;
                     }
-                }
-            }
-        }
-
-        return result;
-    }
-
-    private Closure decomposite(final Instances instances, final int[] labelIndices, final Closure closure,
-                                final double bias) {
-        SortedMap<Double, Closure> closures = new TreeMap<>(Collections.reverseOrder());
-
-        for (int labelIndex : labelIndices) { // For all possible label conditions
-            Closure currentClosure = null;
-
-            for (double value = predictZero ? 0 : 1; value <= 1; value++) {
-                Attribute labelAttribute = instances.attribute(labelIndex);
-                Condition labelCondition = new NominalCondition(toSeCoAttribute(labelAttribute), value);
-
-                if (!closure.containsCondition(labelCondition)) {
-                    MultiHeadRule singleHeadRule = (MultiHeadRule) closure.rule.copy();
-                    Head head = new Head();
-                    head.addCondition(labelCondition);
-                    singleHeadRule.setHead(head);
-                    Closure singleHeadClosure = new Closure(singleHeadRule, null);
-                    singleHeadClosure.metaData = multiLabelEvaluation
-                            .evaluate(instances, labelIndices, singleHeadClosure.rule, null);
-
-                    if (currentClosure == null ||
-                            singleHeadClosure.rule.getRuleValue() >= currentClosure.rule.getRuleValue()) {
-                        currentClosure = singleHeadClosure;
-                    }
-                }
-            }
-
-            if (currentClosure != null && currentClosure.rule.getStats().getNumberOfTruePositives() > 0) {
-                closures.put(currentClosure.rule.getRuleValue(), currentClosure);
-            }
-        }
-
-        Closure result = null;
-
-        for (Closure currentClosure : closures.values()) {
-            if (result == null) {
-                result = currentClosure;
-            } else {
-                MultiHeadRule multiHeadRule = (MultiHeadRule) result.rule.copy();
-                multiHeadRule.getHead().addCondition(currentClosure.rule.getHead().iterator().next());
-                multiLabelEvaluation.evaluate(instances, labelIndices, multiHeadRule, null);
-                double biasedRuleValue =
-                        multiHeadRule.getRuleValue() * Math.pow(bias, multiHeadRule.getHead().size() - 1);
-                multiHeadRule.setRuleValue(multiLabelEvaluation.getHeuristic(), biasedRuleValue);
-
-                if (multiHeadRule.compareTo(result.rule) >= 0) {
-                    result = new Closure(multiHeadRule, null);
-                } else {
-                    return result;
                 }
             }
         }
