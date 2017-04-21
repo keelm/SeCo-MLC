@@ -17,7 +17,6 @@ The project provides the main class `de.tu_darmstadt.ke.seco.Main` for running t
 | useMultilabelHeads           | Whether multi-label head rules should be learned or not (e.g. `true`)                                                             |
 | averagingStrategy            | The averaging strategy to use (must be `micro-averaging`, `label-based-averaging`, `example-based-averaging` or `macro-averaging` |
 | evaluationStrategy           | The evaluation strategy to use (must be `rule-dependent` or `rule-independent`                                                    |
-|------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
 
 In the following an exemplary command line argument for running the provided JAR file is given:
 
