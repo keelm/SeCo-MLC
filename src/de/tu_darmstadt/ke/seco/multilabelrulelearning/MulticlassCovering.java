@@ -177,6 +177,17 @@ public class MulticlassCovering {
                     closure.refineFurther = false;
                 }
 
+                // When starting off with a new rule, try empty body first
+                if (closure == null) {
+                    MultiHeadRule refinedRule = new MultiHeadRule(multiLabelEvaluation.getHeuristic());
+                    Closure refinedClosure = new Closure(refinedRule, null);
+                    refinedClosure = findBestHead(instances, labelIndices, refinedClosure);
+
+                    if (refinedClosure != null) {
+                        improved |= closures.offer(refinedClosure);
+                    }
+                }
+
                 for (int i : attributeIterable(instances, labelIndices, predictedLabels)) { // For all attributes
                     Attribute attribute = instances.attribute(i);
 
