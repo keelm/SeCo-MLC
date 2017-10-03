@@ -9,7 +9,7 @@ The project provides the main class `de.tu_darmstadt.ke.seco.Main` for running t
 | baselearner                  | Path to the XML config file, which specifies the metric to use for selecting candidate rules (e.g. `/config/precision.xml`)       |
 | arff                         | Path to the training data set in Weka .arff format (e.g. `/data/genbase-train.arff`)                                              |
 | xml                          | Path to XML file containing labels meta-data (e.g. `/data/genbase.xml`)                                                           |
-| arff-test                    | Path to the test data set in Weka .arff format (e.g. `/data/genbase-test.arff`)                                                   |
+| test-arff                    | Path to the test data set in Weka .arff format (e.g. `/data/genbase-test.arff`)                                                   |
 | remainingInstancesPercentage | The percentage of the training data set, which must not be covered for the algorithm to terminate (e.g. `0.1`)                    |
 | readAllCovered               | Whether fully-covered rules should be provided to the next separate-and-conquer iteration or not (must be `true` or `false`)      |
 | skipThresholdPercentage      | The threshold, which should be used to create stopping rules. When set to a value < 0 no stopping rules are used (e.g. `0.01`)    |
