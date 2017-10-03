@@ -114,8 +114,10 @@ public abstract class Rule implements Comparable<Rule>, Cloneable, Iterable<Cond
         for (int i = 0; i < length(); i++) {
             final Condition c = getCondition(i);
 
-            if (!c.covers(inst))
+            if (!c.covers(inst)){
+//            if (!MulticlassCovering.cachedCovers(c,inst)){
                 return false;
+            }
         }
 
         return true;

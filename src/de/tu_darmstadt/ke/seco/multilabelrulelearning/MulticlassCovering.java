@@ -116,6 +116,10 @@ public class MulticlassCovering {
     private static final boolean DEBUG_STEP_BY_STEP = true;
     private static final boolean DEBUG_STEP_BY_STEP_V = true;
 
+
+    private static HashSet<Integer> labelIndicesHash;
+    private static Hashtable<Integer,Boolean> coveringCache;
+
     private final MultiLabelEvaluation multiLabelEvaluation;
 
     private final boolean predictZero;
@@ -126,6 +130,69 @@ public class MulticlassCovering {
         this.predictZero = predictZero;
     }
 
+    public MulticlassCovering(final MultiLabelEvaluation multiLabelEvaluation, final boolean predictZero, int[] labelIndices) {
+        this.multiLabelEvaluation = multiLabelEvaluation;
+        this.predictZero = predictZero;
+        labelIndicesHash=new HashSet<Integer>(labelIndices.length);
+        for (int i = 0; i < labelIndices.length; i++) {
+        	labelIndicesHash.add(labelIndices[i]);
+		}
+        coveringCache=new Hashtable<>();
+    }
+    public static boolean isLabelIndex(int index){
+    	return labelIndicesHash.contains(index);
+    }
+
+
+    static int nHashed=0;
+    static int nNonHashed=0;
+    
+    public static boolean cachedCovers(Condition c, Instance inst) {
+    	if(false && !isLabelIndex(c.getAttr().index())){
+    		//https://stackoverflow.com/questions/11742593/what-is-the-hashcode-for-a-custom-class-having-just-two-int-properties
+//    		int hashCode = (17*31+c.hashCode())*31+inst.hashCode(); // this apparently is not very efficient
+    		int hashCode = getHashCodeTemp(c, inst);
+    		Boolean res = getCachedResultTemp(hashCode);
+    		if(res==null){
+    			boolean resComputed = c.covers(inst);
+    			coveringCache.put(hashCode,resComputed);
+//    			System.out.println(coveringCache.size()+" "+nHashed+" "+nNonHashed+ " put into hash "+resComputed+" "+c+" "+inst);
+    			return resComputed;
+    		}else{
+//    			System.out.println(coveringCache.size()+" "+nHashed+" "+nNonHashed + " already in hash "+c+" "+inst+" ");
+    			nHashed++;
+    			return res;
+    		}
+    	}else{
+    		nNonHashed++;
+    		//because this might change (labelfeatures might change)
+    		return c.covers(inst);
+    	}
+	}
+
+	/**
+	 * @param hashCode
+	 * @return
+	 */
+	private static Boolean getCachedResultTemp(int hashCode) {
+		Boolean res=coveringCache.get(hashCode);
+		return res;
+	}
+
+	/**
+	 * @param c
+	 * @param inst
+	 * @return
+	 */
+	private static int getHashCodeTemp(Condition c, Instance inst) {
+		int hashCode = 17*31+c.getAttr().index();
+		hashCode = (int) (hashCode * 31 + Double.doubleToLongBits(c.getValue()));
+		hashCode = hashCode* 31 + System.identityHashCode(inst);
+		hashCode = hashCode* 31 + (c.cmp() ? 1: 0);
+		return hashCode;
+	}
+
+    
     /**
      * @param beamWidthPercentage The beam width as a percentage of the number of attributes
      */
