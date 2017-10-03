@@ -130,7 +130,7 @@ public class MulticlassCovering {
      * @param beamWidthPercentage The beam width as a percentage of the number of attributes
      */
     public final MultiHeadRule findBestGlobalRule(final Instances instances,
-                                                  final int[] labelIndices,
+                                                  final LinkedHashSet<Integer> labelIndices,
                                                   final Set<Integer> predictedLabels,
                                                   final float beamWidthPercentage) throws
             Exception {
@@ -145,7 +145,7 @@ public class MulticlassCovering {
     }
 
     public final MultiHeadRule findBestGlobalRule(final Instances instances,
-                                                  final int[] labelIndices,
+                                                  final LinkedHashSet<Integer> labelIndices,
                                                   final Set<Integer> predictedLabels,
                                                   final int beamWidth) throws
             Exception {
@@ -174,7 +174,7 @@ public class MulticlassCovering {
         return bestRule;
     }
 
-    private boolean refineRule(final Instances instances, final int[] labelIndices,
+    private boolean refineRule(final Instances instances, final LinkedHashSet<Integer> labelIndices,
                                final Set<Integer> predictedLabels,
                                final Queue<Closure> closures) throws
             Exception {
@@ -229,33 +229,46 @@ public class MulticlassCovering {
         return improved;
     }
 
-    private Iterable<Integer> attributeIterable(final Instances instances, final int[] labelIndices,
+    private Iterable<Integer> attributeIterable(final Instances instances,
+                                                final LinkedHashSet<Integer> labelIndices,
                                                 final Set<Integer> predictedLabels) {
         return () -> new Iterator<Integer>() {
 
             private final Iterator<Integer> labelIterator = predictedLabels.iterator();
 
+            private final int numAttributes = instances.numAttributes() - labelIndices.size();
+
             private int i = 0;
+
+            private int count = 0;
 
             @Override
             public boolean hasNext() {
-                return i < (instances.numAttributes() - labelIndices.length) ||
-                        labelIterator.hasNext();
+                return count < numAttributes || labelIterator.hasNext();
             }
 
             @Override
             public Integer next() {
-                if (i < (instances.numAttributes() - labelIndices.length)) {
-                    return i++;
+                int next;
+
+                if (count < numAttributes) {
+                    while (labelIndices.contains(i)) {
+                        i++;
+                    }
+                    next = i;
+                    i++;
                 } else {
-                    return labelIterator.next();
+                    next = labelIterator.next();
                 }
+
+                count++;
+                return next;
             }
         };
 
     }
 
-    private Closure findBestHead(final Instances instances, final int[] labelIndices,
+    private Closure findBestHead(final Instances instances, final LinkedHashSet<Integer> labelIndices,
                                  final Closure closure) throws
             Exception {
         closure.rule.setHead(null);
@@ -273,7 +286,7 @@ public class MulticlassCovering {
         }
     }
 
-    private Closure decomposite(final Instances instances, final int[] labelIndices,
+    private Closure decomposite(final Instances instances, final LinkedHashSet<Integer> labelIndices,
                                 final Closure closure) {
         Closure result = null;
 
@@ -330,7 +343,7 @@ public class MulticlassCovering {
         return result;
     }
 
-    private Closure prunedSearch(final Instances instances, final int[] labelIndices,
+    private Closure prunedSearch(final Instances instances, final LinkedHashSet<Integer> labelIndices,
                                  final Closure closure, final Closure bestClosure,
                                  final Set<Integer> evaluatedHeads,
                                  final List<Head> prunedHeads) throws Exception {
@@ -495,7 +508,7 @@ public class MulticlassCovering {
     }
 
     private Iterable<Condition> numericConditionsIterable(final Instances instances,
-                                                          final int[] labelIndices,
+                                                          final LinkedHashSet<Integer> labelIndices,
                                                           final Attribute attribute) {
         instances.sort(attribute.index());
 
@@ -554,16 +567,17 @@ public class MulticlassCovering {
         };
     }
 
-    private double[] getLabelVector(final Instance instance, final int[] labelIndices) {
+    private double[] getLabelVector(final Instance instance, final LinkedHashSet<Integer> labelIndices) {
         Instance wrappedInstance =
                 instance instanceof DenseInstanceWrapper ?
                         ((DenseInstanceWrapper) instance).getWrappedInstance() :
                         ((SparseInstanceWrapper) instance).getWrappedInstance();
-        double[] labelVector = new double[labelIndices.length];
+        double[] labelVector = new double[labelIndices.size()];
+        int i = 0;
 
-        for (int i = 0; i < labelIndices.length; i++) {
-            int labelIndex = labelIndices[i];
+        for (int labelIndex : labelIndices) {
             labelVector[i] = wrappedInstance.value(labelIndex);
+            i++;
         }
 
         return labelVector;
