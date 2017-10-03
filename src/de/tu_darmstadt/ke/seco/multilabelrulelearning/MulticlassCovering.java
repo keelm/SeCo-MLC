@@ -97,6 +97,7 @@ public class MulticlassCovering {
 
         boolean containsCondition(final Condition condition) {
             Collection<Condition> conditions = this.conditions.get(condition.getAttr().index());
+//            System.out.println(condition+" in "+conditions);
             return conditions != null &&
                     (condition instanceof NominalCondition || conditions.contains(condition));
         }
@@ -116,16 +117,83 @@ public class MulticlassCovering {
     private static final boolean DEBUG_STEP_BY_STEP = true;
     private static final boolean DEBUG_STEP_BY_STEP_V = true;
 
+
+    private static HashSet<Integer> labelIndicesHash;
+    private static Hashtable<Integer,Boolean> coveringCache;
+
     private final MultiLabelEvaluation multiLabelEvaluation;
 
     private final boolean predictZero;
 
     public MulticlassCovering(final MultiLabelEvaluation multiLabelEvaluation,
                               final boolean predictZero) {
+	    this.multiLabelEvaluation = multiLabelEvaluation;
+	    this.predictZero = predictZero;
+	}
+    public MulticlassCovering(final MultiLabelEvaluation multiLabelEvaluation, final boolean predictZero, int[] labelIndices) {
         this.multiLabelEvaluation = multiLabelEvaluation;
         this.predictZero = predictZero;
+        labelIndicesHash=new HashSet<Integer>(labelIndices.length);
+        for (int i = 0; i < labelIndices.length; i++) {
+        	labelIndicesHash.add(labelIndices[i]);
+		}
+        coveringCache=new Hashtable<>();
     }
 
+    public static boolean isLabelIndex(int index){
+    	return labelIndicesHash.contains(index);
+    }
+
+
+    static int nHashed=0;
+    static int nNonHashed=0;
+    
+    public static boolean cachedCovers(Condition c, Instance inst) {
+    	if(false && !isLabelIndex(c.getAttr().index())){
+    		//https://stackoverflow.com/questions/11742593/what-is-the-hashcode-for-a-custom-class-having-just-two-int-properties
+//    		int hashCode = (17*31+c.hashCode())*31+inst.hashCode(); // this apparently is not very efficient
+    		int hashCode = getHashCodeTemp(c, inst);
+    		Boolean res = getCachedResultTemp(hashCode);
+    		if(res==null){
+    			boolean resComputed = c.covers(inst);
+    			coveringCache.put(hashCode,resComputed);
+//    			System.out.println(coveringCache.size()+" "+nHashed+" "+nNonHashed+ " put into hash "+resComputed+" "+c+" "+inst);
+    			return resComputed;
+    		}else{
+//    			System.out.println(coveringCache.size()+" "+nHashed+" "+nNonHashed + " already in hash "+c+" "+inst+" ");
+    			nHashed++;
+    			return res;
+    		}
+    	}else{
+    		nNonHashed++;
+    		//because this might change (labelfeatures might change)
+    		return c.covers(inst);
+    	}
+	}
+
+	/**
+	 * @param hashCode
+	 * @return
+	 */
+	private static Boolean getCachedResultTemp(int hashCode) {
+		Boolean res=coveringCache.get(hashCode);
+		return res;
+	}
+
+	/**
+	 * @param c
+	 * @param inst
+	 * @return
+	 */
+	private static int getHashCodeTemp(Condition c, Instance inst) {
+		int hashCode = 17*31+c.getAttr().index();
+		hashCode = (int) (hashCode * 31 + Double.doubleToLongBits(c.getValue()));
+		hashCode = hashCode* 31 + System.identityHashCode(inst);
+		hashCode = hashCode* 31 + (c.cmp() ? 1: 0);
+		return hashCode;
+	}
+
+    
     /**
      * @param beamWidthPercentage The beam width as a percentage of the number of attributes
      */
@@ -174,12 +242,13 @@ public class MulticlassCovering {
         return bestRule;
     }
 
-    private boolean refineRule(final Instances instances, final LinkedHashSet<Integer> labelIndices,
+    @SuppressWarnings("unchecked")
+	private boolean refineRule(final Instances instances, final LinkedHashSet<Integer> labelIndices,
                                final Set<Integer> predictedLabels,
                                final Queue<Closure> closures) throws
             Exception {
         boolean improved = false;
-
+//        System.out.println("refine "+closures);
         for (Closure closure : beamWidthIterable(closures)) {
             if (closure == null || closure.refineFurther) {
                 if (closure != null) {
@@ -197,28 +266,60 @@ public class MulticlassCovering {
                         improved |= closures.offer(refinedClosure);
                     }
                 }
-
+                
+                int startFromAttIndex = 0;
+                if(closure!=null){
+//                	System.out.println("not null");
+                	for(Attribute att:closure.rule.attributeSet()){
+                		System.out.println(att.index());
+                		if(att.index()>=startFromAttIndex)
+                			startFromAttIndex=att.index()+1;
+                	}
+                }
+//                System.out.println("start from "+startFromAttIndex);
+                
                 for (int i : attributeIterable(instances, labelIndices,
-                        predictedLabels)) { // For all attributes
+                        predictedLabels,startFromAttIndex)) { // For all attributes
+                
                     Attribute attribute = instances.attribute(i);
 
                     for (Condition condition : attribute.isNumeric() ?
                             numericConditionsIterable(instances, labelIndices, attribute) :
                             nominalConditionsIterable(attribute)) {
 
+                    	
                         // If condition is not part of the rule
                         if (closure == null || !closure.containsCondition(condition)) {
                             MultiHeadRule refinedRule =
                                     closure != null ? (MultiHeadRule) closure.rule.copy() :
                                             new MultiHeadRule(multiLabelEvaluation.getHeuristic());
                             refinedRule.addCondition(condition);
+                            
+                            
                             Closure refinedClosure = new Closure(refinedRule,
                                     closure != null ? closure.metaData : null);
                             refinedClosure.addCondition(i, condition);
+                            
                             refinedClosure = findBestHead(instances, labelIndices, refinedClosure);
+
+//                            System.out.println(refinedRule);
+//                            System.out.println(refinedClosure);
+                            if(false){
+	                            for(Attribute cond: new TreeSet<Attribute>(refinedRule.attributeSet())){
+	                            	System.out.print(cond.index()+" ");
+	                            }
+	                            for(Condition cond: refinedRule.getBody()){
+	                            	System.out.print(cond.getAttr().name()+" "+cond.getValue()+" ");
+	                            }
+	                            System.out.println();
+                            }
+//                            System.out.println(new TreeSet<Attribute>(refinedRule.attributeSet()));
+//                            System.out.println(refinedClosure );
 
                             if (refinedClosure != null) {
                                 improved |= closures.offer(refinedClosure);
+//                                if(improved)
+//                                	System.out.println(refinedClosure );
                             }
                         }
                     }
@@ -231,16 +332,16 @@ public class MulticlassCovering {
 
     private Iterable<Integer> attributeIterable(final Instances instances,
                                                 final LinkedHashSet<Integer> labelIndices,
-                                                final Set<Integer> predictedLabels) {
+                                                final Set<Integer> predictedLabels, final int startFromAttIndex) {
         return () -> new Iterator<Integer>() {
 
             private final Iterator<Integer> labelIterator = predictedLabels.iterator();
 
             private final int numAttributes = instances.numAttributes() - labelIndices.size();
 
-            private int i = 0;
+            private int i = startFromAttIndex;
 
-            private int count = 0;
+            private int count = startFromAttIndex;
 
             @Override
             public boolean hasNext() {
@@ -304,8 +405,12 @@ public class MulticlassCovering {
                     head.addCondition(labelCondition);
                     singleHeadRule.setHead(head);
                     Closure singleHeadClosure = new Closure(singleHeadRule, null);
-                    multiLabelEvaluation
-                            .evaluate(instances, labelIndices, singleHeadClosure.rule, null);
+//<<<<<<< HEAD
+//                    multiLabelEvaluation
+//                            .evaluate(instances, labelIndices, singleHeadClosure.rule, null);
+//=======
+                    multiLabelEvaluation.evaluate(instances, labelIndices, singleHeadClosure.rule, null);
+//                    System.out.println(singleHeadClosure);
 
                     if (currentClosure == null ||
                             singleHeadClosure.rule.getRuleValue() >=
@@ -605,5 +710,6 @@ public class MulticlassCovering {
 
         };
     }
+
 
 }

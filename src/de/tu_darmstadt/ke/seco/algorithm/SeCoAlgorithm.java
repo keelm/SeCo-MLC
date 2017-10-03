@@ -1200,7 +1200,7 @@ public class SeCoAlgorithm implements Serializable {
             AveragingStrategy averagingStrategy = AveragingStrategy.create(getAveragingStrategy());
             MultiLabelEvaluation multiLabelEvaluation = new MultiLabelEvaluation(getHeuristic(), evaluationStrategy,
                     averagingStrategy);
-            MulticlassCovering multiclassCovering = new MulticlassCovering(multiLabelEvaluation, isPredictZero());
+            MulticlassCovering multiclassCovering = new MulticlassCovering(multiLabelEvaluation, isPredictZero(),labelIndices);
 
             try {
                 int beamWidth = Integer.valueOf(getBeamWidth());
