@@ -28,8 +28,12 @@ public class Main {
 
         if (testData != null) {
             Evaluator evaluator = new Evaluator();
-            Evaluation evaluation = evaluator.evaluate(multilabelLearner, testData, trainingData);
-            System.out.println("\n\nEvaluation Results:\n");
+            Evaluation evaluation = evaluator.evaluate(multilabelLearner, trainingData, trainingData);
+            System.out.println("\n\nEvaluation Results on train data:\n");
+            System.out.println(evaluation);
+            evaluator = new Evaluator();
+            evaluation = evaluator.evaluate(multilabelLearner, testData, trainingData);
+            System.out.println("\n\nEvaluation Results on test data:\n");
             System.out.println(evaluation);
         }
     }
@@ -110,9 +114,14 @@ public class Main {
         System.out.println("-averagingStrategy " + averagingStrategy);
         System.out.println("\n");
 
+
+
         // Create training instances from dataset
         final MultiLabelInstances trainingData = new MultiLabelInstances(arffFilePath, xmlLabelsDefFilePath);
 
+        System.out.println("SeCo: start experiment\n");
+
+        
         SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(baseLearnerConfigPath);
         Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
                 remainingInstancesPercentage, readAllCovered, skipThresholdPercentage, predictZeroRules,
@@ -123,10 +132,18 @@ public class Main {
                 testArffFilePath != null ? new MultiLabelInstances(testArffFilePath, xmlLabelsDefFilePath) : null;
 
         // Learn model from training instances
+        long startTime = System.currentTimeMillis();
         multilabelLearner.build(trainingData);
+        long estimatedTime = System.currentTimeMillis() - startTime;
+        System.out.println("building the model took secs: "+estimatedTime/1000.0);
 
         // Evaluate model on test instances, if available
+        startTime = System.currentTimeMillis();
         evaluate(trainingData, testData, multilabelLearner);
+        estimatedTime = System.currentTimeMillis() - startTime;
+        System.out.println("evaluating the model took secs: "+estimatedTime/1000.0);
+        System.out.println("SeCo: finish experiment\n");
+
     }
 
 
