@@ -111,18 +111,21 @@ public abstract class Rule implements Comparable<Rule>, Cloneable, Iterable<Cond
      * @param inst the instance to check
      * @return true if the rule covers the instance, false else
      */
-    public final boolean covers(final Instance inst) {
-        for (int i = 0; i < length(); i++) {
-            final Condition c = getCondition(i);
+	public final boolean covers(final Instance inst) {
+		for (int i = 0; i < length(); i++) {
+			final Condition c = getCondition(i);
 
-            if (!c.covers(inst)){
-//            if (!MulticlassCovering.cachedCovers(c,inst)){
-                return false;
-            }
-        }
+			if (false) {
+				if (!MulticlassCovering.cachedCovers(c, inst)) 
+					return false;
+			} else {
+				if (!c.covers(inst))
+					return false;
+			}
+		}
 
-        return true;
-    }
+		return true;
+	}
 
     /**
      * get the length of the rule, the number of conditions in the body

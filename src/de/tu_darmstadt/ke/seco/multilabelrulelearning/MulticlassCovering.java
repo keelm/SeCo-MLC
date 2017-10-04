@@ -141,7 +141,7 @@ public class MulticlassCovering {
     static int nNonHashed=0;
     
     public static boolean cachedCovers(Condition c, Instance inst) {
-    	if(false && !isLabelIndex(c.getAttr().index())){
+    	if(true && !isLabelIndex(c.getAttr().index())){
     		//https://stackoverflow.com/questions/11742593/what-is-the-hashcode-for-a-custom-class-having-just-two-int-properties
 //    		int hashCode = (17*31+c.hashCode())*31+inst.hashCode(); // this apparently is not very efficient
     		int hashCode = getHashCodeTemp(c, inst);
