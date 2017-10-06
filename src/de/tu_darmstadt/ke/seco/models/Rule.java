@@ -337,7 +337,7 @@ public abstract class Rule implements Comparable<Rule>, Cloneable, Iterable<Cond
         computeRuleValue(heuristic);
     }
 
-    public final void evaluateRuleForMultilabel(final Instances examples, final double m_classVal, Heuristic heuristic) throws Exception {
+    public final void evaluateRuleForMultilabel(final ArrayList<Inst> examples, final double m_classVal, Heuristic heuristic) throws Exception {
         final TwoClassConfusionMatrix confusionMatrix = new TwoClassConfusionMatrix();
         for (int i = 0; i < examples.numInstances(); i++) {
             final Instance inst = examples.instance(i);
@@ -487,7 +487,7 @@ public abstract class Rule implements Comparable<Rule>, Cloneable, Iterable<Cond
      * @param data the set of instances
      * @return the set of instances taht are not covered.
      */
-    public final Instances uncoveredInstances(final Instances data) {
+    public final ArrayList<Inst> uncoveredInstances(final ArrayList<Inst> data) {
         final Instances uncovd = new Instances(data, data.numInstances());
         final Enumeration<Instance> e = data.enumerateInstances();
 
@@ -524,7 +524,7 @@ public abstract class Rule implements Comparable<Rule>, Cloneable, Iterable<Cond
      * @param data the set of instances
      * @return the set of instances taht are not covered.
      */
-    public final ArrayList<Instance> coveredInstances(final Instances data) {
+    public final ArrayList<Inst> coveredInstances(final ArrayList<Inst>  data) {
         //TODO ELM: this fucks a lot, since it changes the reference to the dataset. actually, it should make a copy or something. ok, I put, that instances are added directly. this is a problem
         final ArrayList<Instance> covd = new ArrayList<>(data.numInstances());
         final Enumeration<Instance> e = data.enumerateInstances();
@@ -545,7 +545,7 @@ public abstract class Rule implements Comparable<Rule>, Cloneable, Iterable<Cond
      * @param data the set of instances
      * @return the set of instances taht are not covered.
      */
-    public final Instances coveredInstancesNonCopying(final Instances data) {
+    public final ArrayList<Inst> coveredInstancesNonCopying(final ArrayList<Inst>  data) {
         //TODO ELM: this fucks a lot, since it changes the reference to the dataset. actually, it should make a copy or something. ok, I put, that instances are added directly. this is a problem
         final Instances covd = new Instances(data, data.numInstances());
         final Enumeration<Instance> e = data.enumerateInstances();

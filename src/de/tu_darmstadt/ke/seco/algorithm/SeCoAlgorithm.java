@@ -270,7 +270,7 @@ public class SeCoAlgorithm implements Serializable {
      * @param r        The given candidate rule.
      * @return The best CandidateRule.
      */
-    public SingleHeadRule findBestRule(final Instances examples, final SingleHeadRule r, final double classValue) throws
+    public SingleHeadRule findBestRule(final ArrayList<Inst> examples, final SingleHeadRule r, final double classValue) throws
             Exception {
         Logger.debug("findBestRule(), initialize rule");
         TreeSet<SingleHeadRule> rules = new TreeSet<SingleHeadRule>(Collections.reverseOrder());
@@ -382,7 +382,7 @@ public class SeCoAlgorithm implements Serializable {
         return bestRule;
     }
 
-    public SingleHeadRule findBestRuleForMultilabel(final Instances examples, final SingleHeadRule r,
+    public SingleHeadRule findBestRuleForMultilabel(final ArrayList<Inst> examples, final SingleHeadRule r,
                                                     final double classValue) throws Exception {
         Logger.debug("findBestRule(), initialize rule");
         TreeSet<SingleHeadRule> rules = new TreeSet<SingleHeadRule>(Collections.reverseOrder());
@@ -1147,30 +1147,29 @@ public class SeCoAlgorithm implements Serializable {
         }
     }
 
-    public MultiHeadRuleSet multiclassCoveringSeparateAndConquerMultilabel(Instances examples,
+    public MultiHeadRuleSet multiclassCoveringSeparateAndConquerMultilabel(ArrayList<Inst> examples,
                                                                            int labelIndices[]) throws Exception {
         SeCoLogger.debug("entering separateAndConquerMultilabel");
         LinkedHashSet<Integer> labelIndicesAsSet = new LinkedHashSet<>(labelIndices.length);
         Arrays.stream(labelIndices).forEach(labelIndicesAsSet::add);
-        Instances originalExamples = examples; // newExamples used only in postprocessor
-        examples = new Instances(originalExamples,
-                originalExamples.numInstances()); //so that I can do what I want on this
-        ArrayList<Instance> examplesReferences = null; // only used for debugging
+        ArrayList<Inst> originalExamples = examples; // newExamples used only in postprocessor
+        examples = new ArrayList<Inst>(); //so that I can do what I want on this
+        ArrayList<Inst> examplesReferences = null; // only used for debugging
 
         if (DEBUG_STEP_BY_STEP)
             examplesReferences = new ArrayList<>();
 
         for (int i = 0; i < originalExamples.size(); i++) {
-            Instance inst = originalExamples.get(i);
-            Instance wrappedInstance;
+            Inst inst = originalExamples.get(i);
+            Inst wrappedInstance;
 
-            if (inst instanceof SparseInstance) {
-                wrappedInstance = new SparseInstanceWrapper(inst, labelIndices);
+            if (inst.inst instanceof SparseInstance) {
+                wrappedInstance = new Inst(new SparseInstanceWrapper(inst.inst, labelIndices),inst.ID);
             } else {
-                wrappedInstance = new DenseInstanceWrapper(inst, labelIndices);
+                wrappedInstance = new Inst(new DenseInstanceWrapper(inst.inst, labelIndices),inst.ID);
             }
 
-            examples.addDirectly(wrappedInstance); //now secured
+            examples.add(wrappedInstance); //now secured
 
             if (DEBUG_STEP_BY_STEP)
                 examplesReferences.add(wrappedInstance);
@@ -1180,18 +1179,18 @@ public class SeCoAlgorithm implements Serializable {
         MultiHeadRule bestRuleOfMulti;
         MultiHeadRuleSet theory = new MultiHeadRuleSet();
         theory.setLabelIndices(labelIndices); //so that tostring prints out mlc statistics
-        int trainingDataSize = examples.getInstances().size();
+        int trainingDataSize = examples.size();
 
         Set<Integer> predictedLabelIndices = new HashSet<>();
 
         // Continue until a certain percentage of the training data is covered
         outerloop:
-        while (examples.getInstances().size() > trainingDataSize * noNeedForClassification) {
+        while (examples.size() > trainingDataSize * noNeedForClassification) {
             bestRuleOfMulti = null;
 
             if (DEBUG_STEP_BY_STEP) {
                 System.out.println("########remaining training set (" + examples.size() + ")");
-                if (DEBUG_STEP_BY_STEP_V) for (Instance inst : examples) System.out.println(inst);
+                if (DEBUG_STEP_BY_STEP_V) for (Inst inst : examples) System.out.println(inst);
                 else System.out.println(examples.size());
                 System.out.println("########candidate rules");
             }
@@ -1213,25 +1212,25 @@ public class SeCoAlgorithm implements Serializable {
             }
 
             if (bestRuleOfMulti != null) {
-                ArrayList<Instance> coveredInstances = bestRuleOfMulti.coveredInstances(examples);
-                ArrayList<Instance> coveredButLabelsNotFullyCoveredInstances = new ArrayList<Instance>();
+                ArrayList<Inst> coveredInstances = bestRuleOfMulti.coveredInstances(examples);
+                ArrayList<Inst> coveredButLabelsNotFullyCoveredInstances = new ArrayList<Inst>();
                 examples = bestRuleOfMulti.uncoveredInstances(examples); //maintain these in any case
 
                 if (DEBUG_STEP_BY_STEP) {
                     System.out.println("########uncovered by rule (" + examples.size() + ")");
-                    if (DEBUG_STEP_BY_STEP_V) for (Instance inst : examples) System.out.println(inst);
+                    if (DEBUG_STEP_BY_STEP_V) for (Inst inst : examples) System.out.println(inst);
                     else System.out.println(examples.size());
                 }
 
                 Head head = bestRuleOfMulti.getHead();
 
-                for (Instance covered : coveredInstances) {
+                for (Inst covered : coveredInstances) {
                     for (Map.Entry<Integer, Condition> entry : head.entries()) {
                         int labelIndex = entry.getKey();
                         predictedLabelIndices.add(labelIndex);
 
-                        if (Utils.isMissingValue(covered.value(labelIndex))) {
-                            covered.setValue(labelIndex, entry.getValue().getValue());
+                        if (Utils.isMissingValue(covered.inst.value(labelIndex))) {
+                            covered.inst.setValue(labelIndex, entry.getValue().getValue());
                         }
                     }
 
@@ -1256,12 +1255,12 @@ public class SeCoAlgorithm implements Serializable {
                 if (DEBUG_STEP_BY_STEP) {
                     System.out.println(
                             "########covered by rule (and predicted written) (" + coveredInstances.size() + ")");
-                    if (DEBUG_STEP_BY_STEP_V) for (Instance inst : coveredInstances) System.out.println(inst);
+                    if (DEBUG_STEP_BY_STEP_V) for (Inst inst : coveredInstances) System.out.println(inst);
                     else System.out.println(coveredInstances.size());
                     System.out.println(
                             "########readdition candidates (" + coveredButLabelsNotFullyCoveredInstances.size() + ")");
                     if (DEBUG_STEP_BY_STEP_V)
-                        for (Instance inst : coveredButLabelsNotFullyCoveredInstances) System.out.println(inst);
+                        for (Inst inst : coveredButLabelsNotFullyCoveredInstances) System.out.println(inst);
                     else System.out.println(coveredButLabelsNotFullyCoveredInstances.size());
                 }
 
@@ -1278,12 +1277,12 @@ public class SeCoAlgorithm implements Serializable {
                         //most covered examples were not fully label-covered
                         if (!readdAllCovered) {
                             for (int i = 0; i < coveredButLabelsNotFullyCoveredInstances.size(); i++) {
-                                examples.addDirectly(coveredButLabelsNotFullyCoveredInstances
+                                examples.add(coveredButLabelsNotFullyCoveredInstances
                                         .get(i)); //covered but labels not fully covered
                             }
                         } else {
                             for (int i = 0; i < coveredInstances.size(); i++) {
-                                examples.addDirectly(
+                                examples.add(
                                         coveredInstances.get(i)); //covered, labels fully and not fully covered
                             }
                         }
@@ -1301,7 +1300,7 @@ public class SeCoAlgorithm implements Serializable {
                 } else {
                     // Re-add instances to training set for next iteration
                     for (int i = 0; i < coveredButLabelsNotFullyCoveredInstances.size(); i++) {
-                        examples.addDirectly(coveredButLabelsNotFullyCoveredInstances.get(i));
+                        examples.add(coveredButLabelsNotFullyCoveredInstances.get(i));
                     }
                 }
 
@@ -1315,28 +1314,27 @@ public class SeCoAlgorithm implements Serializable {
         return theory;
     }
 
-    public SingleHeadRuleSet standardSeparateAndConquerMultilabel(Instances examples, int labelIndices[]) throws
+    public SingleHeadRuleSet standardSeparateAndConquerMultilabel(ArrayList<Inst> examples, int labelIndices[]) throws
             Exception {
         SeCoLogger.debug("entering separateAndConquerMultilabel");
-        Instances originalExamples = examples; // newExamples used only in postprocessor
-        examples = new Instances(originalExamples,
-                originalExamples.numInstances()); //so that I can do what I want on this
-        ArrayList<Instance> examplesReferences = null; // only used for debugging
+        ArrayList<Inst> originalExamples = examples; // newExamples used only in postprocessor
+        examples = new ArrayList<Inst>(); //so that I can do what I want on this
+        ArrayList<Inst> examplesReferences = null; // only used for debugging
 
         if (DEBUG_STEP_BY_STEP)
             examplesReferences = new ArrayList<>();
 
         for (int i = 0; i < originalExamples.size(); i++) {
-            Instance inst = originalExamples.get(i);
-            Instance wrappedInstance;
+            Inst inst = originalExamples.get(i);
+            Inst wrappedInstance;
 
-            if (inst instanceof SparseInstance) {
-                wrappedInstance = new SparseInstanceWrapper(inst, labelIndices);
+            if (inst.inst instanceof SparseInstance) {
+                wrappedInstance = new Inst(new SparseInstanceWrapper(inst.inst, labelIndices),inst.ID);
             } else {
-                wrappedInstance = new DenseInstanceWrapper(inst, labelIndices);
+                wrappedInstance = new Inst(new DenseInstanceWrapper(inst.inst, labelIndices),inst.ID);
             }
 
-            examples.addDirectly(wrappedInstance); //now secured
+            examples.add(wrappedInstance); //now secured
 
             if (DEBUG_STEP_BY_STEP)
                 examplesReferences.add(wrappedInstance);
@@ -1346,24 +1344,24 @@ public class SeCoAlgorithm implements Serializable {
         SingleHeadRule bestRuleOfMulti;
         SingleHeadRuleSet theory = new SingleHeadRuleSet();
         theory.setLabelIndices(labelIndices); //so that tostring prints out mlc statistics
-        int trainingDataSize = examples.getInstances().size();
+        int trainingDataSize = examples.size();
         double classValueToLearn; // 0 if zero rules are used, 1 otherwise
 
         // Continue until a certain percentage of the training data is covered
         outerloop:
-        while (examples.getInstances().size() > trainingDataSize * noNeedForClassification) {
+        while (examples.size() > trainingDataSize * noNeedForClassification) {
             bestRuleOfMulti = null;
 
             if (DEBUG_STEP_BY_STEP) {
                 System.out.println("########remaining training set (" + examples.size() + ")");
-                if (DEBUG_STEP_BY_STEP_V) for (Instance inst : examples) System.out.println(inst);
+                if (DEBUG_STEP_BY_STEP_V) for (Inst inst : examples) System.out.println(inst);
                 else System.out.println(examples.size());
                 System.out.println("########candidate rules");
             }
 
             // Iterate over all labels
             for (int labelIndex = 0; labelIndex < labelIndices.length; labelIndex++) {
-                examples.setClassIndex(labelIndices[labelIndex]);
+                examples.get(0).inst.dataset().setClassIndex(labelIndices[labelIndex]);
                 classValueToLearn = predictZero ? 0.0 : 1.0;
 
                 for (; classValueToLearn <= 1; classValueToLearn++) {
@@ -1379,9 +1377,9 @@ public class SeCoAlgorithm implements Serializable {
                             }
                         }
 
-                        Instances examplesForRipper = new Instances(examples, examples.numInstances());
-                        for (int i = 0; i < examples.numInstances(); i++) {
-                            Instance inst = examples.instance(i);
+                        Instances examplesForRipper = new Instances(Instances.toSeCoInstances(examples.get(0).inst.dataset()), examples.size());
+                        for (int i = 0; i < examples.size(); i++) {
+                            Instance inst = examples.get(i).inst;
 
                             if (Utils.isMissingValue(
                                     inst.value(inst.classIndex()))) //otherwise the class was already set
@@ -1402,7 +1400,7 @@ public class SeCoAlgorithm implements Serializable {
                         if (r == null) {
                             //create default rule
                             r = new SingleHeadRule(heuristic,
-                                    new NominalCondition(examples.classAttribute(), classValueToLearn));
+                                    new NominalCondition(Instances.toSeCoInstances(examples.get(0).inst.dataset()).classAttribute(), classValueToLearn));
                         }
 
                         r.setHeuristic(heuristic);
@@ -1423,13 +1421,13 @@ public class SeCoAlgorithm implements Serializable {
                 }
             }
 
-            ArrayList<Instance> coveredInstances = bestRuleOfMulti.coveredInstances(examples);
-            ArrayList<Instance> coveredButLabelsNotFullyCoveredInstances = new ArrayList<Instance>();
+            ArrayList<Inst> coveredInstances = bestRuleOfMulti.coveredInstances(examples);
+            ArrayList<Inst> coveredButLabelsNotFullyCoveredInstances = new ArrayList<Inst>();
             examples = bestRuleOfMulti.uncoveredInstances(examples); //maintain these in any case
 
             if (DEBUG_STEP_BY_STEP) {
                 System.out.println("########uncovered by rule (" + examples.size() + ")");
-                if (DEBUG_STEP_BY_STEP_V) for (Instance inst : examples) System.out.println(inst);
+                if (DEBUG_STEP_BY_STEP_V) for (Inst inst : examples) System.out.println(inst);
                 else System.out.println(examples.size());
             }
 
@@ -1437,12 +1435,12 @@ public class SeCoAlgorithm implements Serializable {
             int coveredLabelIndex = head.getAttr().index();
 
             for (int i = 0; i < coveredInstances.size(); i++) {
-                Instance covered = coveredInstances.get(i);
-                covered.dataset().setClassIndex(
+                Inst covered = coveredInstances.get(i);
+                covered.inst.dataset().setClassIndex(
                         coveredLabelIndex); //this is obligatory due to that setvalue executed toDoubleArray, and here the classIndex features is overwritten with the real value. so, before this bugfix, an additional label features (the last one) was always overwritten
 
-                if (Utils.isMissingValue(covered.value(coveredLabelIndex))) {
-                    covered.setValue(coveredLabelIndex, head.getValue());
+                if (Utils.isMissingValue(covered.inst.value(coveredLabelIndex))) {
+                    covered.inst.setValue(coveredLabelIndex, head.getValue());
                 }
 
                 if (predictZero) {
@@ -1465,12 +1463,12 @@ public class SeCoAlgorithm implements Serializable {
 
             if (DEBUG_STEP_BY_STEP) {
                 System.out.println("########covered by rule (and predicted written) (" + coveredInstances.size() + ")");
-                if (DEBUG_STEP_BY_STEP_V) for (Instance inst : coveredInstances) System.out.println(inst);
+                if (DEBUG_STEP_BY_STEP_V) for (Inst inst : coveredInstances) System.out.println(inst);
                 else System.out.println(coveredInstances.size());
                 System.out.println(
                         "########readdition candidates (" + coveredButLabelsNotFullyCoveredInstances.size() + ")");
                 if (DEBUG_STEP_BY_STEP_V)
-                    for (Instance inst : coveredButLabelsNotFullyCoveredInstances) System.out.println(inst);
+                    for (Inst inst : coveredButLabelsNotFullyCoveredInstances) System.out.println(inst);
                 else System.out.println(coveredButLabelsNotFullyCoveredInstances.size());
             }
 
@@ -1487,12 +1485,12 @@ public class SeCoAlgorithm implements Serializable {
                     //most covered examples were not fully label-covered
                     if (!readdAllCovered) { //TODO: eigentlich m�sste auch useSkipping=false && hackAddAll gehen, oder?
                         for (int i = 0; i < coveredButLabelsNotFullyCoveredInstances.size(); i++) {
-                            examples.addDirectly(coveredButLabelsNotFullyCoveredInstances
+                            examples.add(coveredButLabelsNotFullyCoveredInstances
                                     .get(i)); //covered but labels not fully covered
                         }
                     } else {
                         for (int i = 0; i < coveredInstances.size(); i++) {
-                            examples.addDirectly(coveredInstances.get(i)); //covered, labels fully and not fully covered
+                            examples.add(coveredInstances.get(i)); //covered, labels fully and not fully covered
                         }
                     }
                 } else {
@@ -1507,7 +1505,7 @@ public class SeCoAlgorithm implements Serializable {
             } else {
                 // Re-add instances to training set for next iteration
                 for (int i = 0; i < coveredButLabelsNotFullyCoveredInstances.size(); i++) {
-                    examples.addDirectly(coveredButLabelsNotFullyCoveredInstances.get(i));
+                    examples.add(coveredButLabelsNotFullyCoveredInstances.get(i));
                 }
             }
 
@@ -1556,12 +1554,12 @@ public class SeCoAlgorithm implements Serializable {
         return pruningSet;
     }
 
-    private int getUncoveredLabels(Instance covered, int[] labelIndices) {
+    private int getUncoveredLabels(Inst covered, int[] labelIndices) {
         int count = 0;
 
         for (int i = 0; i < labelIndices.length; i++) {
             int labelIndex = labelIndices[i];
-            if (covered.isMissing(labelIndex))
+            if (covered.inst.isMissing(labelIndex))
                 count++;
 
         }
@@ -1569,20 +1567,20 @@ public class SeCoAlgorithm implements Serializable {
     }
 
 
-    private int getUncoveredPosLabels(Instance covered, int[] labelIndices) {
+    private int getUncoveredPosLabels(Inst covered, int[] labelIndices) {
         int count = 0;
         Instance parent = null;
-        if (covered instanceof DenseInstanceWrapper)
-            parent = ((DenseInstanceWrapper) covered).getWrappedInstance(); //TODO: may work, may not work...
+        if (covered.inst instanceof DenseInstanceWrapper)
+            parent = ((DenseInstanceWrapper) covered.inst).getWrappedInstance(); //TODO: may work, may not work...
         else
-            parent = ((SparseInstanceWrapper) covered).getWrappedInstance(); //TODO: may work, may not work...
+            parent = ((SparseInstanceWrapper) covered.inst).getWrappedInstance(); //TODO: may work, may not work...
 
         for (int i = 0; i < labelIndices.length; i++) {
             int labelIndex = labelIndices[i];
             if (parent.value(labelIndex) == 1.0) {
                 count++;
 //				if(Double.compare(covered.value(labelIndex),Utils.missingValue())!=0)
-                if (!covered.isMissing(labelIndex))
+                if (!covered.inst.isMissing(labelIndex))
                     count--; //it does not matter, if it is correct, but it should be somehow set, then it was somehow covered.
             }
         }

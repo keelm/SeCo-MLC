@@ -196,7 +196,7 @@ public class MulticlassCovering {
     /**
      * @param beamWidthPercentage The beam width as a percentage of the number of attributes
      */
-    public final MultiHeadRule findBestGlobalRule(final Instances instances,
+    public final MultiHeadRule findBestGlobalRule(final ArrayList<Inst> instances,
                                                   final LinkedHashSet<Integer> labelIndices,
                                                   final Set<Integer> predictedLabels,
                                                   final float beamWidthPercentage) throws
@@ -211,7 +211,7 @@ public class MulticlassCovering {
         return findBestGlobalRule(instances, labelIndices, predictedLabels, beamWidth);
     }
 
-    public final MultiHeadRule findBestGlobalRule(final Instances instances,
+    public final MultiHeadRule findBestGlobalRule(final ArrayList<Inst>instances,
                                                   final LinkedHashSet<Integer> labelIndices,
                                                   final Set<Integer> predictedLabels,
                                                   final int beamWidth) throws
