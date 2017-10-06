@@ -22,8 +22,10 @@ import weka.core.Instance;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Iterator;
 
 /**
@@ -123,7 +125,83 @@ public abstract class Rule implements Comparable<Rule>, Cloneable, Iterable<Cond
         return true;
     }
 
+
+    
+    
+    
+    
+    private static HashSet<Integer> labelIndicesHash;
+    private static Hashtable<Integer,Boolean> coveringCache;
+
+    private static Instance id2inst[];
+    private static Hashtable<Instance,Integer> inst2id;
+    
+
+    public static void initCache(Instances insts){
+    	id2inst=new Instance[insts.numInstances()];
+    	inst2id=new Hashtable<>();
+    	for (int i = 0; i < insts.numInstances(); i++) {
+			Instance inst = insts.instance(i);
+			
+		}
+    }
+    
+	/**
+	 * @param hashCode
+	 * @return
+	 */
+	private static BitSet getCoveredInsts(Condition c) {
+		Boolean res=coveringCache.get(hashCode);
+		return res;
+	}
+
+	/**
+	 * @param c
+	 * @param inst
+	 * @return
+	 */
+	private static int getHashCodeTemp(Condition c, Instance inst) {
+		int hashCode = 17*31+c.getAttr().index();
+		hashCode = (int) (hashCode * 31 + Double.doubleToLongBits(c.getValue()));
+		hashCode = hashCode* 31 + System.identityHashCode(inst);
+		hashCode = hashCode* 31 + (c.cmp() ? 1: 0);
+		return hashCode;
+	}
+    
+    static BitSet getBitSet(Instances insts) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+    
+    
+    
     /**
+     * check whether the rule covers a set if instances
+     *
+     * @param inst the instance to check
+     * @return true if the rule covers the instance, false else
+     */
+    public final BitSet covers(final Instances insts) {
+    	//get vector of all instances seen with 1 set if respective inst is in insts
+    	BitSet instsBitSet=getBitSet(insts);
+    	
+    	for (int i = 0; i < length(); i++) {
+            final Condition c = getCondition(i);
+
+            //get insts that are covered by condition. as there is only a limited number of conditions, this is well cachable
+            BitSet coveredInsts=getCoveredInsts(c);
+            
+            //if inst is in insts, and c covers inst, then there is a 1 in the respective position
+            instsBitSet.and(coveredInsts);
+        }
+
+    	return instsBitSet;
+    	
+    }
+
+    
+
+	/**
      * get the length of the rule, the number of conditions in the body
      */
     public final int length() {
