@@ -9,6 +9,7 @@ import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.Evalua
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
 
 public class MultiLabelEvaluation {
 
@@ -38,7 +39,7 @@ public class MultiLabelEvaluation {
         this.averagingStrategy = averagingStrategy;
     }
 
-    public final MetaData evaluate(final Instances instances, final int[] labelIndices, final MultiHeadRule rule,
+    public final MetaData evaluate(final Instances instances, final LinkedHashSet<Integer> labelIndices, final MultiHeadRule rule,
                                    final MetaData metaData) {
         Collection<Integer> relevantLabels = evaluationStrategy.getRelevantLabels(labelIndices, rule.getHead());
         return averagingStrategy.evaluate(instances, rule, heuristic, relevantLabels, metaData);

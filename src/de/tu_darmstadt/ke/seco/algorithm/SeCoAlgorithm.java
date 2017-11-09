@@ -1150,6 +1150,8 @@ public class SeCoAlgorithm implements Serializable {
     public MultiHeadRuleSet multiclassCoveringSeparateAndConquerMultilabel(Instances examples,
                                                                            int labelIndices[]) throws Exception {
         SeCoLogger.debug("entering separateAndConquerMultilabel");
+        LinkedHashSet<Integer> labelIndicesAsSet = new LinkedHashSet<>(labelIndices.length);
+        Arrays.stream(labelIndices).forEach(labelIndicesAsSet::add);
         Instances originalExamples = examples; // newExamples used only in postprocessor
         examples = new Instances(originalExamples,
                 originalExamples.numInstances()); //so that I can do what I want on this
@@ -1198,16 +1200,16 @@ public class SeCoAlgorithm implements Serializable {
             AveragingStrategy averagingStrategy = AveragingStrategy.create(getAveragingStrategy());
             MultiLabelEvaluation multiLabelEvaluation = new MultiLabelEvaluation(getHeuristic(), evaluationStrategy,
                     averagingStrategy);
-            MulticlassCovering multiclassCovering = new MulticlassCovering(multiLabelEvaluation, isPredictZero(),labelIndices);
+            MulticlassCovering multiclassCovering = new MulticlassCovering(multiLabelEvaluation, isPredictZero());
 
             try {
                 int beamWidth = Integer.valueOf(getBeamWidth());
                 bestRuleOfMulti = multiclassCovering
-                        .findBestGlobalRule(examples, labelIndices, predictedLabelIndices, beamWidth);
+                        .findBestGlobalRule(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth);
             } catch (NumberFormatException e) {
                 float beamWidthPercentage = Float.valueOf(getBeamWidth());
                 bestRuleOfMulti = multiclassCovering
-                        .findBestGlobalRule(examples, labelIndices, predictedLabelIndices, beamWidthPercentage);
+                        .findBestGlobalRule(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage);
             }
 
             if (bestRuleOfMulti != null) {

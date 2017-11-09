@@ -114,8 +114,6 @@ public class Main {
         System.out.println("-averagingStrategy " + averagingStrategy);
         System.out.println("\n");
 
-
-
         // Create training instances from dataset
         final MultiLabelInstances trainingData = new MultiLabelInstances(arffFilePath, xmlLabelsDefFilePath);
 
