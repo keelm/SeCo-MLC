@@ -17,6 +17,7 @@
 package de.tu_darmstadt.ke.seco.models;
 
 import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Heuristic;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.MulticlassCovering;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 import weka.core.Instance;
 
@@ -115,7 +116,7 @@ public abstract class Rule implements Comparable<Rule>, Cloneable, Iterable<Cond
 			final Condition c = getCondition(i);
 
 			if (false) {
-				if (!MulticlassCovering.cachedCovers(c, inst)) 
+				if (!MulticlassCovering.cachedCovers(c, inst))
 					return false;
 			} else {
 				if (!c.covers(inst))
@@ -266,7 +267,7 @@ public abstract class Rule implements Comparable<Rule>, Cloneable, Iterable<Cond
         final TwoClassConfusionMatrix confusionMatrix = new TwoClassConfusionMatrix();
         for (int i = 0; i < examples.numInstances(); i++) {
             final Instance inst = examples.instance(i);
-            final boolean classValueAlreadySet = !weka.core.Utils.isMissingValue(inst.value(inst.classIndex())); //this should get something different then inst.classValue()
+            final boolean classValueAlreadySet = false; // !weka.core.Utils.isMissingValue(inst.value(inst.classIndex())); //this should get something different then inst.classValue()
             //before, fn and tn did count, so that the consistency and especially the coverage was was somehow rewarded. now I try it out without, let's see
             if (classValueAlreadySet)
                 continue;
