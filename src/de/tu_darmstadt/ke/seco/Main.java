@@ -11,6 +11,7 @@ import mulan.evaluation.Evaluation;
 import mulan.evaluation.Evaluator;
 import weka.core.Utils;
 
+import java.util.Arrays;
 import java.util.Random;
 
 /**

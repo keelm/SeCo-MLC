@@ -6,6 +6,9 @@ import de.tu_darmstadt.ke.seco.models.MultiHeadRule.Head;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.MultiLabelEvaluation;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.MultiLabelEvaluation.MetaData;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.RuleIndependentEvaluation;
+import de.tu_darmstadt.ke.seco.utils.Logger;
+import mulan.evaluation.Evaluation;
+import mulan.evaluation.Evaluator;
 import weka.core.Attribute;
 import weka.core.Instance;
 
@@ -252,6 +255,7 @@ public class MulticlassCovering {
                 if (closure != null) {
                     closure.refineFurther = false;
                 }
+                
 
                 // When starting off with a new rule, try empty body first
                 if (closure == null) {
@@ -341,7 +345,10 @@ public class MulticlassCovering {
         closure.rule.setHead(null);
         Characteristic characteristic = multiLabelEvaluation.getCharacteristic();
 
-        if (characteristic == Characteristic.DECOMPOSABLE) {
+        return findBestRelaxedHead(instances, labelIndices, closure, null, new HashSet<>(),
+                new LinkedList<>());
+
+        /*if (characteristic == Characteristic.DECOMPOSABLE) {
             return decomposite(instances, labelIndices, closure);
         } else if (characteristic == Characteristic.ANTI_MONOTONOUS) {
             return prunedSearch(instances, labelIndices, closure, null, new HashSet<>(),
@@ -350,13 +357,132 @@ public class MulticlassCovering {
             throw new RuntimeException(
                     "Only anti-monotonous or decomposable evaluation metrics are supported for " +
                             "learning multi-label head rules");
+        }*/
+    }
+
+    // exploiting anti-monotonicity: adding another label to the so far best head cannot increase performance
+    private Closure findBestRelaxedHead(final Instances instances, final LinkedHashSet<Integer> labelIndices,
+                                 final Closure closure, final Closure bestClosure,
+                                 final Set<Integer> evaluatedHeads,
+                                 final List<Head> prunedHeads) throws Exception {
+        // haben einen head, fügen zu dieser jeweils alle neuen hinzu
+        // prüfen und rufen rekursiv auf
+
+        // best head so far
+        Closure result = bestClosure;
+        // variable naming subpar
+        SortedMap<Double, Closure> improvedHeads = new TreeMap<>(Comparator.reverseOrder());
+        // for all possible label conditions
+        for (int labelIndex : labelIndices) {
+            // if head empty or it does not contain condition yet
+            if (closure.rule.getHead() == null ||
+                    !closure.rule.getHead().containsCondition(labelIndex)) {
+                Closure refinedClosure = null;
+
+                for (double value = predictZero ? 0 : 1; value <= 1; value++) {
+                    Attribute labelAttribute = instances.attribute(labelIndex);
+                    Condition labelCondition = new NominalCondition(toSeCoAttribute(labelAttribute),
+                            value);
+                    // head contains condition -> break
+                    if (closure.containsCondition(labelCondition)) {
+                        break;
+                    } else {
+                        // copy old rule
+                        MultiHeadRule refinedRule = (MultiHeadRule) closure.rule.copy();
+                        Head head = refinedRule.getHead();
+                        // if empty head -> create new head
+                        if (head == null) {
+                            head = new Head();
+                            refinedRule.setHead(head);
+                        }
+                        // add label
+                        head.addCondition(labelCondition);
+
+                        // TODO: pruning
+                        // if head has not already been pruned
+                        if (isHeadPruned(prunedHeads, evaluatedHeads, head)) {
+                            break;
+                        }   else {
+                            boolean isRuleIndependent = multiLabelEvaluation
+                                    .getEvaluationStrategy() instanceof RuleIndependentEvaluation;
+                            Closure currentClosure = new Closure(refinedRule,
+                                    isRuleIndependent ? closure.metaData : null);
+                            // evaluate rule with head
+                            MetaData metaData = multiLabelEvaluation
+                                    .evaluate(instances, labelIndices, currentClosure.rule,
+                                            isRuleIndependent ? currentClosure.metaData : null);
+
+                            if (isRuleIndependent) {
+                                currentClosure.metaData = metaData;
+                            }
+                            // if new closure better than refined closure -> set new refined closure
+                            if (refinedClosure == null ||
+                                    currentClosure.rule.getRuleValue() >=
+                                            refinedClosure.rule.getRuleValue()) {
+                                refinedClosure = currentClosure;
+                            }
+                        }
+                    }
+                }
+
+                if (refinedClosure != null) {
+                    // if refined closure better than result -> set new result
+                    if (refinedClosure.rule.getStats().getNumberOfTruePositives() > 0 &&
+                            (result == null ||
+                                    refinedClosure.rule.getRuleValue() >=
+                                            result.rule.getRuleValue())) {
+                        // add refined closure
+                        // map value to closure
+                        improvedHeads.put(refinedClosure.rule.getRuleValue(), refinedClosure);
+                        // add to evaluated heads
+                        evaluatedHeads.add(hashCodeOfConditions(
+                                refinedClosure.rule.getHead().getConditions()));
+                    } else {
+                        // add to pruned heads
+                        MultiHeadRule rule = refinedClosure.rule;
+                        Head head = rule.getHead();
+                        int numberOfLabels = head.size();
+                        int log = 25;
+                        double currentBoost = (Math.log(numberOfLabels + log - 1) / Math.log(log));
+                        double nextBoost = (Math.log(numberOfLabels + log - 1) / Math.log(log));
+
+                        double ruleValue = rule.getRuleValue();
+                        double rawRuleValue = ruleValue / currentBoost;
+
+                        double nextMaxRuleValue = rawRuleValue * nextBoost;
+                        if (result != null && nextMaxRuleValue < result.rule.getRuleValue())
+                            prunedHeads.add(refinedClosure.rule.getHead());
+                    }
+
+
+                }
+            }
         }
+        // terminates if no rules in sorted map, i.e. no rules/heads were found to be an improvement
+        // go through rules/heads in sorted map
+        Iterator<Closure> iterator = improvedHeads.values().iterator();
+        boolean first = true;
+        // for all
+        while (iterator.hasNext()) {
+            // get refined rule
+            Closure refinedClosure = iterator.next();
+
+            if (first) {
+                result = refinedClosure;
+            }
+
+            result = findBestRelaxedHead(instances, labelIndices, refinedClosure, result, evaluatedHeads,
+                    prunedHeads);
+            first = false;
+        }
+
+        return result;
     }
 
     private Closure decomposite(final Instances instances, final LinkedHashSet<Integer> labelIndices,
                                 final Closure closure) {
         Closure result = null;
-
+       
         for (int labelIndex : labelIndices) { // For all possible label conditions
             Closure currentClosure = null;
 

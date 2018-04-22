@@ -7,6 +7,8 @@ import de.tu_darmstadt.ke.seco.multilabelrulelearning.MultilabelSecoClassifier;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 import de.tu_darmstadt.ke.seco.utils.Logger;
 import de.tu_darmstadt.ke.seco.utils.StopWatch;
+import mulan.evaluation.Evaluation;
+import mulan.evaluation.Evaluator;
 import weka.core.Instance;
 
 public class SeCoClassifierFactory {

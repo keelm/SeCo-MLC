@@ -15,14 +15,14 @@ public class HammingAccuracy extends ValueHeuristic {
 
     @Override
     public final double evaluateRule(final Rule rule) {
-        return evaluateConfusionMatrix(rule.getStats());
+    	return evaluateConfusionMatrix(rule.getStats());
     }
 
     @Override
     public double evaluateConfusionMatrix(final TwoClassConfusionMatrix confusionMatrix) {
         double correctly = confusionMatrix.getNumberOfCorrectlyClassified();
         double numExamples = confusionMatrix.getNumberOfExamples(); // P + N
-
+        
         if (numExamples == 0)
             return 0;
         return correctly / numExamples;

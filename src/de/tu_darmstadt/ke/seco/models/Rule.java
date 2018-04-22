@@ -17,6 +17,7 @@
 package de.tu_darmstadt.ke.seco.models;
 
 import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Heuristic;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.MulticlassCovering;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 import weka.core.Instance;
 
@@ -115,7 +116,7 @@ public abstract class Rule implements Comparable<Rule>, Cloneable, Iterable<Cond
 			final Condition c = getCondition(i);
 
 			if (false) {
-				if (!MulticlassCovering.cachedCovers(c, inst)) 
+				if (!MulticlassCovering.cachedCovers(c, inst))
 					return false;
 			} else {
 				if (!c.covers(inst))
