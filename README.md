@@ -21,5 +21,5 @@ The project provides the main class `de.tu_darmstadt.ke.seco.Main` for running t
 In the following an exemplary command line argument for running the provided JAR file is given:
 
 ```
-java -jar SeCo-MLC.jar -baselearner config/precision.xml -arff data/genbase-train.arff -xml data/genbase.xml -arff-test data/genbase-test.arff -remainingInstancesPercentage 0.1 -readAllCovered true -skipThresholdPercentage 0.01 -predictZeroRules true -useMultilabelHeads true -averagingStrategy micro-averaging -evaluationStrategy rule-dependent
+java -jar SeCo-MLC.jar -baselearner config/precision.xml -arff data/genbase-train.arff -xml data/genbase.xml -test-arff data/genbase-test.arff -remainingInstancesPercentage 0.1 -readAllCovered true -skipThresholdPercentage 0.01 -predictZeroRules true -useMultilabelHeads true -averagingStrategy micro-averaging -evaluationStrategy rule-dependent
 ```
