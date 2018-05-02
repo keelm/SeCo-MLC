@@ -240,4 +240,30 @@ public class MultiHeadRule extends Rule {
         return false;
     }
 
+    private double boostedRuleValue;
+    private double rawRuleValue;
+
+    public void setBoostedRuleValue(double value) {
+        boostedRuleValue = value;
+    }
+
+    public double getBoostedRuleValue() {
+        return boostedRuleValue;
+    }
+
+    public void setRawRuleValue(double value) {
+        rawRuleValue = value;
+    }
+
+    public double getRawRuleValue() {
+        return rawRuleValue;
+    }
+
+    private int log = 13;
+
+    private double logValue(double heuristic, int numberOfLabels) {
+        heuristic *= (Math.log(numberOfLabels + log - 1) / Math.log(log));
+        return heuristic;
+    }
+
 }

@@ -46,15 +46,13 @@ public class MicroAveraging extends AveragingStrategy {
             }
         }
         double h = heuristic.evaluateConfusionMatrix(stats);
-        int numberOfLabels = head.size();
-        // RELAXING CHANGE
-        h = logValue(h, numberOfLabels);
 
         rule.setRuleValue(heuristic, h);
+        rule.setRawRuleValue(h);
         return new MicroAveragingMetaData(coveredInstances, stats);
     }
 
-    private int log = 25;
+    private int log = 10;
 
     private double logValue(double heuristic, int numberOfLabels) {
         heuristic *= (Math.log(numberOfLabels + log - 1) / Math.log(log));
