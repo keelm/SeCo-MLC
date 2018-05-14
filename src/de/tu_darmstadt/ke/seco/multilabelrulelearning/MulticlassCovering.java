@@ -6,11 +6,9 @@ import de.tu_darmstadt.ke.seco.models.MultiHeadRule.Head;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.MultiLabelEvaluation;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.MultiLabelEvaluation.MetaData;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.boosting.LinLogBoosting;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.boosting.LogBoosting;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.BoostingStrategy;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.RuleIndependentEvaluation;
-import de.tu_darmstadt.ke.seco.utils.Logger;
-import mulan.evaluation.Evaluation;
-import mulan.evaluation.Evaluator;
 import weka.core.Attribute;
 import weka.core.Instance;
 
@@ -132,7 +130,7 @@ public class MulticlassCovering {
 
     public MulticlassCovering(final MultiLabelEvaluation multiLabelEvaluation,
                               final boolean predictZero) {
-        this.boostingStrategy = new LinLogBoosting();
+        this.boostingStrategy = new LogBoosting();
         this.multiLabelEvaluation = multiLabelEvaluation;
         this.predictZero = predictZero;
     }
@@ -246,6 +244,9 @@ public class MulticlassCovering {
         MultiHeadRule bestRule = getBestRule(bestClosures);
         if (DEBUG_STEP_BY_STEP)
             System.out.println("Found best rule: " + bestRule + "\n");
+
+        System.out.println("Evaluations per Head: " + evalutionsPerHead);
+        System.out.println("#findBestHead(): " + evaluatedHeads);
         return bestRule;
     }
 
@@ -292,7 +293,7 @@ public class MulticlassCovering {
                                     closure != null ? closure.metaData : null);
                             refinedClosure.addCondition(i, condition);
                             refinedClosure = findBestHead(instances, labelIndices, refinedClosure);
-
+                            increaseEvaluationCount();
                             if (refinedClosure != null) {
                                 improved |= closures.offer(refinedClosure);
                             }
@@ -365,6 +366,10 @@ public class MulticlassCovering {
     private boolean useRelaxedPruning = true;
     private boolean useBoostedHeuristicForChoosingRules = false;
 
+    static int evaluations = 0;
+    static int evaluatedHeads = 0;
+    static double evalutionsPerHead = 0;
+
     // exploiting anti-monotonicity: adding another label to the so far best head cannot increase performance any further if performance decreased by adding a label
     private Closure findBestRelaxedHead(final Instances instances, final LinkedHashSet<Integer> labelIndices,
                                  final Closure closure, final Closure bestClosure,
@@ -382,8 +387,7 @@ public class MulticlassCovering {
 
                 for (double value = predictZero ? 0 : 1; value <= 1; value++) {
                     Attribute labelAttribute = instances.attribute(labelIndex);
-                    Condition labelCondition = new NominalCondition(toSeCoAttribute(labelAttribute),
-                            value);
+                    Condition labelCondition = new NominalCondition(toSeCoAttribute(labelAttribute), value);
                     // head contains condition -> break
                     if (closure.containsCondition(labelCondition)) {
                         break;
@@ -408,6 +412,8 @@ public class MulticlassCovering {
                             // evaluate rule with head
                             MetaData metaData = multiLabelEvaluation.evaluate(instances, labelIndices, currentClosure.rule, isRuleIndependent ? currentClosure.metaData : null);
                             boostingStrategy.evaluate(currentClosure.rule);
+                            evaluations += 1;
+
                             if (useBoostedHeuristicForChoosingRules)
                                 currentClosure.rule.setRuleValue(currentClosure.rule.getHeuristic(), currentClosure.rule.getBoostedRuleValue());
                             else
@@ -438,7 +444,7 @@ public class MulticlassCovering {
                         // add refined closure
                         // map value to closure
                         improvedHeads.put(refinedClosure.rule.getRuleValue(), refinedClosure);
-                        // add to evaluated heads
+                        // add to evaluatedHeads heads
                         evaluatedHeads.add(hashCodeOfConditions(refinedClosure.rule.getHead().getConditions()));
                     } else {
                         // add to pruned heads
@@ -454,6 +460,8 @@ public class MulticlassCovering {
                 }
             }
         }
+
+
         // terminates if no rules in sorted map, i.e. no rules/heads were found to be an improvement
         // go through rules/heads in sorted map
         Iterator<Closure> iterator = improvedHeads.values().iterator();
@@ -472,6 +480,14 @@ public class MulticlassCovering {
         }
 
         return result;
+    }
+
+    private void increaseEvaluationCount() {
+        double tmp = evalutionsPerHead * MulticlassCovering.evaluatedHeads;
+        MulticlassCovering.evaluatedHeads++;
+        tmp += evaluations;
+        evalutionsPerHead = tmp / MulticlassCovering.evaluatedHeads;
+        evaluations = 0;
     }
 
     private Closure decomposite(final Instances instances, final LinkedHashSet<Integer> labelIndices,
@@ -494,6 +510,7 @@ public class MulticlassCovering {
                     Closure singleHeadClosure = new Closure(singleHeadRule, null);
                     multiLabelEvaluation
                             .evaluate(instances, labelIndices, singleHeadClosure.rule, null);
+                    this.evaluations += 1;
 
                     if (currentClosure == null ||
                             singleHeadClosure.rule.getRuleValue() >=
@@ -561,7 +578,7 @@ public class MulticlassCovering {
 
                         head.addCondition(labelCondition);
 
-                        // If head has not already been evaluated
+                        // If head has not already been evaluatedHeads
                         if (isHeadPruned(prunedHeads, evaluatedHeads, head)) {
                             break;
                         } else {
@@ -572,6 +589,7 @@ public class MulticlassCovering {
                             MetaData metaData = multiLabelEvaluation
                                     .evaluate(instances, labelIndices, currentClosure.rule,
                                             isRuleIndependent ? currentClosure.metaData : null);
+                            this.evaluations += 1;
 
                             if (isRuleIndependent) {
                                 currentClosure.metaData = metaData;
@@ -600,6 +618,8 @@ public class MulticlassCovering {
                 }
             }
         }
+
+
 
         Iterator<Closure> iterator = sortedMap.values().iterator();
         boolean first = true;
