@@ -3,6 +3,7 @@ package de.tu_darmstadt.ke.seco.learners.core;
 import de.tu_darmstadt.ke.seco.algorithm.SeCoAlgorithm;
 import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Heuristic;
 import de.tu_darmstadt.ke.seco.models.*;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.MulticlassCovering;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.MultilabelSecoClassifier;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 import de.tu_darmstadt.ke.seco.utils.Logger;
@@ -279,8 +280,11 @@ public class SeCoClassifierFactory {
 
         seCoClassifier.m_theory = seCoClassifier.getSeCoAlgorithm().separateAndConquerMultilabel(instances, labelIndices);
 
+        MulticlassCovering.finished = true;
+
         seCoAlgorithm.getRuleStoppingCriterion().setProperty("reset", "true");
         Logger.info("Complete theory:\n" + seCoClassifier.getTheory().toString());
+
 
         stopWatch.stop();
         seCoClassifier.setLearningTime(stopWatch.getElapsedTime());

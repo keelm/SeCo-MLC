@@ -7,7 +7,7 @@ public class LogBoosting extends BoostingStrategy {
 
     private double m = 1; // gradient
 
-    private int log = 10;
+    private int log = 20;
 
     private double numberOfLabelsInTheHead;
 
@@ -37,9 +37,13 @@ public class LogBoosting extends BoostingStrategy {
     }
 
     private double logValue(double x) {
-        double logValue = (m * (Math.log(log - 1 + x)) / Math.log(log));
+        double logValue = (m * (Math.log(log - 1 + x)) / Math.log(log)) - (m - 1);
         // double logValue = Math.log(log - 1 + m * x) / Math.log(log);
         return logValue;
+    }
+
+    public String toString() {
+        return "LogBoosting(" + m + "|" + log + ")";
     }
 
 }

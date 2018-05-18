@@ -1,10 +1,13 @@
 package de.tu_darmstadt.ke.seco.models;
 
 import de.tu_darmstadt.ke.seco.models.MultiHeadRule.Head;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.MulticlassCovering;
 import weka.core.Instance;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import static de.tu_darmstadt.ke.seco.Main.csvWriter;
 
 public class MultiHeadRuleSet extends RuleSet<MultiHeadRule> {
 
@@ -122,6 +125,34 @@ public class MultiHeadRuleSet extends RuleSet<MultiHeadRule> {
             stringBuilder.append("\n%multiHeadRules..................: " + numMultiHeadRules / (double) correctedNumRules);
             stringBuilder.append("\naverage #labels..................: " + totalLabels / (double) correctedNumRules);
             stringBuilder.append("\naverage #labels per multiHeadRule: " + (numMultiHeadRules == 0 ? 0 : totalLabelsMultiHeadRules / (double) numMultiHeadRules));
+            if (MulticlassCovering.finished && !csvWritten) {
+                csvWritten = true;
+                csvWriter.writeNext(new String[]{"number of rules", Integer.toString(correctedNumRules)});
+                csvWriter.writeNext(new String[]{"referred attributes", Integer.toString(referredAttributes())});
+                csvWriter.writeNext(new String[]{"average rule length", Double.toString((totalConditions) / (double) correctedNumRules)});
+                csvWriter.writeNext(new String[]{"#stopRules", Integer.toString(numStopRules)});
+                csvWriter.writeNext(new String[]{"#zeroLabelPredictions", Integer.toString(numPredictZero)});
+                csvWriter.writeNext(new String[]{"#partLabelRulesNotFul", Integer.toString(numPartialLabelRules)});
+                csvWriter.writeNext(new String[]{"#fullLabelRules", Integer.toString(numFullLabelRules)});
+                csvWriter.writeNext(new String[]{"#nonLabelRules",
+                        Integer.toString((correctedNumRules - numFullLabelRules - numPartialLabelRules))});
+                csvWriter.writeNext(new String[]{"%partLabelRulesNotFul",  Double.toString(numPartialLabelRules / (double) correctedNumRules)});
+                csvWriter.writeNext(new String[]{"%fullLabelRules" ,  Double.toString(numFullLabelRules / (double) correctedNumRules)});
+                csvWriter.writeNext(new String[]{"%nonLabelRules",
+                        Double.toString((correctedNumRules - numFullLabelRules - numPartialLabelRules) / (double) correctedNumRules)});
+                csvWriter.writeNext(new String[]{"number of conditions",   Integer.toString(numConditions())});
+                csvWriter.writeNext(new String[]{"#nonLabelConditions",   Integer.toString((totalConditions - totalLabelConditions))});
+                csvWriter.writeNext(new String[]{"#labelConditions",  Double.toString(totalLabelConditions)});
+                csvWriter.writeNext(new String[]{"%nonLabelConditions",
+                        Double.toString((totalConditions - totalLabelConditions) / (double) totalConditions)});
+                csvWriter.writeNext(new String[]{"%labelConditions",  Double.toString(totalLabelConditions / (double) totalConditions)});
+                csvWriter.writeNext(new String[]{"#multiHeadRules",   Integer.toString(numMultiHeadRules)});
+                csvWriter.writeNext(new String[]{"%multiHeadRules",  Double.toString(numMultiHeadRules / (double) correctedNumRules)});
+                csvWriter.writeNext(new String[]{"average #labels",  Double.toString(totalLabels / (double) correctedNumRules)});
+                csvWriter.writeNext(new String[]{"average #labels per multiHeadRule",  Double.toString((numMultiHeadRules == 0 ? 0 : totalLabelsMultiHeadRules / (double) numMultiHeadRules))});
+
+            }
+
         } else {
             stringBuilder.append("number of rules....................: " + getRules().size());
             stringBuilder.append("\nnumber of conditions.............: " + numConditions());
@@ -144,5 +175,7 @@ public class MultiHeadRuleSet extends RuleSet<MultiHeadRule> {
         stringBuilder.append("\ndefaultRule..........: " + getDefaultRule());
         return stringBuilder.toString();
     }
+
+    private static boolean csvWritten = false;
 
 }

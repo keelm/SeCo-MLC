@@ -1,5 +1,6 @@
 package de.tu_darmstadt.ke.seco;
 
+import com.opencsv.CSVWriter;
 import de.tu_darmstadt.ke.seco.algorithm.SeCoAlgorithm;
 import de.tu_darmstadt.ke.seco.algorithm.SeCoAlgorithmFactory;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.Weka379AdapterMultilabel;
@@ -9,10 +10,18 @@ import mulan.classifier.MultiLabelLearner;
 import mulan.data.MultiLabelInstances;
 import mulan.evaluation.Evaluation;
 import mulan.evaluation.Evaluator;
+import mulan.evaluation.measure.Measure;
 import weka.core.Utils;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Random;
+
+import static de.tu_darmstadt.ke.seco.multilabelrulelearning.MulticlassCovering.*;
 
 /**
  * Runner class for building multilabel learners using XML config files, running it on a given dataset and outputting
@@ -34,8 +43,15 @@ public class Main {
             System.out.println(evaluation);
             evaluator = new Evaluator();
             evaluation = evaluator.evaluate(multilabelLearner, testData, trainingData);
+            for (Measure measure : evaluation.getMeasures()) {
+                csvWriter.writeNext(new String[]{measure.getName(), Double.toString(measure.getValue())});
+            }
             System.out.println("\n\nEvaluation Results on test data:\n");
             System.out.println(evaluation);
+
+
+            csvWriter.writeNext(new String[]{"avg. #evals per findBestHead()", Double.toString(evaluationsPerHead)});
+            csvWriter.writeNext(new String[]{"#findBestHead()", Integer.toString(evaluatedHeads)});
         }
     }
 
@@ -115,6 +131,39 @@ public class Main {
         System.out.println("-averagingStrategy " + averagingStrategy);
         System.out.println("\n");
 
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+        filename = "results/experiments/" + xmlLabelsDefFilePath.split("/")[1].split("\\.")[0] + "_" + sdf.format(new Date()) + ".csv";
+        File file = new File(filename);
+        System.out.println(filename);
+        file.createNewFile();
+        fileWriter = new FileWriter(file);
+
+        csvWriter = new CSVWriter(fileWriter,
+                CSVWriter.DEFAULT_SEPARATOR,
+                CSVWriter.NO_QUOTE_CHARACTER,
+                CSVWriter.DEFAULT_ESCAPE_CHARACTER,
+                CSVWriter.DEFAULT_LINE_END);
+
+
+
+        String[] headerRecord = {"Info", "Value"};
+        csvWriter.writeNext(headerRecord);
+        csvWriter.writeNext(new String[]{"baselearner", baseLearnerConfigPath});
+        csvWriter.writeNext(new String[]{"arff", arffFilePath});
+        csvWriter.writeNext(new String[]{"xml", xmlLabelsDefFilePath});
+        csvWriter.writeNext(new String[]{"test-arff", testArffFilePath});
+        csvWriter.writeNext(new String[]{"remainingInstancesPercentage", Double.toString(remainingInstancesPercentage)});
+        csvWriter.writeNext(new String[]{"readAllCovered", Boolean.toString(readAllCovered)});
+        csvWriter.writeNext(new String[]{"skipThresholdPercentage", Double.toString(skipThresholdPercentage)});
+        csvWriter.writeNext(new String[]{"predictZeroRules", Boolean.toString(predictZeroRules)});
+        csvWriter.writeNext(new String[]{"useMultilabelHeads" ,Boolean.toString(useMultilabelHeads)});
+        csvWriter.writeNext(new String[]{"evaluationStrategy", evaluationStrategy});
+        csvWriter.writeNext(new String[]{"averagingStrategy", averagingStrategy});
+
+
+
+
+
         // Create training instances from dataset
         final MultiLabelInstances trainingData = new MultiLabelInstances(arffFilePath, xmlLabelsDefFilePath);
 
@@ -136,14 +185,24 @@ public class Main {
         long estimatedTime = System.currentTimeMillis() - startTime;
         System.out.println("building the model took secs: "+estimatedTime/1000.0);
 
+        csvWriter.writeNext(new String[]{"useRelaxedPruning", Boolean.toString(useRelaxedPruning)});
+        if (useRelaxedPruning) {
+            csvWriter.writeNext(new String[]{"boostingStrategy", boostingStrategy.toString()});
+            csvWriter.writeNext(new String[]{"useBoostedHeuristicForRules", Boolean.toString(useBoostedHeuristicForChoosingRules)});
+        }
+
+
         // Evaluate model on test instances, if available
         startTime = System.currentTimeMillis();
         evaluate(trainingData, testData, multilabelLearner);
         estimatedTime = System.currentTimeMillis() - startTime;
         System.out.println("evaluating the model took secs: "+estimatedTime/1000.0);
         System.out.println("SeCo: finish experiment\n");
-
+        fileWriter.close();
     }
 
+    public static CSVWriter csvWriter;
+    public static FileWriter fileWriter;
+    public static String filename;
 
 }
