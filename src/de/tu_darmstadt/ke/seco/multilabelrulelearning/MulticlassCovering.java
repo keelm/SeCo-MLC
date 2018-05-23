@@ -1,15 +1,21 @@
 package de.tu_darmstadt.ke.seco.multilabelrulelearning;
 
+import com.google.common.collect.ForwardingSortedSetMultimap;
+import com.google.common.collect.Ordering;
+import com.google.common.collect.SortedSetMultimap;
+import com.google.common.collect.TreeMultimap;
 import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Heuristic;
 import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Heuristic.Characteristic;
 import de.tu_darmstadt.ke.seco.models.*;
 import de.tu_darmstadt.ke.seco.models.MultiHeadRule.Head;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.MultiLabelEvaluation;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.MultiLabelEvaluation.MetaData;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.boosting.LogAlphaBoosting;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.boosting.LogBoosting;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.BoostingStrategy;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.EvaluationStrategy;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.RuleIndependentEvaluation;
+import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 import weka.core.Attribute;
 import weka.core.Instance;
 
@@ -61,7 +67,7 @@ public class MulticlassCovering {
         /**
          * The rule.
          **/
-        private final MultiHeadRule rule;
+        private MultiHeadRule rule;
 
         /**
          * Meta data, which is associated with the rule.
@@ -385,7 +391,7 @@ public class MulticlassCovering {
      * True if the boosted heuristic value is to be used for evaluating rules.
      * False otherwise, correspond to the unboosted heuristic value being used for assessing rules.
      */
-    public static boolean useBoostedHeuristicForChoosingRules = true;
+    public static boolean useBoostedHeuristicForChoosingRules = false;
 
     /**
      * Variables for tracking the number of evaluations per execution of findBestHead().
@@ -398,7 +404,8 @@ public class MulticlassCovering {
     private Closure findBestRelaxedHeadDecomposable(final Instances instances, final LinkedHashSet<Integer> labelIndices, final Closure closure) {
         Closure result = null;
         // save all single label heads heuristic values and closures
-        SortedMap<Double, Closure> singleLabelHeads = new TreeMap<>(Comparator.reverseOrder());
+        SortedMultimap<Double, Closure> singleLabelHeads = new SortedMultimap<>();
+
         // for all possible labels
         for (int labelIndex : labelIndices) {
             Closure currentClosure = null;
@@ -426,6 +433,7 @@ public class MulticlassCovering {
 
         Double bestSingleLabelHeuristicValue = singleLabelHeads.firstKey();
         Closure bestSingleLabelHeuristicClosure = singleLabelHeads.get(bestSingleLabelHeuristicValue);
+
         boostedMultiLabelHeads.put(bestSingleLabelHeuristicValue, bestSingleLabelHeuristicClosure);
         Head bestSingleLabelHead = bestSingleLabelHeuristicClosure.rule.getHead();
         headsOfLengthN.put(1, bestSingleLabelHead);
@@ -435,9 +443,11 @@ public class MulticlassCovering {
         if (bestSingleLabelHeuristicClosure.rule.getStats().getNumberOfTruePositives() <= 0)
             return null;
 
-        singleLabelHeads.remove(bestSingleLabelHeuristicValue);
+        singleLabelHeads.remove(bestSingleLabelHeuristicValue, bestSingleLabelHeuristicClosure);
 
         boolean finish = false;
+
+         // TODO: copy conditions
 
         for (int n = 2; n <= labelIndices.size(); n++) {
             // TODO: copy properly
@@ -458,7 +468,7 @@ public class MulticlassCovering {
                 int attributeIndex = bestRemainingCondition.getAttr().index();
                 Collection<Integer> labelIndicesInHead = bestHeadOfLessLength.getLabelIndices();
                 labelAlreadyInHead = labelIndicesInHead.contains(attributeIndex);
-                singleLabelHeads.remove(bestRemainingHeuristicValue);
+                singleLabelHeads.remove(bestRemainingHeuristicValue, bestRemainingHeuristicClosure);
                 conditionToBeAdded = bestRemainingCondition;
             }
             if (finish)
@@ -466,7 +476,9 @@ public class MulticlassCovering {
 
             bestHeadOfLessLength.addCondition(conditionToBeAdded);
             headsOfLengthN.put(n, bestHeadOfLessLength);
-            Closure multiClosure = new Closure(new MultiHeadRule(heuristic), null);
+
+            Closure multiClosure = new Closure((MultiHeadRule) closure.rule.copy(), null);
+            multiClosure.rule.setStats(new TwoClassConfusionMatrix());
 
 
             multiClosure.rule.getStats().addTruePositives(bestRemainingHeuristicClosure.rule.getStats().getNumberOfTruePositives());
@@ -474,6 +486,7 @@ public class MulticlassCovering {
             multiClosure.rule.getStats().addTrueNegatives(bestRemainingHeuristicClosure.rule.getStats().getNumberOfTrueNegatives());
             multiClosure.rule.getStats().addFalseNegatives(bestRemainingHeuristicClosure.rule.getStats().getNumberOfFalseNegatives());
 
+            // TODO: necessary?
             Closure prevClosure = closuresWithHeadOfLengthN.get(n-1);
 
             multiClosure.rule.getStats().addTruePositives(prevClosure.rule.getStats().getNumberOfTruePositives());
@@ -482,6 +495,7 @@ public class MulticlassCovering {
             multiClosure.rule.getStats().addFalseNegatives(prevClosure.rule.getStats().getNumberOfFalseNegatives());
 
             // TODO: if same heuristic already in map, then remove and add the new one as it is larger
+
 
 
             multiClosure.rule.setHead(bestHeadOfLessLength);
@@ -495,6 +509,8 @@ public class MulticlassCovering {
                 multiClosure.rule.setRuleValue(heuristic, multiClosure.rule.getRawRuleValue());
             }
 
+            if (boostedMultiLabelHeads.containsKey(multiClosure.rule.getBoostedRuleValue()))
+                boostedMultiLabelHeads.remove(multiClosure.rule.getBoostedRuleValue());
             boostedMultiLabelHeads.put(multiClosure.rule.getBoostedRuleValue(), multiClosure);
             closuresWithHeadOfLengthN.put(n, multiClosure);
         }
@@ -510,7 +526,8 @@ public class MulticlassCovering {
         // best head so far
         Closure result = bestClosure;
         // variable naming?
-        SortedMap<Double, Closure> improvedHeads = new TreeMap<>(Comparator.reverseOrder());
+        SortedSetMultimap<Double, Closure> improvedHeads = TreeMultimap.create(Comparator.reverseOrder(), Comparator.reverseOrder());
+
         // for all possible label conditions
         for (int labelIndex : labelIndices) {
             // if head empty or it does not contain condition yet

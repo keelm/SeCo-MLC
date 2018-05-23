@@ -259,11 +259,4 @@ public class MultiHeadRule extends Rule {
         return rawRuleValue;
     }
 
-    private int log = 13;
-
-    private double logValue(double heuristic, int numberOfLabels) {
-        heuristic *= (Math.log(numberOfLabels + log - 1) / Math.log(log));
-        return heuristic;
-    }
-
 }
