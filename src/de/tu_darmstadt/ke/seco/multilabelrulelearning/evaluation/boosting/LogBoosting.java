@@ -23,7 +23,7 @@ public class LogBoosting extends BoostingStrategy {
     }
 
     @Override
-    public double evaluate(MultiHeadRule rule, int numberOfLabelsInTheHead) {
+    public double evaluate(MultiHeadRule rule, double numberOfLabelsInTheHead) {
         this.numberOfLabelsInTheHead = numberOfLabelsInTheHead;
         rawRuleValue = rule.getRawRuleValue();
         boostedRuleValue = logValue();

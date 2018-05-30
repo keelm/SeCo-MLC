@@ -6,6 +6,6 @@ public abstract class BoostingStrategy {
 
     public abstract void evaluate(MultiHeadRule rule);
 
-    public abstract double evaluate(MultiHeadRule rule, int numberOfLabelsInTheHead);
+    public abstract double evaluate(MultiHeadRule rule, double numberOfLabelsInTheHead);
 
 }

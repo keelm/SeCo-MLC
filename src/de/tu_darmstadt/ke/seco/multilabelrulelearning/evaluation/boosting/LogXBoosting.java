@@ -16,7 +16,7 @@ public class LogXBoosting extends BoostingStrategy {
      */
     private boolean useAutomaticSettings = true;
     private double maximum = 3.0;
-    private double boostAtMaximum = 1.5;
+    private double boostAtMaximum = 1.4;
 
     private double numberOfLabelsInTheHead;
 
@@ -34,7 +34,7 @@ public class LogXBoosting extends BoostingStrategy {
     }
 
     @Override
-    public double evaluate(MultiHeadRule rule, int numberOfLabelsInTheHead) {
+    public double evaluate(MultiHeadRule rule, double numberOfLabelsInTheHead) {
         this.numberOfLabelsInTheHead = numberOfLabelsInTheHead;
         rawRuleValue = rule.getRawRuleValue();
         if (useAutomaticSettings)
