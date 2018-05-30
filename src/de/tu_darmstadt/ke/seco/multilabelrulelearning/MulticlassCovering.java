@@ -12,6 +12,7 @@ import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.MultiLabelEvalu
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.MultiLabelEvaluation.MetaData;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.boosting.LogAlphaBoosting;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.boosting.LogBoosting;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.boosting.LogXBoosting;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.BoostingStrategy;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.EvaluationStrategy;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.RuleIndependentEvaluation;
@@ -385,13 +386,19 @@ public class MulticlassCovering {
     /**
      * The boosting strategy to use. Defines how much boost to apply depending on the number of labels in the head.
      */
-    public static final BoostingStrategy boostingStrategy = new LogBoosting();
+    public static final BoostingStrategy boostingStrategy = new LogXBoosting();
+
 
     /**
      * True if the boosted heuristic value is to be used for evaluating rules.
      * False otherwise, correspond to the unboosted heuristic value being used for assessing rules.
      */
     public static boolean useBoostedHeuristicForChoosingRules = false;
+
+    /**
+     * True if the quality of the label is supposed to be taken into account, false otherwise.
+     */
+    public static boolean useLabelHeuristicBoosting = true;
 
     /**
      * Variables for tracking the number of evaluations per execution of findBestHead().
@@ -494,7 +501,6 @@ public class MulticlassCovering {
             multiClosure.rule.getStats().addTrueNegatives(prevClosure.rule.getStats().getNumberOfTrueNegatives());
             multiClosure.rule.getStats().addFalseNegatives(prevClosure.rule.getStats().getNumberOfFalseNegatives());
 
-            // TODO: if same heuristic already in map, then remove and add the new one as it is larger
 
 
 

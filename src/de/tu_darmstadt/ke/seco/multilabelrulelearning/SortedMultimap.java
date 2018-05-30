@@ -2,7 +2,7 @@ package de.tu_darmstadt.ke.seco.multilabelrulelearning;
 
 import java.util.*;
 
-public class SortedMultimap<Double, V> {
+public class SortedMultimap<K, V> {
 
     private class KeyValuePair {
 
@@ -91,6 +91,15 @@ public class SortedMultimap<Double, V> {
         for (KeyValuePair keyValuePair : map)
             keys.add(keyValuePair.key);
         return keys;
+    }
+
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("[");
+        for (KeyValuePair keyValuePair : map)
+            stringBuilder.append("(" + keyValuePair.key + "," + keyValuePair.value + ")");
+        stringBuilder.append("]");
+        return stringBuilder.toString();
     }
 
 }
