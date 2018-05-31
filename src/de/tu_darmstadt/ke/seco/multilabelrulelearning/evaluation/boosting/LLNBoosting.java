@@ -3,11 +3,9 @@ package de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.boosting;
 import de.tu_darmstadt.ke.seco.models.MultiHeadRule;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.BoostingStrategy;
 
-public class LogBoosting extends BoostingStrategy {
+public class LLNBoosting extends BoostingStrategy {
 
-    private double m = 1.0; // gradient
-
-    private double log = 15.0;
+    private double l = 0.2;
 
     private double numberOfLabelsInTheHead;
 
@@ -37,12 +35,13 @@ public class LogBoosting extends BoostingStrategy {
     }
 
     private double logValue(double x) {
-        double logValue = (m * (Math.log(log - 1.0 + x)) / Math.log(log)) - (m - 1.0);
+        double logValue = 1.0 + l * Math.log(x);
         return logValue;
     }
 
     public String toString() {
-        return "LogBoosting(" + m + "|" + log + ")";
+        return "LLNBoosting(" + l + "|)";
     }
+
 
 }

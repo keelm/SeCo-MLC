@@ -3,6 +3,7 @@ package de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.boosting;
 import de.tu_darmstadt.ke.seco.models.MultiHeadRule;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.BoostingStrategy;
 
+@Deprecated
 public class LogAlphaBoosting extends BoostingStrategy {
 
     private double m = 10; // gradient

@@ -5,11 +5,13 @@ import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.Boosti
 
 public class LogXBoosting extends BoostingStrategy {
 
+    // TODO: Parameters per Constructor
+
     /**
      * Manual Settings.
      */
-    private double a = 1.0; // gradient
-    private double b = 4.2; // shifts maximum
+    private double a = 0.4605; // gradient
+    private double b = 4.2864; // shifts maximum
 
     /**
      * Automatic Settings. Sets Parameters a and b according to the maximum and the wished boost at that maximum.
@@ -27,6 +29,7 @@ public class LogXBoosting extends BoostingStrategy {
     public void evaluate(MultiHeadRule rule) {
         numberOfLabelsInTheHead = rule.getHead().size();
         rawRuleValue = rule.getRawRuleValue();
+        rule.setRawRuleValue(Math.pow(rule.getRawRuleValue(), 1.5));
         if (useAutomaticSettings)
             setParameters();
         boostedRuleValue = logValue();
@@ -71,15 +74,15 @@ public class LogXBoosting extends BoostingStrategy {
 
     private double logValue() {
         double boost = logValue(numberOfLabelsInTheHead);
-        double value = rawRuleValue * boost;
+        double value = Math.pow(rawRuleValue, 1.5) * boost;
         return value;
     }
 
     private double logValue(double x) {
-        double t = Math.pow(b / Math.exp(1), 1/3);
-        double logPart = a * (- Math.log(b) + Math.log(Math.pow(x + t - 1, 3) + 1));
-        double xPart = (x + t - 1) * Math.log(b);
-        return (logPart / xPart) + 1;
+        double t = Math.pow(b / Math.exp(1.0), 1.0/3.0);
+        double logPart = a * (- Math.log(b) + Math.log(Math.pow(x + t - 1.0, 3.0)) + 1.0);
+        double xPart = (x + t - 1.0) * Math.log(b);
+        return (logPart / xPart) + 1.0;
     }
 
     public String toString() {

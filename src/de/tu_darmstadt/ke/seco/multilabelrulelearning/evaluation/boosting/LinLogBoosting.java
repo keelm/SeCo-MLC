@@ -3,6 +3,7 @@ package de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.boosting;
 import de.tu_darmstadt.ke.seco.models.MultiHeadRule;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.BoostingStrategy;
 
+@Deprecated
 public class LinLogBoosting extends BoostingStrategy {
 
     private double u = 30; // switching point
