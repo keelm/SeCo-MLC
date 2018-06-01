@@ -23,7 +23,7 @@ public class MultiHeadRuleSet extends RuleSet<MultiHeadRule> {
             if (pred != null)
                 return pred;
         }
-
+        
         return getDefaultPrediction();
     }
 
@@ -76,6 +76,7 @@ public class MultiHeadRuleSet extends RuleSet<MultiHeadRule> {
                     numStopRules++;
                     continue; //dont count
                 }
+
                 for (Condition cond : head) {
                     if (cond.getValue() == 1.0)
                         numPredictZero++;

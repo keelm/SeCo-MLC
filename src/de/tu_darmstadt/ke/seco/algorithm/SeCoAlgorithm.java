@@ -1149,6 +1149,7 @@ public class SeCoAlgorithm implements Serializable {
 
     public MultiHeadRuleSet multiclassCoveringSeparateAndConquerMultilabel(Instances examples,
                                                                            int labelIndices[]) throws Exception {
+
         SeCoLogger.debug("entering separateAndConquerMultilabel");
         LinkedHashSet<Integer> labelIndicesAsSet = new LinkedHashSet<>(labelIndices.length);
         Arrays.stream(labelIndices).forEach(labelIndicesAsSet::add);
@@ -1307,12 +1308,43 @@ public class SeCoAlgorithm implements Serializable {
 
                 if (DEBUG_STEP_BY_STEP)
                     System.out.println(theory);
+
             } else {
                 break;
             }
+
         }
 
+        if (DEBUG_STEP_BY_STEP)
+            getHeadOccurrencePercentage(theory, originalExamples);
+
         return theory;
+    }
+
+    private void getHeadOccurrencePercentage(MultiHeadRuleSet multiHeadRuleSet, Instances instances) {
+        double numberOfInstances = 0.0;
+        boolean numberOfInstancesCountDone = false;
+        for (MultiHeadRule multiHeadRule : multiHeadRuleSet) {
+            Head head = multiHeadRule.getHead();
+            double numberOfFittingInstances = 0.0;
+            for (Instance instance : instances.getInstances()) {
+                if (!numberOfInstancesCountDone)
+                    numberOfInstances++;
+                boolean headFitsInstance = true;
+                for (Condition condition : head.getConditions()) {
+                    int attribute = condition.getAttr().index();
+                    if (attribute == -1)
+                        continue;
+                    double value = condition.getValue();
+                    if (instance.value(attribute) != value)
+                        headFitsInstance = false;
+                }
+                if (headFitsInstance)
+                    numberOfFittingInstances++;
+            }
+            System.out.println(multiHeadRule.toString() + " " + (numberOfFittingInstances / numberOfInstances));
+            numberOfInstancesCountDone = true;
+        }
     }
 
     public SingleHeadRuleSet standardSeparateAndConquerMultilabel(Instances examples, int labelIndices[]) throws
