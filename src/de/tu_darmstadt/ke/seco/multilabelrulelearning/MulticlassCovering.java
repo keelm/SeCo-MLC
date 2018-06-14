@@ -10,10 +10,7 @@ import de.tu_darmstadt.ke.seco.models.*;
 import de.tu_darmstadt.ke.seco.models.MultiHeadRule.Head;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.MultiLabelEvaluation;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.MultiLabelEvaluation.MetaData;
-import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.boosting.LogAlphaBoosting;
-import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.boosting.LogBoosting;
-import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.boosting.LogXBoosting;
-import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.boosting.RootBoosting;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.boosting.*;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.BoostingStrategy;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.EvaluationStrategy;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.RuleIndependentEvaluation;
@@ -390,8 +387,7 @@ public class MulticlassCovering {
     /**
      * The boosting strategy to use. Defines how much boost to apply depending on the number of labels in the head.
      */
-    public static final BoostingStrategy boostingStrategy = new RootBoosting();
-
+    public static final BoostingStrategy boostingStrategy = new LLNBoosting();
 
     /**
      * True if the boosted heuristic value is to be used for evaluating rules.
@@ -514,9 +510,7 @@ public class MulticlassCovering {
 
             // boost the rule
             if (useLabelHeuristicBoosting) {
-                System.out.println("n: " + n + " " + multiClosure.labelHeuristicValue);
-                System.out.println(boostingStrategy.evaluate(multiClosure.rule, multiClosure.labelHeuristicValue) + " vs " + boostingStrategy.evaluate(multiClosure.rule, n));
-                multiClosure.rule.setBoostedRuleValue(boostingStrategy.evaluate(multiClosure.rule, multiClosure.labelHeuristicValue));
+                multiClosure.rule.setBoostedRuleValue(boostingStrategy.evaluate(multiClosure.rule, bestHeadOfLessLength.size()));
             } else {
                 boostingStrategy.evaluate(multiClosure.rule);
             }
