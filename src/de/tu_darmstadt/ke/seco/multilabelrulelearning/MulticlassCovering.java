@@ -387,7 +387,7 @@ public class MulticlassCovering {
     /**
      * The boosting strategy to use. Defines how much boost to apply depending on the number of labels in the head.
      */
-    public static final BoostingStrategy boostingStrategy = new LLNBoosting();
+    public static final BoostingStrategy boostingStrategy = new MaxBoosting(3.0, 1.15, 2.0);
 
     /**
      * True if the boosted heuristic value is to be used for evaluating rules.
@@ -411,6 +411,7 @@ public class MulticlassCovering {
     private Closure findBestRelaxedHeadDecomposable(final Instances instances, final LinkedHashSet<Integer> labelIndices, final Closure closure) {
         // save all single label heads heuristic values and closures
         SortedMultimap<Double, Closure> singleLabelHeads = new SortedMultimap<>();
+        //System.out.println(closure.rule.getBody());
         // for all possible labels
         for (int labelIndex : labelIndices) {
             // for both possibilities, i.e. [red = 0] and [red = 1]
@@ -425,6 +426,7 @@ public class MulticlassCovering {
                     singleHeadRule.setHead(head);
                     Closure singleHeadClosure = new Closure(singleHeadRule, null);
                     multiLabelEvaluation.evaluate(instances, labelIndices, singleHeadClosure.rule, null);
+                    //System.out.println(singleHeadClosure);
                     // label heuristic
                     singleHeadClosure.labelHeuristicValue += singleHeadClosure.rule.getRawRuleValue();
                     this.evaluations += 1;
@@ -531,10 +533,10 @@ public class MulticlassCovering {
 
             closuresWithHeadOfLengthN.put(n, multiClosure);
         }
-
+        //System.out.println(boostedMultiLabelHeads);
         Closure bestClosure = boostedMultiLabelHeads.get(boostedMultiLabelHeads.firstKey());
-        if (bestClosure.rule.getStats().getNumberOfTruePositives() < bestClosure.rule.getStats().getNumberOfFalsePositives())
-            return null;
+        /*if (bestClosure.rule.getStats().getNumberOfTruePositives() < bestClosure.rule.getStats().getNumberOfFalsePositives())
+            return null;*/
 
         return boostedMultiLabelHeads.get(boostedMultiLabelHeads.firstKey());
     }
@@ -717,6 +719,9 @@ public class MulticlassCovering {
                 }
             }
         }
+
+        /*if (result != null && result.rule.getStats().getNumberOfTruePositives() < result.rule.getStats().getNumberOfFalsePositives())
+            return null;*/
 
         return result;
     }

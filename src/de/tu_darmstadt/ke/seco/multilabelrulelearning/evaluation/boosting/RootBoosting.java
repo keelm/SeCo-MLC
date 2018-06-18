@@ -5,7 +5,7 @@ import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.Boosti
 
 public class RootBoosting extends BoostingStrategy {
 
-    private double k = 4.1;
+    private double k = 2.3;
 
     private double numberOfLabelsInTheHead;
 

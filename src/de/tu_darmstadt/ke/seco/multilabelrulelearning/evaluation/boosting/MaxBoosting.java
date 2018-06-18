@@ -24,7 +24,7 @@ public class MaxBoosting extends BoostingStrategy {
     /**
      * Maximum number of labels a head can consist of.
      */
-    private double maxNumberOfLabels = 50.0; // TODO: set automatically
+    private double maxNumberOfLabels = 14.0; // TODO: set automatically
 
     private double numberOfLabelsInTheHead;
 

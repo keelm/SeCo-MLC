@@ -5,7 +5,7 @@ import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.Boosti
 
 public class LLNBoosting extends BoostingStrategy {
 
-    private double l = 0.26;
+    private double l = 0.6;
 
     private double numberOfLabelsInTheHead;
 

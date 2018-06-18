@@ -31,6 +31,10 @@ public class SortedMultimap<K, V> {
         if (map.isEmpty())
             map.add(keyValuePair);
         for (int i = 0; i < map.size(); i++) {
+            if (i == map.size() - 1) {
+                map.add(i, keyValuePair);
+                break;
+            }
             KeyValuePair listElement = map.get(i);
             if (keyValuePair.key >= listElement.key) {
                 map.add(i, keyValuePair);
