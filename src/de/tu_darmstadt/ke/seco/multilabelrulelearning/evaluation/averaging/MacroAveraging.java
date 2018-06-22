@@ -70,6 +70,7 @@ public class MacroAveraging extends AveragingStrategy {
 
         h = h / (double) instances.size();
         rule.setRuleValue(heuristic, h);
+        rule.setRawRuleValue(h);
         return new MacroAveragingMetaData(coveredInstances, stats, uncoveredH);
     }
 

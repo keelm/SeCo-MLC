@@ -240,7 +240,14 @@ public class MultiHeadRule extends Rule {
         return false;
     }
 
+    /**
+     * The rule value after the boost function is applied.
+     */
     private double boostedRuleValue;
+
+    /**
+     * The rule value before the boost function is applied.
+     */
     private double rawRuleValue;
 
     public void setBoostedRuleValue(double value) {

@@ -73,6 +73,7 @@ public class LabelBasedAveraging extends AveragingStrategy {
 
         h = h / (double) relevantLabels.size();
         rule.setRuleValue(heuristic, h);
+        rule.setRawRuleValue(h);
         return new LabelBasedAveragingMetaData(coveredInstances, stats, uncoveredLabelWiseStats);
     }
 

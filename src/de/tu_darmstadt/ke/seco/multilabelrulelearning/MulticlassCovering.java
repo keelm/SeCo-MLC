@@ -120,9 +120,6 @@ public class MulticlassCovering {
             return rule.toString();
         }
 
-        // TODO: wrap up properly
-        public double labelHeuristicValue = 0;
-
     }
 
     private static final boolean DEBUG_STEP_BY_STEP = true;
@@ -357,6 +354,8 @@ public class MulticlassCovering {
         Characteristic characteristic = multiLabelEvaluation.getCharacteristic();
 
         if (useRelaxedPruning) {
+            if (boostingStrategy == null)
+                boostingStrategy = new MaxBoosting(labelIndices.size(), 3.0, 1.15, 2.0);
             if (characteristic == Characteristic.DECOMPOSABLE) {
                 return findBestRelaxedHeadDecomposable(instances, labelIndices, closure);
             } else if (characteristic == Characteristic.ANTI_MONOTONOUS) {
@@ -387,18 +386,13 @@ public class MulticlassCovering {
     /**
      * The boosting strategy to use. Defines how much boost to apply depending on the number of labels in the head.
      */
-    public static final BoostingStrategy boostingStrategy = new MaxBoosting(3.0, 1.15, 2.0);
+    public static BoostingStrategy boostingStrategy;
 
     /**
      * True if the boosted heuristic value is to be used for evaluating rules.
-     * False otherwise, correspond to the unboosted heuristic value being used for assessing rules.
+     * False otherwise, corresponds to the unboosted heuristic value being used for assessing rules.
      */
     public static boolean useBoostedHeuristicForChoosingRules = true;
-
-    /**
-     * True if the quality of the label is supposed to be taken into account, false otherwise.
-     */
-    public static boolean useLabelHeuristicBoosting = false;
 
     /**
      * Variables for tracking the number of evaluations per execution of findBestHead().
@@ -408,13 +402,13 @@ public class MulticlassCovering {
     public static int evaluatedHeads = 0;
     public static double evaluationsPerHead = 0;
 
+    // TODO: add pruning!
     private Closure findBestRelaxedHeadDecomposable(final Instances instances, final LinkedHashSet<Integer> labelIndices, final Closure closure) {
         // save all single label heads heuristic values and closures
         SortedMultimap<Double, Closure> singleLabelHeads = new SortedMultimap<>();
-        //System.out.println(closure.rule.getBody());
         // for all possible labels
         for (int labelIndex : labelIndices) {
-            // for both possibilities, i.e. [red = 0] and [red = 1]
+            // for both target, i.e. [red = 0] and [red = 1] (depending on whether or not to predict zero rules)
             for (double value = predictZero ? 0 : 1; value <= 1; value++) {
                 Attribute labelAttribute = instances.attribute(labelIndex);
                 Condition labelCondition = new NominalCondition(toSeCoAttribute(labelAttribute), value);
@@ -426,9 +420,6 @@ public class MulticlassCovering {
                     singleHeadRule.setHead(head);
                     Closure singleHeadClosure = new Closure(singleHeadRule, null);
                     multiLabelEvaluation.evaluate(instances, labelIndices, singleHeadClosure.rule, null);
-                    //System.out.println(singleHeadClosure);
-                    // label heuristic
-                    singleHeadClosure.labelHeuristicValue += singleHeadClosure.rule.getRawRuleValue();
                     this.evaluations += 1;
                     singleLabelHeads.put(singleHeadClosure.rule.getRuleValue(), singleHeadClosure);
                 }
@@ -503,19 +494,11 @@ public class MulticlassCovering {
             multiClosure.rule.getStats().addTrueNegatives(prevClosure.rule.getStats().getNumberOfTrueNegatives());
             multiClosure.rule.getStats().addFalseNegatives(prevClosure.rule.getStats().getNumberOfFalseNegatives());
 
-            // label heuristic
-            multiClosure.labelHeuristicValue = prevClosure.labelHeuristicValue + bestRemainingHeuristicClosure.labelHeuristicValue;
-
             // set rule values and head
             multiClosure.rule.setHead(bestHeadOfLessLength);
             multiClosure.rule.setRawRuleValue(heuristic.evaluateRule(multiClosure.rule));
 
-            // boost the rule
-            if (useLabelHeuristicBoosting) {
-                multiClosure.rule.setBoostedRuleValue(boostingStrategy.evaluate(multiClosure.rule, bestHeadOfLessLength.size()));
-            } else {
-                boostingStrategy.evaluate(multiClosure.rule);
-            }
+            boostingStrategy.evaluate(multiClosure.rule);
 
             this.evaluations += 1;
 
@@ -535,8 +518,8 @@ public class MulticlassCovering {
         }
         //System.out.println(boostedMultiLabelHeads);
         Closure bestClosure = boostedMultiLabelHeads.get(boostedMultiLabelHeads.firstKey());
-        /*if (bestClosure.rule.getStats().getNumberOfTruePositives() < bestClosure.rule.getStats().getNumberOfFalsePositives())
-            return null;*/
+        if (bestClosure.rule.getStats().getNumberOfTruePositives() < bestClosure.rule.getStats().getNumberOfFalsePositives())
+            return null;
 
         return boostedMultiLabelHeads.get(boostedMultiLabelHeads.firstKey());
     }
@@ -623,7 +606,7 @@ public class MulticlassCovering {
                         MultiHeadRule rule = refinedClosure.rule;
                         Head head = rule.getHead();
                         int numberOfLabelsInTheHead = head.size();
-                        double nextMaxRuleValue = boostingStrategy.evaluate(rule, numberOfLabelsInTheHead+1);
+                        double nextMaxRuleValue = rule.getRawRuleValue() * boostingStrategy.getMaximumBoost(numberOfLabelsInTheHead);
                         if (result != null && nextMaxRuleValue < result.rule.getBoostedRuleValue())
                             prunedHeads.add(refinedClosure.rule.getHead());
                     }

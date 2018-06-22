@@ -52,32 +52,6 @@ public class MicroAveraging extends AveragingStrategy {
         return new MicroAveragingMetaData(coveredInstances, stats);
     }
 
-    private int log = 10;
-
-    private double logValue(double heuristic, int numberOfLabels) {
-        heuristic *= (Math.log(numberOfLabels + log - 1) / Math.log(log));
-        return heuristic;
-    }
-
-    private int times = 10;
-
-    private double logTimesValue(double heuristic, int numberOfLabels) {
-        heuristic *= (Math.log(10 * (numberOfLabels + log - 1)) / Math.log(log));
-        return heuristic;
-    }
-
-    private double quadrValue(double heuristic, int numberOfLabels) {
-        heuristic *= 1 + Math.pow((1 / ((numberOfLabels+1) / 2)), 2);
-        return heuristic;
-    }
-
-    private double a = 0.1;
-
-    private double tradeOffValue(double heuristic, int numberOfLabels) {
-        heuristic = (1 - a) * heuristic+ a * numberOfLabels;
-        return heuristic;
-    }
-
     @Override
     public final String toString() {
         return "mm";

@@ -1,6 +1,5 @@
 package de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.boosting;
 
-import de.tu_darmstadt.ke.seco.models.MultiHeadRule;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.BoostingStrategy;
 
 public class MaxBoosting extends BoostingStrategy {
@@ -11,7 +10,7 @@ public class MaxBoosting extends BoostingStrategy {
     private double maximum;
 
     /**
-     * Boost function value at the maximum.
+     * Boost function value at the maximum. Therefore boost(maximum) = boostAtMaximum.
      */
     private double boostAtMaximum;
 
@@ -21,45 +20,30 @@ public class MaxBoosting extends BoostingStrategy {
      */
     private double curvature;
 
-    /**
-     * Maximum number of labels a head can consist of.
-     */
-    private double maxNumberOfLabels = 14.0; // TODO: set automatically
-
-    private double numberOfLabelsInTheHead;
-
-    private double rawRuleValue;
-    private double boostedRuleValue;
-
-    public MaxBoosting(double maximum, double boostAtMaximum, double curvature) {
+    public MaxBoosting(int maximumNumberOfLabels, double maximum, double boostAtMaximum, double curvature) {
+        super(maximumNumberOfLabels);
         this.maximum = maximum;
         this.boostAtMaximum = boostAtMaximum;
         this.curvature = curvature;
+        evaluateForAllHeadLengths();
     }
 
     @Override
-    public void evaluate(MultiHeadRule rule) {
-        numberOfLabelsInTheHead = rule.getHead().size();
-        rawRuleValue = rule.getRawRuleValue();
-        boostedRuleValue = boost();
-        rule.setBoostedRuleValue(boostedRuleValue);
+    public double getMaximumLookaheadBoost(int headSize, int lookahead) {
+        if (maximum >= headSize && maximum <= headSize + lookahead)
+            return boostFunctionValues.get(maximum);
+        return super.getMaximumLookaheadBoost(headSize, lookahead);
     }
 
     @Override
-    public double evaluate(MultiHeadRule rule, double numberOfLabelsInTheHead) {
-        this.numberOfLabelsInTheHead = numberOfLabelsInTheHead;
-        rawRuleValue = rule.getRawRuleValue();
-        boostedRuleValue = boost();
-        return boostedRuleValue;
+    public double getMaximumBoost(int headSize) {
+        if (headSize <= maximum)
+            return boostFunctionValues.get(maximum);
+        return super.getMaximumBoost(headSize);
     }
 
-    private double boost() {
-        double boost = boost(numberOfLabelsInTheHead);
-        double value = rawRuleValue * boost;
-        return value;
-    }
-
-    private double boost(double x) {
+    @Override
+    protected double boost(double x) {
         if (x <= maximum)
             return boostBeforeMaximum(x);
         return boostAfterMaximum(x);
@@ -74,7 +58,7 @@ public class MaxBoosting extends BoostingStrategy {
 
     private double boostAfterMaximum(double x) {
         double exponent = 1.0 / curvature;
-        double normalization = (x - maxNumberOfLabels) / (maxNumberOfLabels - maximum);
+        double normalization = (x - maximumNumberOfLabels) / (maximumNumberOfLabels - maximum);
         double boost = 1.0 + Math.pow(-normalization, exponent) * (boostAtMaximum - 1.0);
         return boost;
     }
@@ -82,7 +66,5 @@ public class MaxBoosting extends BoostingStrategy {
     public String toString() {
         return "MaxBoosting(" + maximum + "|" + boostAtMaximum + " | " + curvature + ")";
     }
-
-
 
 }
