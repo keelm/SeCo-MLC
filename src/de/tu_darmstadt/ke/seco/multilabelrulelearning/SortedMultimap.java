@@ -1,15 +1,16 @@
 package de.tu_darmstadt.ke.seco.multilabelrulelearning;
 
 import java.util.*;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.MulticlassCovering.Closure;
 
-public class SortedMultimap<K, V> {
+public class SortedMultimap {
 
     private class KeyValuePair {
 
         public double key;
-        public V value;
+        public Closure value;
 
-        public KeyValuePair(double key, V value) {
+        public KeyValuePair(double key, Closure value) {
             this.key = key;
             this.value = value;
         }
@@ -22,7 +23,7 @@ public class SortedMultimap<K, V> {
 
     }
 
-    public void put(double key, V value) {
+    public void put(double key, Closure value) {
         KeyValuePair keyValuePair = new KeyValuePair(key, value);
         insertSorted(keyValuePair);
     }
@@ -36,9 +37,15 @@ public class SortedMultimap<K, V> {
                 break;
             }
             KeyValuePair listElement = map.get(i);
-            if (keyValuePair.key >= listElement.key) {
+            if (keyValuePair.key > listElement.key) {
                 map.add(i, keyValuePair);
                 break;
+            } else if (keyValuePair.key == listElement.key) {
+                int compare = keyValuePair.value.compareTo(listElement.value); // -1 if listElement better
+                if (compare == 1) { // i.e. keyValuePair is better
+                    map.add(i, keyValuePair);
+                    break;
+                }
             }
         }
     }
@@ -48,7 +55,7 @@ public class SortedMultimap<K, V> {
      * @param key
      * @param value
      */
-    public void remove(double key, V value) {
+    public void remove(double key, Closure value) {
         for (int i = 0; i < map.size(); i++) {
             KeyValuePair keyValuePair = map.get(i);
             if (keyValuePair.key == key && keyValuePair.value.equals(value)) {
@@ -63,7 +70,7 @@ public class SortedMultimap<K, V> {
      * @param key
      * @return
      */
-    public V get(double key) {
+    public Closure get(double key) {
         for (int i = 0; i < map.size(); i++) {
             KeyValuePair keyValuePair = map.get(i);
             if (keyValuePair.key == key)

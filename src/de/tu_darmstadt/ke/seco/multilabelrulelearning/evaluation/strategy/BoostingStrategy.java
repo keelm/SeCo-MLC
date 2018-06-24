@@ -27,7 +27,6 @@ public abstract class BoostingStrategy {
     protected void evaluateForAllHeadLengths() {
         for (int headLength = 1; headLength <= maximumNumberOfLabels; headLength++) {
             double boostFunctionValue = boost(headLength);
-            System.out.println(headLength + " " + boostFunctionValue);
             boostFunctionValues.put(headLength, boostFunctionValue);
         }
     }
