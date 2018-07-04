@@ -105,17 +105,22 @@ public class Main {
         final String arffFilePath = getMandatoryArgument("arff", args);
         final String xmlLabelsDefFilePath = getOptionalArgument("xml", args, arffFilePath.replace(".arff", ".xml"));
         final String testArffFilePath = getOptionalArgument("test-arff", args, null);
-        final double remainingInstancesPercentage = Double
-                .valueOf(getOptionalArgument("remainingInstancesPercentage", args, "0.05"));
-        final boolean readAllCovered = Boolean.valueOf(getOptionalArgument("readAllCovered", args, "false"));
-        final double skipThresholdPercentage = Double
-                .valueOf(getOptionalArgument("skipThresholdPercentage", args, "-1.0"));
+        final double remainingInstancesPercentage = Double.valueOf(getOptionalArgument("remainingInstancesPercentage", args, "0.05"));
+        final boolean readdAllCovered = Boolean.valueOf(getOptionalArgument("readdAllCovered", args, "false"));
+        final double skipThresholdPercentage = Double.valueOf(getOptionalArgument("skipThresholdPercentage", args, "-1.0"));
         final boolean predictZeroRules = Boolean.valueOf(getOptionalArgument("predictZeroRules", args, "false"));
         final boolean useMultilabelHeads = Boolean.valueOf(getOptionalArgument("useMultilabelHeads", args, "false"));
-        final String evaluationStrategy = getOptionalArgument("evaluationStrategy", args,
-                EvaluationStrategy.RULE_DEPENDENT);
-        final String averagingStrategy = getOptionalArgument("averagingStrategy", args,
-                AveragingStrategy.MICRO_AVERAGING);
+        final String evaluationStrategy = getOptionalArgument("evaluationStrategy", args, EvaluationStrategy.RULE_DEPENDENT);
+        final String averagingStrategy = getOptionalArgument("averagingStrategy", args, AveragingStrategy.MICRO_AVERAGING);
+        // relaxed pruning options
+        final boolean useRelaxedPruning = Boolean.valueOf((getOptionalArgument("useRelaxedPruning", args, "false")));
+        final boolean useBoostedHeuristicForRules = Boolean.valueOf(getOptionalArgument("useBoostedHeuristicForRules", args, "true"));
+        final String boostFunction = getOptionalArgument("boostFunction", args, "llm");
+        final double label = Double.valueOf(getOptionalArgument("label", args, "3.0"));
+        final double boostAtLabel = Double.valueOf(getOptionalArgument("boostAtLabel", args, "1.1"));
+        final double curvature = Double.valueOf(getOptionalArgument("curvature", args, "2.0"));
+        final int pruningDepth = Integer.valueOf(getOptionalArgument("pruningDepth", args, "-1"));
+
 
         System.out.println("Arguments:\n");
         System.out.println("-baselearner " + baseLearnerConfigPath);
@@ -123,14 +128,22 @@ public class Main {
         System.out.println("-xml " + xmlLabelsDefFilePath);
         System.out.println("-test-arff " + testArffFilePath);
         System.out.println("-remainingInstancesPercentage " + remainingInstancesPercentage);
-        System.out.println("-readAllCovered " + readAllCovered);
+        System.out.println("-readdAllCovered " + readdAllCovered);
         System.out.println("-skipThresholdPercentage " + skipThresholdPercentage);
         System.out.println("-predictZeroRules " + predictZeroRules);
         System.out.println("-useMultilabelHeads " + useMultilabelHeads);
         System.out.println("-evaluationStrategy " + evaluationStrategy);
         System.out.println("-averagingStrategy " + averagingStrategy);
+        System.out.println("-useRelaxedPruning " + useRelaxedPruning);
+        System.out.println("-useBoostedHeuristicForRules " + useBoostedHeuristicForRules);
+        System.out.println("-boostFunction " + boostFunction);
+        System.out.println("-label " + label);
+        System.out.println("-boostAtLabel " + boostAtLabel);
+        System.out.println("-curvature " + curvature);
+        System.out.println("-pruningDepth " + pruningDepth);
         System.out.println("\n");
 
+        // create csv file
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
         filename = "results/experiments/" + xmlLabelsDefFilePath.split("/")[1].split("\\.")[0] + "_" + sdf.format(new Date()) + ".csv";
         File file = new File(filename);
@@ -138,14 +151,14 @@ public class Main {
         file.createNewFile();
         fileWriter = new FileWriter(file);
 
+        // create csv writer
         csvWriter = new CSVWriter(fileWriter,
                 CSVWriter.DEFAULT_SEPARATOR,
                 CSVWriter.NO_QUOTE_CHARACTER,
                 CSVWriter.DEFAULT_ESCAPE_CHARACTER,
                 CSVWriter.DEFAULT_LINE_END);
 
-
-
+        // write settings to file
         String[] headerRecord = {"Info", "Value"};
         csvWriter.writeNext(headerRecord);
         csvWriter.writeNext(new String[]{"baselearner", baseLearnerConfigPath});
@@ -153,44 +166,39 @@ public class Main {
         csvWriter.writeNext(new String[]{"xml", xmlLabelsDefFilePath});
         csvWriter.writeNext(new String[]{"test-arff", testArffFilePath});
         csvWriter.writeNext(new String[]{"remainingInstancesPercentage", Double.toString(remainingInstancesPercentage)});
-        csvWriter.writeNext(new String[]{"readAllCovered", Boolean.toString(readAllCovered)});
+        csvWriter.writeNext(new String[]{"readdAllCovered", Boolean.toString(readdAllCovered)});
         csvWriter.writeNext(new String[]{"skipThresholdPercentage", Double.toString(skipThresholdPercentage)});
         csvWriter.writeNext(new String[]{"predictZeroRules", Boolean.toString(predictZeroRules)});
         csvWriter.writeNext(new String[]{"useMultilabelHeads" ,Boolean.toString(useMultilabelHeads)});
         csvWriter.writeNext(new String[]{"evaluationStrategy", evaluationStrategy});
         csvWriter.writeNext(new String[]{"averagingStrategy", averagingStrategy});
+        csvWriter.writeNext(new String[]{"useRelaxedPruning ", Boolean.toString(useRelaxedPruning)});
+        csvWriter.writeNext(new String[]{"useBoostedHeuristicForRules", Boolean.toString(useBoostedHeuristicForRules)});
+        csvWriter.writeNext(new String[]{"boostFunction", boostFunction});
+        csvWriter.writeNext(new String[]{"label", Double.toString(label)});
+        csvWriter.writeNext(new String[]{"boostAtLabel", Double.toString(boostAtLabel)});
+        csvWriter.writeNext(new String[]{"curvature", Double.toString(curvature)});
+        csvWriter.writeNext(new String[]{"pruningDepth", Integer.toString(pruningDepth)});
 
-
-
-
-
-        // Create training instances from dataset
+        // create training instances from dataset
         final MultiLabelInstances trainingData = new MultiLabelInstances(arffFilePath, xmlLabelsDefFilePath);
 
         System.out.println("SeCo: start experiment\n");
-
         
         SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(baseLearnerConfigPath);
         Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
-                remainingInstancesPercentage, readAllCovered, skipThresholdPercentage, predictZeroRules,
-                useMultilabelHeads, evaluationStrategy, averagingStrategy);
+                remainingInstancesPercentage, readdAllCovered, skipThresholdPercentage, predictZeroRules,
+                useMultilabelHeads, evaluationStrategy, averagingStrategy,
+                useRelaxedPruning, useBoostedHeuristicForRules, boostFunction, label, boostAtLabel, curvature, pruningDepth);
 
         // Create test instances from dataset, if available
-        final MultiLabelInstances testData =
-                testArffFilePath != null ? new MultiLabelInstances(testArffFilePath, xmlLabelsDefFilePath) : null;
+        final MultiLabelInstances testData = testArffFilePath != null ? new MultiLabelInstances(testArffFilePath, xmlLabelsDefFilePath) : null;
 
         // Learn model from training instances
         long startTime = System.currentTimeMillis();
         multilabelLearner.build(trainingData);
         long estimatedTime = System.currentTimeMillis() - startTime;
         System.out.println("building the model took secs: "+estimatedTime/1000.0);
-
-        csvWriter.writeNext(new String[]{"useRelaxedPruning", Boolean.toString(useRelaxedPruning)});
-        if (useRelaxedPruning) {
-            csvWriter.writeNext(new String[]{"boostingStrategy", boostingStrategy.toString()});
-            csvWriter.writeNext(new String[]{"useBoostedHeuristicForRules", Boolean.toString(useBoostedHeuristicForChoosingRules)});
-        }
-
 
         // Evaluate model on test instances, if available
         startTime = System.currentTimeMillis();

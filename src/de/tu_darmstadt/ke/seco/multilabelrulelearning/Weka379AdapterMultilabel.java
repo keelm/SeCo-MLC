@@ -49,7 +49,14 @@ public class Weka379AdapterMultilabel extends MultiLabelLearnerBase implements S
                                     final boolean readdAllCovered, final double skipThresholdPercentage,
                                     final boolean predictZeroRules, final boolean useMultilabelHeads,
                                     final String evaluationStrategy,
-                                    final String averagingStrategy) {
+                                    final String averagingStrategy,
+                                    final boolean useRelaxedPruning,
+                                    final boolean useBoostedHeuristicForRules,
+                                    final String boostFunction,
+                                    final double label,
+                                    final double boostAtLabel,
+                                    final double curvature,
+                                    final int pruningDepth) {
         if (seCoAlgorithm == null)
             throw new IllegalArgumentException("seCoAlgorithm must not be null.");
 
@@ -61,6 +68,14 @@ public class Weka379AdapterMultilabel extends MultiLabelLearnerBase implements S
         seCoAlgorithm.setUseMultilabelHeads(useMultilabelHeads);
         seCoAlgorithm.setEvaluationStrategy(evaluationStrategy);
         seCoAlgorithm.setAveragingStrategy(averagingStrategy);
+        seCoAlgorithm.setRelaxedPruning(useRelaxedPruning);
+        seCoAlgorithm.setBoostedHeuristicForRules(useBoostedHeuristicForRules);
+        seCoAlgorithm.setBoostFunction(boostFunction);
+        seCoAlgorithm.setLabel(label);
+        seCoAlgorithm.setBoostAtLabel(boostAtLabel);
+        seCoAlgorithm.setCurvature(curvature);
+        seCoAlgorithm.setPruningDepth(pruningDepth);
+
     }
 
     public Capabilities getCapabilities() {

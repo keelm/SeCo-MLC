@@ -22,7 +22,7 @@ import java.util.Arrays;
 
 /**
  * The seco package implements generic functionality for simple separate-and-conquer rule learning.
- * <p>
+ * <pruningDepth>
  * SingleHeadRuleSet implements the representation of a rule set.
  *
  * @author Knowledge Engineering Group

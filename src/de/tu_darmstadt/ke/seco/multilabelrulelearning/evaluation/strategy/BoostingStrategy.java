@@ -1,6 +1,9 @@
 package de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy;
 
 import de.tu_darmstadt.ke.seco.models.MultiHeadRule;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.boosting.LLNBoosting;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.boosting.MaxBoosting;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.boosting.RootBoosting;
 
 import java.util.HashMap;
 
@@ -19,6 +22,19 @@ public abstract class BoostingStrategy {
     public BoostingStrategy(int maximumNumberOfLabels) {
         this.maximumNumberOfLabels = maximumNumberOfLabels;
 
+    }
+
+    /**
+     * Creates the desired boosting strategy given parameters.
+     */
+    public static BoostingStrategy create(int maximumNumberOfLabels, String boostFunction, double label, double boostAtLabel, double curvature) {
+        if (boostFunction.equalsIgnoreCase("peak")) {
+            return new MaxBoosting(maximumNumberOfLabels, label, boostAtLabel, curvature);
+        } else if (boostFunction.equalsIgnoreCase("root")){
+            return new RootBoosting(maximumNumberOfLabels, label, boostAtLabel);
+        } else {
+            return new LLNBoosting(maximumNumberOfLabels, label, boostAtLabel);
+        }
     }
 
     /**

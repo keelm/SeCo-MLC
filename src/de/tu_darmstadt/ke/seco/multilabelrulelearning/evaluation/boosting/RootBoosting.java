@@ -15,6 +15,12 @@ public class RootBoosting extends BoostingStrategy {
         evaluateForAllHeadLengths();
     }
 
+    public RootBoosting(int maximumNumberOfLabels, double point, double boostAtPoint) {
+        super(maximumNumberOfLabels);
+        this.k = Math.log(point) / Math.log(boostAtPoint);
+        evaluateForAllHeadLengths();
+    }
+
     @Override
     protected double boost(double x) {
         return Math.pow(x, 1.0 / k);

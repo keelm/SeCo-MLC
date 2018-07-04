@@ -19,9 +19,9 @@ import de.tu_darmstadt.ke.seco.models.Rule;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 
 /**
- * The seco package implements generic functionality for simple separate-and-conquer rule learning. <p> <p> This file
+ * The seco package implements generic functionality for simple separate-and-conquer rule learning. <pruningDepth> <pruningDepth> This file
  * implements a generic class for evaluating a rule with the kloesgen-estimate. It is defined by (coverage)^omega *
- * (precision - apriori) where coverage = (tp + fp) / (P + N), precision = tp / (tp + fp) and apriori = P / (P + N). <p>
+ * (precision - apriori) where coverage = (tp + fp) / (P + N), precision = tp / (tp + fp) and apriori = P / (P + N). <pruningDepth>
  * The default value of n is 0.4323 as determined in (Janssen and F�rnkranz, Machine Learning 2010). It can be changed
  * via setProperty.
  *

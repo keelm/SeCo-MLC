@@ -82,7 +82,7 @@ public abstract class AveragingStrategy {
                     }
                 }
             } else {
-                if (labelValue == 1) {
+                if (labelValue == 1.0) {
                     confusionMatrix.addFalsePositives(instance.weight());
 
                     if (stats != null) {
@@ -97,7 +97,8 @@ public abstract class AveragingStrategy {
                 }
             }
         } else {
-            if (labelValue == 1) {
+            //Condition labelAttribute = head.getCondition(labelIndex);
+            if (labelValue == 1.0) {
                 confusionMatrix.addFalseNegatives(instance.weight());
 
                 if (stats != null) {

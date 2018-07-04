@@ -64,11 +64,11 @@ public class TopDownRefiner extends RuleRefiner {
 
     /**
      * The kind of nominal conditions that should be created. Influences the cmp setting of Class Condition and NominalCondition
-     * <p>
+     * <pruningDepth>
      * Divided into two booleans:
-     * <p>
+     * <pruningDepth>
      * m_nominalCmpModeUseEquality decides whether Equality (==) should be used or not, then Inequality is used (!=)
-     * <p>
+     * <pruningDepth>
      * m_nominalCmpModeUseBoth decides whether both Equality (==) and Inequality (!=) should be used or only one of them
      */
 

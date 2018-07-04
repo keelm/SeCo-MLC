@@ -99,7 +99,7 @@ public final class Logger {
 
 	/**
 	 * The maximum {@link LogLevel} to log.
-	 * <p>
+	 * <pruningDepth>
 	 * E.g. {@code logLevel = LogLevel.WARN} will log only {@link LogLevel#ERROR} and {@link LogLevel#WARN} messages.
 	 */
 	private LogLevel logLevel = LogLevel.ERROR;

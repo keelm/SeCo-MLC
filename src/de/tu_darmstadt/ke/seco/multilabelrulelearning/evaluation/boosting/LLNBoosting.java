@@ -15,6 +15,12 @@ public class LLNBoosting extends BoostingStrategy {
         evaluateForAllHeadLengths();
     }
 
+    public LLNBoosting(int maximumNumberOfLabels, double point, double boostAtPoint) {
+        super(maximumNumberOfLabels);
+        this.l = (boostAtPoint - 1.0) / Math.log(point);
+        evaluateForAllHeadLengths();
+    }
+
     @Override
     protected double boost(double x) {
         double logValue = 1.0 + l * Math.log(x);

@@ -30,6 +30,7 @@ import de.tu_darmstadt.ke.seco.multilabelrulelearning.MulticlassCovering;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.SparseInstanceWrapper;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.MultiLabelEvaluation;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.averaging.AveragingStrategy;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.BoostingStrategy;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.EvaluationStrategy;
 import de.tu_darmstadt.ke.seco.stats.RuleStats;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
@@ -72,13 +73,13 @@ public class SeCoAlgorithm implements Serializable {
     private double growingSetSize = 1;
 
     /**
-     * The minimum number of examples a rule has to cover <p> TODO by m.zopf: should very likely be placed in another
+     * The minimum number of examples a rule has to cover <pruningDepth> TODO by m.zopf: should very likely be placed in another
      * class (maybe in the RuleFilter)
      */
     private int minNo = 1;
 
     /**
-     * used for stratifying the folds of a cross validation in a random way <p> TODO by m.zopf: should be the only
+     * used for stratifying the folds of a cross validation in a random way <pruningDepth> TODO by m.zopf: should be the only
      * source for randomness
      */
     private Random random = null;
@@ -99,6 +100,7 @@ public class SeCoAlgorithm implements Serializable {
     private RuleStoppingCriterion ruleStoppingCriterion;
     private StoppingCriterion stoppingCriterion;
     private WeightModel weightModel;
+
 
     public SeCoAlgorithm(String name) {
         this.name = name;
@@ -1199,9 +1201,9 @@ public class SeCoAlgorithm implements Serializable {
 
             EvaluationStrategy evaluationStrategy = EvaluationStrategy.create(getEvaluationStrategy());
             AveragingStrategy averagingStrategy = AveragingStrategy.create(getAveragingStrategy());
-            MultiLabelEvaluation multiLabelEvaluation = new MultiLabelEvaluation(getHeuristic(), evaluationStrategy,
-                    averagingStrategy);
-            MulticlassCovering multiclassCovering = new MulticlassCovering(multiLabelEvaluation, isPredictZero());
+            MultiLabelEvaluation multiLabelEvaluation = new MultiLabelEvaluation(getHeuristic(), evaluationStrategy, averagingStrategy);
+            BoostingStrategy boostingStrategy = BoostingStrategy.create(labelIndices.length, boostFunction, label, boostAtLabel, curvature);
+            MulticlassCovering multiclassCovering = new MulticlassCovering(multiLabelEvaluation, isPredictZero(), boostingStrategy, useRelaxedPruning, useBoostedHeuristicForRules, pruningDepth);
 
             try {
                 int beamWidth = Integer.valueOf(getBeamWidth());
@@ -1687,6 +1689,42 @@ public class SeCoAlgorithm implements Serializable {
         }
 
         return result;
+    }
+
+    private boolean useRelaxedPruning;
+    private boolean useBoostedHeuristicForRules;
+    private String boostFunction;
+    private double label;
+    private double boostAtLabel;
+    private double curvature;
+    private int pruningDepth;
+
+    public void setRelaxedPruning(boolean useRelaxedPruning) {
+        this.useRelaxedPruning = useRelaxedPruning;
+    }
+
+    public void setBoostedHeuristicForRules(boolean useBoostedHeuristicForRules) {
+        this.useBoostedHeuristicForRules = useBoostedHeuristicForRules;
+    }
+
+    public void setBoostFunction(String boostFunction) {
+       this.boostFunction = boostFunction;
+    }
+
+    public void setLabel(double label) {
+        this.label = label;
+    }
+
+    public void setBoostAtLabel(double boostAtLabel) {
+        this.boostAtLabel = boostAtLabel;
+    }
+
+    public void setCurvature(double curvature) {
+        this.curvature = curvature;
+    }
+
+    public void setPruningDepth(int pruningDepth) {
+        this.pruningDepth = pruningDepth;
     }
 
 }

@@ -24,7 +24,7 @@ import java.util.Iterator;
 
 /**
  * The seco package implements generic functionality for simple separate-and-conquer rule learning.
- * <p>
+ * <pruningDepth>
  * RuleSet implements the representation of a rule set.
  *
  * @author Knowledge Engineering Group

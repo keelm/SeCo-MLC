@@ -19,11 +19,11 @@ import de.tu_darmstadt.ke.seco.models.Rule;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 
 /**
- * The seco package implements generic functionality for simple separate-and-conquer rule learning. <p> <p> Linear Costs
- * implements a class for evaluating a rule with a linear cost function (c*tp - (1-c)*fp), where 0 <= c <= 1. <p> <p> c
+ * The seco package implements generic functionality for simple separate-and-conquer rule learning. <pruningDepth> <pruningDepth> Linear Costs
+ * implements a class for evaluating a rule with a linear cost function (c*tp - (1-c)*fp), where 0 <= c <= 1. <pruningDepth> <pruningDepth> c
  * = 1 means that only covering positives counts, c = 0 means that only excluding negatives counts, values in between
  * trade off between these two extremes. The default value of c is 0.437, which has been derived empirically in (Janssen
- * and F�rnkranz, Machine Learning 2010). <p> <p> The parameter can be canged via setProperty.
+ * and F�rnkranz, Machine Learning 2010). <pruningDepth> <pruningDepth> The parameter can be canged via setProperty.
  *
  * @author Knowledge Engineering Group
  * @version $Revision: 354 $

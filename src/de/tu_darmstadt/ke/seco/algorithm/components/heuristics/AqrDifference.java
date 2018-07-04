@@ -18,10 +18,10 @@ import de.tu_darmstadt.ke.seco.models.Rule;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 
 /**
- * The seco package implements generic functionality for simple separate-and-conquer rule learning. <p> This file
+ * The seco package implements generic functionality for simple separate-and-conquer rule learning. <pruningDepth> This file
  * implements a generic class for evaluating a rule with the difference between the covered positive and negative
- * examples, i.e., tp - fp. <p> <p> Note, however, that for rules with the same example distribution (tp + fn) and (fp +
- * tn) are constant), this is eqivalent to accuracy, but presumbably somewhat faster. <p> It is a spezial version for
+ * examples, i.e., tp - fp. <pruningDepth> <pruningDepth> Note, however, that for rules with the same example distribution (tp + fn) and (fp +
+ * tn) are constant), this is eqivalent to accuracy, but presumbably somewhat faster. <pruningDepth> It is a spezial version for
  * AQR
  *
  * @author Knowledge Engineering Group

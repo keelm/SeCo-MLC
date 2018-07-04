@@ -53,7 +53,7 @@ public class SeCoAlgorithmConfiguration implements Serializable {
 
     /**
      * The minimum number of examples a rule has to cover
-     * <p>
+     * <pruningDepth>
      * TODO by m.zopf: should very likely be placed in another class (maybe in the RuleFilter)
      */
     private int minNo = 1;

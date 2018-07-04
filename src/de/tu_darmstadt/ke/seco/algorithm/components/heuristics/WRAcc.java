@@ -18,10 +18,10 @@ import de.tu_darmstadt.ke.seco.models.Rule;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 
 /**
- * The seco package implements generic functionality for simple separate-and-conquer rule learning. <p> <p> This file
+ * The seco package implements generic functionality for simple separate-and-conquer rule learning. <pruningDepth> <pruningDepth> This file
  * implements a generic class for evaluating a rule with weighted relative accuracy. weighted relative accuracy is
- * (tp+fp)/total (tp/(tp+fp) - prior) where total is tp+fp+fn+tn and prior is the prior probability (tp+fn)/total. <p>
- * <p> You may also want to consider the equivalent but faster RateDiff. For more details on the the equivalences
+ * (tp+fp)/total (tp/(tp+fp) - prior) where total is tp+fp+fn+tn and prior is the prior probability (tp+fn)/total. <pruningDepth>
+ * <pruningDepth> You may also want to consider the equivalent but faster RateDiff. For more details on the the equivalences
  * between search heuristics see (F�rnkranz & Flach, ICML-03).
  *
  * @author Knowledge Engineering Group
