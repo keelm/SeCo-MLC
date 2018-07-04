@@ -23,7 +23,7 @@ import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.RuleDe
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 
 /**
- * The seco package implements generic functionality for simple separate-and-conquer rule learning. <pruningDepth> <pruningDepth> This file
+ * The seco package implements generic functionality for simple separate-and-conquer rule learning. <p> <p> This file
  * implements a generic class for evaluating a rule with the F-Measure. The F-Measure origins from the Information
  * Retrieval community and is defined by (beta^2+1)*precision*recall / (beta^2)*precision+recall where precision = tp /
  * (tp + fp) and recal = tp / P. In (Janssen and F�rnkranz, Machine Learning 2010) an optimal parameter setting for beta

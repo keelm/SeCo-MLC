@@ -21,7 +21,7 @@ import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
  * The heuristic Linear Regression is the product of a linear regression algorithm that was trained on a meta data set
  * where the goal was to predict the true precision of a candidate rule, i.e., not the regular precision computed on the
  * training set but a more realistic one computed on a hold-out validation set. The statistics of the rule that were
- * used in this research were log (tp+1), log (fp+1), log (P+1), log (N+1), tp/P, fp/N, P/(P+N) and tp/(tp+fp) <pruningDepth> For
+ * used in this research were log (tp+1), log (fp+1), log (P+1), log (N+1), tp/P, fp/N, P/(P+N) and tp/(tp+fp) <p> For
  * more information see (Janssen and F�rnkranz, Machine Learning 2010).
  *
  * @author Frederik Janssen 6.5.2008

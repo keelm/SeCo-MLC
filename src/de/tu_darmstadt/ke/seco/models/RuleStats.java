@@ -22,10 +22,10 @@ import weka.core.UnassignedDatasetException;
 
 /**
  * This class implements the statistics functions used in the propositional rule learner, from the simpler ones like count of true/false positive/negatives, filter data based on the ruleset, etc. to the more sophisticated ones such as MDL calculation and rule variants generation for each rule in the ruleset.
- * <pruningDepth>
- * <pruningDepth>
+ * <p>
+ * <p>
  * Obviously the statistics functions listed above need the specific data and the specific ruleset, which are given in order to instantiate an object of this class.
- * <pruningDepth>
+ * <p>
  *
  * @author Xin Xu (xx5@cs.waikato.ac.nz)
  * @version $Revision: 4608 $
@@ -392,8 +392,8 @@ public class RuleStats implements Serializable {
 
     /**
      * Subset description length: <br>
-     * S(t,k,pruningDepth) = -k*log2(pruningDepth)-(n-k)log2(1-pruningDepth)
-     * <pruningDepth>
+     * S(t,k,p) = -k*log2(p)-(n-k)log2(1-p)
+     * <p>
      * Details see Quilan: "MDL and categorical theories (Continued)",ML95
      *
      * @param t the number of elements in a known set
@@ -410,9 +410,9 @@ public class RuleStats implements Serializable {
     /**
      * The description length of the theory for a given rule. Computed as:<br>
      * 0.5* [||k||+ S(t, k, k/t)]<br>
-     * where k is the number of antecedents of the rule; t is the total possible antecedents that could appear in a rule; ||K|| is the universal prior for k , log2*(k) and S(t,k,pruningDepth) = -k*log2(pruningDepth)-(n-k)log2(1-pruningDepth) is the subset encoding length.
-     * <pruningDepth>
-     * <pruningDepth>
+     * where k is the number of antecedents of the rule; t is the total possible antecedents that could appear in a rule; ||K|| is the universal prior for k , log2*(k) and S(t,k,p) = -k*log2(p)-(n-k)log2(1-p) is the subset encoding length.
+     * <p>
+     * <p>
      * Details see Quilan: "MDL and categorical theories (Continued)",ML95
      *
      * @param index the index of the given rule (assuming correct)
@@ -438,9 +438,9 @@ public class RuleStats implements Serializable {
 
     /**
      * The description length of data given the parameters of the data based on the ruleset.
-     * <pruningDepth>
+     * <p>
      * Details see Quinlan: "MDL and categorical theories (Continued)",ML95
-     * <pruningDepth>
+     * <p>
      *
      * @param expFPOverErr expected FP/(FP+FN)
      * @param cover        coverage
@@ -472,10 +472,10 @@ public class RuleStats implements Serializable {
 
     /**
      * Calculate the potential to decrease DL of the ruleset, i.e. the possible DL that could be decreased by deleting the rule whose index and simple statstics are given. If there's no potentials (i.e. smOrEq 0 && error rate < 0.5), it returns NaN.
-     * <pruningDepth>
-     * <pruningDepth>
+     * <p>
+     * <p>
      * The way this procedure does is copied from original RIPPER implementation and is quite bizzare because it does not update the following rules' stats recursively any more when testing each rule, which means it assumes after deletion no data covered by the following rules (or regards the deleted rule as the last rule). Reasonable assumption?
-     * <pruningDepth>
+     * <p>
      *
      * @param index        the index of the rule in m_Ruleset to be deleted
      * @param expFPOverErr expected FP/(FP+FN)
@@ -632,7 +632,7 @@ public class RuleStats implements Serializable {
      * The description length (DL) of the ruleset relative to if the rule in the given position is deleted, which is obtained by: <br>
      * MDL if the rule exists - MDL if the rule does not exist <br>
      * Note the minimal possible DL of the ruleset is calculated(i.e. some other rules may also be deleted) instead of the DL of the current ruleset.
-     * <pruningDepth>
+     * <p>
      *
      * @param index     the given position of the rule in question (assuming correct)
      * @param expFPRate expected FP/(FP+FN), used in dataDL calculation

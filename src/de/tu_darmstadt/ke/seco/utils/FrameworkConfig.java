@@ -10,9 +10,9 @@ import org.w3c.dom.NodeList;
 
 /**
  * The configuration for the entire framework is accessed by this class.
- * <pruningDepth>
+ * <p>
  * The {@link FrameworkConfig} reads a XML file to access the desired configuration of the user. Once the class is initialized the configuration can be accessed by {@link FrameworkConfig#getConfiguration(String, String, Class)}.
- * <pruningDepth>
+ * <p>
  * 
  * @author Markus Zopf
  * 

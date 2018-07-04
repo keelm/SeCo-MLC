@@ -18,7 +18,7 @@ import de.tu_darmstadt.ke.seco.models.Rule;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 
 /**
- * The seco package implements generic functionality for simple separate-and-conquer rule learning. <pruningDepth> This file
+ * The seco package implements generic functionality for simple separate-and-conquer rule learning. <p> This file
  * implements a generic class for evaluating a rule with Foil's information gain, i.e. tp*(log2(tp/(tp+fp)) -
  * log2(tp'/(tp'+fp'))) where tp' and fp' are the true and false positives of the parent rule.
  *

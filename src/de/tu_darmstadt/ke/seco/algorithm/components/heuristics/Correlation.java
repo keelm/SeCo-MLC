@@ -18,7 +18,7 @@ import de.tu_darmstadt.ke.seco.models.Rule;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 
 /**
- * The seco package implements generic functionality for simple separate-and-conquer rule learning. <pruningDepth> This file
+ * The seco package implements generic functionality for simple separate-and-conquer rule learning. <p> This file
  * implements a generic class for evaluating a rule with the Correlation-estimate, i.e. tp*tn -
  * fp*fn/sqrt(Pos*Neg*Covered*Uncovered)
  *

@@ -185,7 +185,7 @@ public class MultiHeadRule extends Rule {
     }
 
     /**
-     * print out a candidate rule with coverage statistics and the heuristic value <pruningDepth> `@return a printable
+     * print out a candidate rule with coverage statistics and the heuristic value <p> `@return a printable
      * representation of the rule
      */
     @Override

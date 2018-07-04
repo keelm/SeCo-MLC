@@ -29,7 +29,7 @@ import java.util.Iterator;
 
 /**
  * CandidateRule is a subclass of Rule for candidate rules. A candidate rule contains additional information like - a slot for storing the result of the rule - the history of the rule (a pointer back to the predecessor)
- * <pruningDepth>
+ * <p>
  * Parts of it is based on code for JRip and for Prism.
  *
  * @author Xin Xu
@@ -83,14 +83,14 @@ public abstract class Rule implements Comparable<Rule>, Cloneable, Iterable<Cond
 
     /**
      * @return a shallow copy of the candidate rule
-     * <pruningDepth>
+     * <p>
      * The copy does not copy the conditions, while the clone does.
      */
     public abstract Object copy();
 
     /**
      * print out a candidate rule with coverage statistics and the heuristic value
-     * <pruningDepth>
+     * <p>
      * `@return a printable representation of the rule
      */
     @Override
@@ -144,7 +144,7 @@ public abstract class Rule implements Comparable<Rule>, Cloneable, Iterable<Cond
 
     /**
      * @return a deep copy of the candidate rule
-     * <pruningDepth>
+     * <p>
      * the clone contains also contains fresh copies of the conditions and the coverage stats.
      */
     @Override

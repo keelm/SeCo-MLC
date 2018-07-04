@@ -18,7 +18,7 @@ import de.tu_darmstadt.ke.seco.models.Rule;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 
 /**
- * (pruningDepth + n) / (P + N) * (pruningDepth / (pruningDepth + n) - P / (P + N))
+ * (p + n) / (P + N) * (p / (p + n) - P / (P + N))
  */
 public class WeightedRelativeAccuracy extends ValueHeuristic {
 

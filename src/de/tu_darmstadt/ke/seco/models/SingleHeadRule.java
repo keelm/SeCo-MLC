@@ -26,7 +26,7 @@ import java.util.Enumeration;
 
 /**
  * CandidateRule is a subclass of Rule for candidate rules. A candidate rule contains additional information like - a slot for storing the result of the rule - the history of the rule (a pointer back to the predecessor)
- * <pruningDepth>
+ * <p>
  * Parts of it is based on code for JRip and for Prism.
  *
  * @author Xin Xu
@@ -119,7 +119,7 @@ public class SingleHeadRule extends Rule {
 
 	/**
 	 * print out a candidate rule with coverage statistics and the heuristic value
-	 * <pruningDepth>
+	 * <p>
 	 * `@return a printable representation of the rule
 	 */
 	@Override

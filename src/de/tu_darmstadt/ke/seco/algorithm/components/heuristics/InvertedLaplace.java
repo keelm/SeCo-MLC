@@ -19,7 +19,7 @@ import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 
 /**
  * The seco package implements generic functionality for simple separate-and-conquer rule learning.
- * <pruningDepth>
+ * <p>
  * This file provides evaluation for evaluating a rule with precision, i.e. tp/(tp+fp)
  *
  * @author Knowledge Engineering Group

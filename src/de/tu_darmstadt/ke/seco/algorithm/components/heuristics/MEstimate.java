@@ -19,10 +19,10 @@ import de.tu_darmstadt.ke.seco.models.Rule;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 
 /**
- * The seco package implements generic functionality for simple separate-and-conquer rule learning. <pruningDepth> <pruningDepth> This file
+ * The seco package implements generic functionality for simple separate-and-conquer rule learning. <p> <p> This file
  * implements a generic class for evaluating a rule with the m-estimate, i.e. (tp+m*prior)/(tp+fp+m). The prior
  * probability is (tp + fn) / (tp + fp + fn +tn). If you don't want to recompute this every time around, better use the
- * GeneralizedM. <pruningDepth> <pruningDepth> The default value of m is 22.466 as determined in (Janssen and F�rnkranz, 2010). It can be
+ * GeneralizedM. <p> <p> The default value of m is 22.466 as determined in (Janssen and F�rnkranz, 2010). It can be
  * canged via setProperty.
  *
  * @author Knowledge Engineering Group

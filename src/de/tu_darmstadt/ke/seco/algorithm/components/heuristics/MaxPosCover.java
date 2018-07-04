@@ -18,9 +18,9 @@ import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 
 /**
  * The seco package implements generic functionality for simple separate-and-conquer rule learning.
- * <pruningDepth>
+ * <p>
  * This file implements a generic class for evaluating a rule with the number of covered positive examples
- * <pruningDepth>
+ * <p>
  * This is outsourced to support other than the standard heuristics for AQR
  *
  * @author Knowledge Engineering Group

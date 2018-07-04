@@ -58,7 +58,7 @@ public class LikelihoodRatio extends StoppingCriterion implements Serializable {
         final double en = (p + n) * (N / (P + N));
         final double lrs = evalLikelihoodRatioStatistic(p, n, ep, en);
         // m_log.trace("Likelihoodratio
-        // LRS("+pruningDepth+","+n+","+P+","+N+","+ep+","+en+") = "+lrs+" for rule
+        // LRS("+p+","+n+","+P+","+N+","+ep+","+en+") = "+lrs+" for rule
         // "+refinement);
         final boolean result = (lrs <= mapThreshold(m_threshold));
         if (result) {

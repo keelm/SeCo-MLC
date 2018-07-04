@@ -18,9 +18,9 @@ import de.tu_darmstadt.ke.seco.models.Rule;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 
 /**
- * The seco package implements generic functionality for simple separate-and-conquer rule learning. <pruningDepth> <pruningDepth> This file
+ * The seco package implements generic functionality for simple separate-and-conquer rule learning. <p> <p> This file
  * implements a generic class for evaluating a rule with accuracy. The accuracy of a single rule is (tp + tn) / (tp + fp
- * + fn + tn). <pruningDepth> <pruningDepth> You may also want to consider the equivalent but faster Difference. For more details on the the
+ * + fn + tn). <p> <p> You may also want to consider the equivalent but faster Difference. For more details on the the
  * equivalences between search heuristics see (F�rnkranz & Flach, ICML-03).
  *
  * @author Knowledge Engineering Group

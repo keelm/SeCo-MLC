@@ -18,11 +18,11 @@ import de.tu_darmstadt.ke.seco.models.Rule;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 
 /**
- * The seco package implements generic functionality for simple separate-and-conquer rule learning. <pruningDepth> <pruningDepth> This file
+ * The seco package implements generic functionality for simple separate-and-conquer rule learning. <p> <p> This file
  * implements a generic class for evaluating a rule with the relative cost measure. This is an extension to the linear
  * cost where the covered positive and negative examples are normalized by the total numbers of them. Thus it can be
- * viewed like a parametrized weighted relative accuracy heuristic. <pruningDepth> It is computed by (c*tp/P - (1-c)*fp/N) where 0
- * <= c <= 1. <pruningDepth> The default value of c is 0.342, which has been derived empirically in (Janssen and F�rnkranz, Machine
+ * viewed like a parametrized weighted relative accuracy heuristic. <p> It is computed by (c*tp/P - (1-c)*fp/N) where 0
+ * <= c <= 1. <p> The default value of c is 0.342, which has been derived empirically in (Janssen and F�rnkranz, Machine
  * Learning 2010).
  *
  * @author Knowledge Engineering Group
