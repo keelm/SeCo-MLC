@@ -126,7 +126,7 @@ public class MultiHeadRuleSet extends RuleSet<MultiHeadRule> {
             stringBuilder.append("\n%multiHeadRules..................: " + numMultiHeadRules / (double) correctedNumRules);
             stringBuilder.append("\naverage #labels..................: " + totalLabels / (double) correctedNumRules);
             stringBuilder.append("\naverage #labels per multiHeadRule: " + (numMultiHeadRules == 0 ? 0 : totalLabelsMultiHeadRules / (double) numMultiHeadRules));
-            if (MulticlassCovering.finished && !csvWritten) {
+            if (MulticlassCovering.finished && !csvWritten && csvWriter != null) {
                 csvWritten = true;
                 csvWriter.writeNext(new String[]{"number of rules", Integer.toString(correctedNumRules)});
                 csvWriter.writeNext(new String[]{"referred attributes", Integer.toString(referredAttributes())});

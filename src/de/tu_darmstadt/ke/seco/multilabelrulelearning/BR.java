@@ -1,10 +1,13 @@
 package de.tu_darmstadt.ke.seco.multilabelrulelearning;
 
+import de.tu_darmstadt.ke.seco.algorithm.SeCoAlgorithm;
 import mulan.classifier.MultiLabelLearner;
 import mulan.classifier.transformation.BinaryRelevance;
 import mulan.data.MultiLabelInstances;
 import mulan.evaluation.Evaluation;
 import mulan.evaluation.Evaluator;
+import mulan.evaluation.MultipleEvaluation;
+import mulan.examples.CrossValidationExperiment;
 import weka.classifiers.rules.JRip;
 
 public class BR {
@@ -25,7 +28,8 @@ public class BR {
         System.out.println(multiLabelLearner);
 
         Evaluator evaluator = new Evaluator();
-        Evaluation results = evaluator.evaluate(multiLabelLearner, testInstances, trainInstances);
+
+        MultipleEvaluation results = evaluator.crossValidate(multiLabelLearner, trainInstances, 10);
         System.out.println(results);
 
     }

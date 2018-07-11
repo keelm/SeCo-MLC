@@ -1149,6 +1149,182 @@ public class SeCoAlgorithm implements Serializable {
         }
     }
 
+    /**
+     * This algorithm initially sets all label to be irrelevant and then tries to correct these predictions.
+     * @param examples The training data.
+     * @param labelIndices The indices of the class labels.
+     */
+    public MultiHeadRuleSet correctPredictionsSeparateAndConquerMultilabel(Instances examples, int labelIndices[]) throws Exception {
+        SeCoLogger.debug("entering separateAndConquerMultilabel");
+        LinkedHashSet<Integer> labelIndicesAsSet = new LinkedHashSet<>(labelIndices.length);
+        Arrays.stream(labelIndices).forEach(labelIndicesAsSet::add);
+        Instances originalExamples = examples; // newExamples used only in postprocessor
+        examples = new Instances(originalExamples, originalExamples.numInstances()); //so that I can do what I want on this
+        ArrayList<Instance> examplesReferences = null; // only used for debugging
+
+        System.out.println("BLUB " + examples.size());
+
+        if (DEBUG_STEP_BY_STEP)
+            examplesReferences = new ArrayList<>();
+
+        for (int i = 0; i < originalExamples.size(); i++) {
+            Instance inst = originalExamples.get(i);
+            Instance wrappedInstance;
+
+            if (inst instanceof SparseInstance) {
+                wrappedInstance = new SparseInstanceWrapper(inst, labelIndices);
+            } else {
+                wrappedInstance = new DenseInstanceWrapper(inst, labelIndices);
+            }
+
+            examples.addDirectly(wrappedInstance); //now secured
+
+            if (DEBUG_STEP_BY_STEP)
+                examplesReferences.add(wrappedInstance);
+        }
+
+        MultiHeadRule r;
+        MultiHeadRule bestRuleOfMulti;
+        MultiHeadRuleSet theory = new MultiHeadRuleSet();
+        theory.setLabelIndices(labelIndices); //so that tostring prints out mlc statistics
+        int trainingDataSize = examples.getInstances().size();
+
+        Set<Integer> predictedLabelIndices = new HashSet<>();
+
+        // Continue until a certain percentage of the training data is covered
+        outerloop:
+        while (examples.getInstances().size() > trainingDataSize * noNeedForClassification) {
+            bestRuleOfMulti = null;
+
+            if (DEBUG_STEP_BY_STEP) {
+                System.out.println("########remaining training set (" + examples.size() + ")");
+                if (DEBUG_STEP_BY_STEP_V) for (Instance inst : examples) System.out.println(inst);
+                else System.out.println(examples.size());
+                System.out.println("########candidate rules");
+            }
+
+            EvaluationStrategy evaluationStrategy = EvaluationStrategy.create(getEvaluationStrategy());
+            AveragingStrategy averagingStrategy = AveragingStrategy.create(getAveragingStrategy());
+            MultiLabelEvaluation multiLabelEvaluation = new MultiLabelEvaluation(getHeuristic(), evaluationStrategy, averagingStrategy);
+            BoostingStrategy boostingStrategy = BoostingStrategy.create(labelIndices.length, boostFunction, label, boostAtLabel, curvature);
+            MulticlassCovering multiclassCovering = new MulticlassCovering(multiLabelEvaluation, isPredictZero(), boostingStrategy, useRelaxedPruning, useBoostedHeuristicForRules, pruningDepth);
+
+            try {
+                int beamWidth = Integer.valueOf(getBeamWidth());
+                bestRuleOfMulti = multiclassCovering.findBestGlobalRule(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth);
+            } catch (NumberFormatException e) {
+                float beamWidthPercentage = Float.valueOf(getBeamWidth());
+                bestRuleOfMulti = multiclassCovering.findBestGlobalRule(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage);
+            }
+
+            if (bestRuleOfMulti != null) {
+                ArrayList<Instance> coveredInstances = bestRuleOfMulti.coveredInstances(examples);
+                ArrayList<Instance> coveredButLabelsNotFullyCoveredInstances = new ArrayList<Instance>();
+                examples = bestRuleOfMulti.uncoveredInstances(examples); //maintain these in any case
+
+                if (DEBUG_STEP_BY_STEP) {
+                    System.out.println("########uncovered by rule (" + examples.size() + ")");
+                    if (DEBUG_STEP_BY_STEP_V) for (Instance inst : examples) System.out.println(inst);
+                    else System.out.println(examples.size());
+                }
+
+                Head head = bestRuleOfMulti.getHead();
+
+                for (Instance covered : coveredInstances) {
+                    for (Map.Entry<Integer, Condition> entry : head.entries()) {
+                        int labelIndex = entry.getKey();
+                        predictedLabelIndices.add(labelIndex);
+
+                        if (Utils.isMissingValue(covered.value(labelIndex))) {
+                            covered.setValue(labelIndex, entry.getValue().getValue());
+                        }
+                    }
+
+                    if (predictZero) {
+                        int uncoveredLabels = getUncoveredLabels(covered, labelIndices);
+
+                        if (uncoveredLabels > 0) {
+                            coveredButLabelsNotFullyCoveredInstances.add(covered);
+                        }
+                    } else {
+                        int uncoveredPosLabels = getUncoveredPosLabels(covered, labelIndices);
+
+                        if (uncoveredPosLabels > 0) {
+                            // there are still label attributes to fill up, so continue
+                            coveredButLabelsNotFullyCoveredInstances.add(covered);
+                        }
+                    }
+                }
+
+                theory.addRule(bestRuleOfMulti);
+
+                if (DEBUG_STEP_BY_STEP) {
+                    System.out.println(
+                            "########covered by rule (and predicted written) (" + coveredInstances.size() + ")");
+                    if (DEBUG_STEP_BY_STEP_V) for (Instance inst : coveredInstances) System.out.println(inst);
+                    else System.out.println(coveredInstances.size());
+                    System.out.println(
+                            "########readdition candidates (" + coveredButLabelsNotFullyCoveredInstances.size() + ")");
+                    if (DEBUG_STEP_BY_STEP_V)
+                        for (Instance inst : coveredButLabelsNotFullyCoveredInstances) System.out.println(inst);
+                    else System.out.println(coveredButLabelsNotFullyCoveredInstances.size());
+                }
+
+                if (useSkippingRules) {
+                    if (DEBUG_STEP_BY_STEP)
+                        System.out.println(
+                                coveredButLabelsNotFullyCoveredInstances.size() + " " + coveredInstances.size() + " " +
+                                        (double) coveredButLabelsNotFullyCoveredInstances.size() /
+                                                (double) coveredInstances.size() + " " +
+                                        ((double) coveredButLabelsNotFullyCoveredInstances.size() /
+                                                (double) coveredInstances.size() > skipThresholdPercentage));
+                    if ((double) coveredButLabelsNotFullyCoveredInstances.size() / (double) coveredInstances.size() >
+                            skipThresholdPercentage) {
+                        //most covered examples were not fully label-covered
+                        if (!readdAllCovered) {
+                            for (int i = 0; i < coveredButLabelsNotFullyCoveredInstances.size(); i++) {
+                                examples.addDirectly(coveredButLabelsNotFullyCoveredInstances
+                                        .get(i)); //covered but labels not fully covered
+                            }
+                        } else {
+                            for (int i = 0; i < coveredInstances.size(); i++) {
+                                examples.addDirectly(
+                                        coveredInstances.get(i)); //covered, labels fully and not fully covered
+                            }
+                        }
+                    } else {
+                        //dont add examples and add a special rule (since most covered examples were fully label-covered)
+                        MultiHeadRule skipRule = new MultiHeadRule(null);
+                        Head skipHead = new Head();
+                        skipHead.addCondition(new NominalCondition(new Attribute("magicSkipHead"), 0));
+                        skipRule.setHead(skipHead);
+                        skipRule.setStats(new TwoClassConfusionMatrix(
+                                coveredInstances.size() - coveredButLabelsNotFullyCoveredInstances.size(), 0,
+                                coveredButLabelsNotFullyCoveredInstances.size(), 0));
+                        theory.addRule(skipRule);
+                    }
+                } else {
+                    // Re-add instances to training set for next iteration
+                    for (int i = 0; i < coveredButLabelsNotFullyCoveredInstances.size(); i++) {
+                        examples.addDirectly(coveredButLabelsNotFullyCoveredInstances.get(i));
+                    }
+                }
+
+                if (DEBUG_STEP_BY_STEP)
+                    System.out.println(theory);
+
+            } else {
+                break;
+            }
+
+        }
+
+        if (DEBUG_STEP_BY_STEP)
+            getHeadOccurrencePercentage(theory, originalExamples);
+
+        return theory;
+    }
+
     public MultiHeadRuleSet multiclassCoveringSeparateAndConquerMultilabel(Instances examples,
                                                                            int labelIndices[]) throws Exception {
 

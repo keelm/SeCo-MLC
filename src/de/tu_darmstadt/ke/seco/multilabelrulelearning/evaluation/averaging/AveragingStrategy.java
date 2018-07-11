@@ -60,6 +60,33 @@ public abstract class AveragingStrategy {
         return true;
     }
 
+    final void aggregateCorrect(final boolean covers, final Head head, final Instance instance, final int labelIndex,
+                         final TwoClassConfusionMatrix confusionMatrix, final TwoClassConfusionMatrix stats) {
+        double trueLabelValue = getLabelValue(instance, labelIndex); // true label value (WrappedInstance)
+
+        boolean isMissing = instance.isMissing(labelIndex);
+
+        if (!isMissing)
+            return;
+
+        if (covers) { // the rule covers the instance
+            Condition labelAttribute = head.getCondition(labelIndex); // get the attribute of the head
+            double labelValue = labelAttribute.getValue(); // value of the attribute in the head
+
+            if (labelValue == trueLabelValue) { // then we correct the value
+                confusionMatrix.addTruePositives(instance.weight());
+            } else { // we don't...
+                confusionMatrix.addFalsePositives(instance.weight());
+            }
+
+        } else {
+            if (trueLabelValue == 1.0) {
+                confusionMatrix.addFalseNegatives(instance.weight());
+            }
+        }
+
+    }
+
     final void aggregate(final boolean covers, final Head head, final Instance instance, final int labelIndex,
                          final TwoClassConfusionMatrix confusionMatrix, final TwoClassConfusionMatrix stats) {
         double labelValue = getLabelValue(instance, labelIndex);

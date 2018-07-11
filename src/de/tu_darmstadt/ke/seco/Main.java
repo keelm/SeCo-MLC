@@ -3,6 +3,7 @@ package de.tu_darmstadt.ke.seco;
 import com.opencsv.CSVWriter;
 import de.tu_darmstadt.ke.seco.algorithm.SeCoAlgorithm;
 import de.tu_darmstadt.ke.seco.algorithm.SeCoAlgorithmFactory;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.MainEvaluation;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.Weka379AdapterMultilabel;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.averaging.AveragingStrategy;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.EvaluationStrategy;
@@ -10,6 +11,7 @@ import mulan.classifier.MultiLabelLearner;
 import mulan.data.MultiLabelInstances;
 import mulan.evaluation.Evaluation;
 import mulan.evaluation.Evaluator;
+import mulan.evaluation.MultipleEvaluation;
 import mulan.evaluation.measure.Measure;
 import weka.core.Utils;
 
@@ -101,6 +103,12 @@ public class Main {
      * @throws Exception The exception, which is thrown, if any error occurs
      */
     public static void main(final String[] args) throws Exception {
+        final boolean eval = Boolean.valueOf(getOptionalArgument("evaluate", args, "false"));
+        if (eval) {
+            MainEvaluation.mainEvaluation(args);
+            return;
+        }
+
         final String baseLearnerConfigPath = getMandatoryArgument("baselearner", args);
         final String arffFilePath = getMandatoryArgument("arff", args);
         final String xmlLabelsDefFilePath = getOptionalArgument("xml", args, arffFilePath.replace(".arff", ".xml"));
@@ -120,6 +128,7 @@ public class Main {
         final double boostAtLabel = Double.valueOf(getOptionalArgument("boostAtLabel", args, "1.1"));
         final double curvature = Double.valueOf(getOptionalArgument("curvature", args, "2.0"));
         final int pruningDepth = Integer.valueOf(getOptionalArgument("pruningDepth", args, "-1"));
+
 
 
         System.out.println("Arguments:\n");
