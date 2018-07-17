@@ -105,7 +105,7 @@ public class Main {
     public static void main(final String[] args) throws Exception {
         final boolean eval = Boolean.valueOf(getOptionalArgument("evaluate", args, "false"));
         if (eval) {
-            MainEvaluation.mainEvaluation(args);
+            MainEvaluation.createTasks(args);
             return;
         }
 
