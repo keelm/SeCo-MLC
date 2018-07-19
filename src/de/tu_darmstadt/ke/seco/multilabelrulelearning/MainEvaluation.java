@@ -234,6 +234,7 @@ public class MainEvaluation {
             }
         //}
         System.out.println("Created " + tasks.size() + " tasks...");
+        NUMBER_OF_THREADS = tasks.size();
 
         ExecutorService executorService = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
         for (int i = 0; i < NUMBER_OF_THREADS; i++) {
@@ -257,7 +258,7 @@ public class MainEvaluation {
 
         // create csv file
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
-        filename = "results/experiments/" + sdf.format(new Date()) + ".csv";
+        filename = "results/experiments/" + xmlLabelsDefFilePath.split("/")[1].split("\\.")[0] + "_" + getMeasureName(bestSetting.evaluationMeasureValue, bestSetting.averagingStrategyValue) + "_" + sdf.format(new Date()) + ".csv";
         File file = new File(filename);
         System.out.println(filename);
         file.createNewFile();
@@ -308,7 +309,7 @@ public class MainEvaluation {
         executorService.shutdown();
     }
 
-    private final static int NUMBER_OF_THREADS = 64;
+    private static int NUMBER_OF_THREADS = 64;
 
     public synchronized static EvaluationSetting getSetting() {
         if (tasks.isEmpty())
@@ -395,6 +396,5 @@ public class MainEvaluation {
     public static CSVWriter csvWriter;
     public static FileWriter fileWriter;
     public static String filename;
-
 
 }
