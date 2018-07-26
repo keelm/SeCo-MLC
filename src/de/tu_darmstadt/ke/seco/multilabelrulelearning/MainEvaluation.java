@@ -110,7 +110,7 @@ public class MainEvaluation {
     private static boolean[] readdAllCoveredValues = new boolean[]{true, false};
 
     private static double remainingInstancesMinimum = 0.0;
-    private static double remainingInstancesMaximum = 0.9;
+    private static double remainingInstancesMaximum = 0.2;
     private static double deltaRemainingInstances = 0.05;
 
     private static double skipThresholdMinimum = -0.01;
@@ -180,10 +180,10 @@ public class MainEvaluation {
         // create test instances from dataset, if available
         final MultiLabelInstances testData = testArffFilePath != null ? new MultiLabelInstances(testArffFilePath, xmlLabelsDefFilePath) : null;
 
-        for (String evaluationMeasureValue : evaluationMeasuresValues) {
+        /*for (String evaluationMeasureValue : evaluationMeasuresValues) {
             baseLearnerConfigPath = evaluationMeasureValue;
             for (String averagingStrategyValue : averagingStrategyValues) {
-                averagingStrategy = averagingStrategyValue;
+                averagingStrategy = averagingStrategyValue;*/
 
                 Settings bestSetting = null;
                 for (boolean predictZeroRulesValue : predictZeroRulesValues) {
@@ -194,7 +194,7 @@ public class MainEvaluation {
                             for (skipThresholdPercentage = skipThresholdMinimum; skipThresholdPercentage <= skipThresholdMaximum; skipThresholdPercentage += deltaSkipThreshold) {
                                 if (!useRelaxedPruning) {
 
-                                    SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile("config/" + baseLearnerConfigPath + ".xml");
+                                    SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(baseLearnerConfigPath);
                                     Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
                                             remainingInstancesPercentage, readdAllCovered, skipThresholdPercentage, predictZeroRules,
                                             useMultilabelHeads, evaluationStrategy, averagingStrategy,
@@ -204,7 +204,7 @@ public class MainEvaluation {
                                     MultipleEvaluation multipleEvaluation = evaluator.crossValidate(multilabelLearner, trainingData, 10);
 
                                     String measureName = getMeasureName(baseLearnerConfigPath, averagingStrategy);
-                                    System.out.println(measureName);
+
                                     double value = multipleEvaluation.getMean(measureName);
                                     value = convertValue(baseLearnerConfigPath, value);
                                     Settings currentSetting = new Settings(value, baseLearnerConfigPath, averagingStrategy, predictZeroRules, readdAllCovered,
@@ -224,7 +224,7 @@ public class MainEvaluation {
                                             for (label = 2.0; label < trainingData.getNumLabels(); label++) {
                                                 for (boostAtLabel = minimumBoost; boostAtLabel <= maximumBoost; boostAtLabel += deltaBoost) {
                                                     for (curvature = minimumCurvature; curvature <= maximumCurvature; curvature += deltaCurvature) {
-                                                        SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile("config/" + baseLearnerConfigPath + ".xml");
+                                                        SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile( baseLearnerConfigPath);
                                                         Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
                                                                 remainingInstancesPercentage, readdAllCovered, skipThresholdPercentage, predictZeroRules,
                                                                 useMultilabelHeads, evaluationStrategy, averagingStrategy,
@@ -234,7 +234,6 @@ public class MainEvaluation {
                                                         MultipleEvaluation multipleEvaluation = evaluator.crossValidate(multilabelLearner, trainingData, 10);
 
                                                         String measureName = getMeasureName(baseLearnerConfigPath, averagingStrategy);
-                                                        System.out.println(measureName);
                                                         double value = multipleEvaluation.getMean(measureName);
                                                         value = convertValue(baseLearnerConfigPath, value);
                                                         Settings currentSetting = new Settings(value, baseLearnerConfigPath, averagingStrategy, predictZeroRules, readdAllCovered,
@@ -250,7 +249,7 @@ public class MainEvaluation {
                                         } else {
                                             label = 3.0;
                                             for (boostAtLabel = minimumBoost; boostAtLabel <= maximumBoost; boostAtLabel += deltaBoost) {
-                                                SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile("config/" + baseLearnerConfigPath + ".xml");
+                                                SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(baseLearnerConfigPath);
                                                 Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
                                                         remainingInstancesPercentage, readdAllCovered, skipThresholdPercentage, predictZeroRules,
                                                         useMultilabelHeads, evaluationStrategy, averagingStrategy,
@@ -260,7 +259,7 @@ public class MainEvaluation {
                                                 MultipleEvaluation multipleEvaluation = evaluator.crossValidate(multilabelLearner, trainingData, 10);
 
                                                 String measureName = getMeasureName(baseLearnerConfigPath, averagingStrategy);
-                                                System.out.println(measureName);
+
                                                 double value = multipleEvaluation.getMean(measureName);
                                                 value = convertValue(baseLearnerConfigPath, value);
                                                 Settings currentSetting = new Settings(value, baseLearnerConfigPath, averagingStrategy, predictZeroRules, readdAllCovered,
@@ -301,7 +300,7 @@ public class MainEvaluation {
                 bestSetting.writeToCSV();
 
                 if (!useRelaxedPruning) {
-                    SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile("config/" + bestSetting.evaluationMeasureValue + ".xml");
+                    SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(bestSetting.evaluationMeasureValue );
                     Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
                             bestSetting.remainingInstancesPercentage, bestSetting.readdAllCoveredValue, bestSetting.skipThresholdPercentage, bestSetting.predictZeroRulesValue,
                             useMultilabelHeads, evaluationStrategy, bestSetting.averagingStrategyValue,
@@ -316,8 +315,8 @@ public class MainEvaluation {
                 }
 
                 csvWriter.close();
-            }
-        }
+         /*   }
+        }*/
 
     }
 
@@ -336,17 +335,17 @@ public class MainEvaluation {
     }
 
     public static String getMeasureSuffix(String evaluationMeasure) {
-        if (evaluationMeasure.equalsIgnoreCase("hamming_accuracy"))
+        if (evaluationMeasure.equalsIgnoreCase("config/hamming_accuracy.xml"))
             return "Hamming Loss";
-        if (evaluationMeasure.equalsIgnoreCase("subset_accuracy"))
+        if (evaluationMeasure.equalsIgnoreCase("config/subset_accuracy.xml"))
             return "Subset Accuracy";
-        if (evaluationMeasure.equalsIgnoreCase("f_measure"))
+        if (evaluationMeasure.equalsIgnoreCase("config/f_measure.xml"))
             return "F-Measure";
         return null;
     }
 
     public static double convertValue(String evaluationMeasure, double value) {
-        if (evaluationMeasure.equalsIgnoreCase("hamming_accuracy"))
+        if (evaluationMeasure.equalsIgnoreCase("config/hamming_accuracy.xml"))
             return (1.0 - value);
         return value;
     }

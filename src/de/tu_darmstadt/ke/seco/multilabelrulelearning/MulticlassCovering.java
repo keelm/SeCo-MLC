@@ -226,7 +226,7 @@ public class MulticlassCovering {
     }
 
     public static boolean finished = false;
-    boolean fixHead = false;
+    boolean fixHead = true;
     Head fixedHead = null;
 
     public final MultiHeadRule findBestGlobalRule(final Instances instances,

@@ -1138,7 +1138,7 @@ public class SeCoAlgorithm implements Serializable {
     private JRipOneRuler ripper;
 
 
-    public static boolean DEBUG_STEP_BY_STEP = true;
+    public static boolean DEBUG_STEP_BY_STEP = false;
     public static boolean DEBUG_STEP_BY_STEP_V = false;
 
     public RuleSet<?> separateAndConquerMultilabel(Instances examples, int labelIndices[]) throws Exception {
@@ -1332,8 +1332,7 @@ public class SeCoAlgorithm implements Serializable {
         LinkedHashSet<Integer> labelIndicesAsSet = new LinkedHashSet<>(labelIndices.length);
         Arrays.stream(labelIndices).forEach(labelIndicesAsSet::add);
         Instances originalExamples = examples; // newExamples used only in postprocessor
-        examples = new Instances(originalExamples,
-                originalExamples.numInstances()); //so that I can do what I want on this
+        examples = new Instances(originalExamples, originalExamples.numInstances()); //so that I can do what I want on this
         ArrayList<Instance> examplesReferences = null; // only used for debugging
 
         if (DEBUG_STEP_BY_STEP)
@@ -1363,6 +1362,32 @@ public class SeCoAlgorithm implements Serializable {
 
         Set<Integer> predictedLabelIndices = new HashSet<>();
 
+        HashMap<Integer, Integer> setEntries = new HashMap<>();
+        HashMap<Integer, Double> previousDensity = new HashMap<>();
+        HashMap<Integer, Integer> relevantEntries = new HashMap<>();
+        double previousMatrixDensity = 0;
+        double numberOfRelevantLabelEntries = 0;
+
+        if (!predictZero) {
+            for (Instance instance : originalExamples) {
+                for (int labelIndex : labelIndices) {
+                    if (instance.value(labelIndex) == 1.0) {
+                        numberOfRelevantLabelEntries++;
+                        if (relevantEntries.containsKey(labelIndex)) {
+                            relevantEntries.put(labelIndex, relevantEntries.get(labelIndex) + 1);
+                        } else {
+                            relevantEntries.put(labelIndex, 1);
+                        }
+                    }
+                }
+            }
+        }
+
+
+        double numberOfTotalMatrixEntries = predictZero ? labelIndices.length * originalExamples.size() : numberOfRelevantLabelEntries;
+
+
+
         // Continue until a certain percentage of the training data is covered
         outerloop:
         while (examples.getInstances().size() > trainingDataSize * noNeedForClassification) {
@@ -1387,8 +1412,7 @@ public class SeCoAlgorithm implements Serializable {
                         .findBestGlobalRule(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth);
             } catch (NumberFormatException e) {
                 float beamWidthPercentage = Float.valueOf(getBeamWidth());
-                bestRuleOfMulti = multiclassCovering
-                        .findBestGlobalRule(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage);
+                bestRuleOfMulti = multiclassCovering.findBestGlobalRule(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage);
             }
 
             if (bestRuleOfMulti != null) {
@@ -1411,6 +1435,12 @@ public class SeCoAlgorithm implements Serializable {
 
                         if (Utils.isMissingValue(covered.value(labelIndex))) {
                             covered.setValue(labelIndex, entry.getValue().getValue());
+                            // count matrix density
+                            if (setEntries.containsKey(labelIndex)) {
+                                setEntries.put(labelIndex, setEntries.get(labelIndex) + 1);
+                            } else {
+                                setEntries.put(labelIndex, 1);
+                            }
                         }
                     }
 
@@ -1429,6 +1459,27 @@ public class SeCoAlgorithm implements Serializable {
                         }
                     }
                 }
+
+
+                double numberOfMatrixEntries = 0;
+
+                StringBuilder stringBuilder = new StringBuilder();
+                for (int labelIndex : setEntries.keySet()) {
+                    double numberOfEntries = setEntries.get(labelIndex);
+                    double numberOfTotalEntries = predictZero ? originalExamples.size() : relevantEntries.get(labelIndex);
+                    double density = numberOfEntries / numberOfTotalEntries; // label density
+                    double ruleDifference = previousDensity.containsKey(labelIndex) ? density - previousDensity.get(labelIndex) : density;
+                    previousDensity.put(labelIndex, density);
+                    numberOfMatrixEntries += numberOfEntries;
+                    weka.core.Attribute attribute = examples.attribute(labelIndex);
+                    stringBuilder.append(attribute.name() + ": " + roundTo4Digits(density) + " (+" + roundTo4Digits(ruleDifference) + "), ");
+                }
+                double matrixDensity = numberOfMatrixEntries / numberOfTotalMatrixEntries;
+                double matrixDensityDifference = matrixDensity - previousMatrixDensity;
+                previousMatrixDensity = matrixDensity;
+                stringBuilder.append("Matrix: " + roundTo4Digits(matrixDensity) + " (+" + roundTo4Digits(matrixDensityDifference) + ")");
+
+                System.out.println(stringBuilder.toString());
 
                 theory.addRule(bestRuleOfMulti);
 
@@ -1497,6 +1548,13 @@ public class SeCoAlgorithm implements Serializable {
             getHeadOccurrencePercentage(theory, originalExamples);
 
         return theory;
+    }
+
+    private double roundTo4Digits(double value) {
+        value *= 10000.0;
+        value = Math.round(value);
+        value /= 10000.0;
+        return value;
     }
 
     private void getHeadOccurrencePercentage(MultiHeadRuleSet multiHeadRuleSet, Instances instances) {
