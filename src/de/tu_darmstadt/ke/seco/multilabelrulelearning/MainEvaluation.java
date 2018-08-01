@@ -1,6 +1,6 @@
 package de.tu_darmstadt.ke.seco.multilabelrulelearning;
 
-import com.opencsv.CSVWriter;
+import com.opencsv.*;
 import de.tu_darmstadt.ke.seco.Main;
 import de.tu_darmstadt.ke.seco.algorithm.SeCoAlgorithm;
 import de.tu_darmstadt.ke.seco.algorithm.SeCoAlgorithmFactory;
@@ -11,13 +11,10 @@ import mulan.evaluation.Evaluation;
 import mulan.evaluation.Evaluator;
 import mulan.evaluation.MultipleEvaluation;
 import mulan.evaluation.measure.Measure;
-import org.xmlpull.v1.XmlPullParserException;
 import weka.core.Utils;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -28,8 +25,10 @@ public class MainEvaluation {
 
     private static class EvaluationSetting {
 
-        public EvaluationSetting(double value, String evaluationMeasureValue, String averagingStrategyValue, boolean predictZeroRulesValue,
+        public EvaluationSetting(double hamming, double subset, double value, String evaluationMeasureValue, String averagingStrategyValue, boolean predictZeroRulesValue,
                                  boolean readdAllCoveredValue, double remainingInstancesPercentage, double skipThresholdPercentage) {
+            this.hamming = hamming;
+            this.subset = subset;
             this.value = value;
             this.evaluationMeasureValue = evaluationMeasureValue;
             this.averagingStrategyValue = averagingStrategyValue;
@@ -44,9 +43,11 @@ public class MainEvaluation {
             this.curvature = 2.0;
         }
 
-        public EvaluationSetting(double value, String evaluationMeasureValue, String averagingStrategyValue, boolean predictZeroRulesValue,
+        public EvaluationSetting(double hamming, double subset, double value, String evaluationMeasureValue, String averagingStrategyValue, boolean predictZeroRulesValue,
                                  boolean readdAllCoveredValue, double remainingInstancesPercentage, double skipThresholdPercentage,
                                  String boostFunctionValue, int labelValue, double boost, double curvature) {
+            this.hamming = hamming;
+            this.subset = subset;
             this.value = value;
             this.evaluationMeasureValue = evaluationMeasureValue;
             this.averagingStrategyValue = averagingStrategyValue;
@@ -66,6 +67,9 @@ public class MainEvaluation {
          */
 
         public double value;
+
+        public double hamming;
+        public double subset;
 
         /**
          * Normal parameters.
@@ -202,7 +206,7 @@ public class MainEvaluation {
             for (remainingInstancesPercentage = remainingInstancesMinimum; remainingInstancesPercentage <= remainingInstancesMaximum; remainingInstancesPercentage += deltaRemainingInstances) {
                 for (skipThresholdPercentage = skipThresholdMinimum; skipThresholdPercentage <= skipThresholdMaximum; skipThresholdPercentage += deltaSkipThreshold) {
                     if (!useRelaxedPruning) {
-                        EvaluationSetting setting = new EvaluationSetting(-1, baseLearnerConfigPath, averagingStrategy, predictZeroRules,
+                        EvaluationSetting setting = new EvaluationSetting(-1, -1, -1, baseLearnerConfigPath, averagingStrategy, predictZeroRules,
                                 readdAllCovered, remainingInstancesPercentage, skipThresholdPercentage);
                         tasks.add(setting);
                     } else {
@@ -213,7 +217,7 @@ public class MainEvaluation {
                                 for (label = 2.0; label < trainingData.getLabelIndices().length && label <= 10; label++) {
                                     for (boostAtLabel = minimumBoost; boostAtLabel <= maximumBoost; boostAtLabel += deltaBoost) {
                                         for (curvature = minimumCurvature; curvature <= maximumCurvature; curvature += deltaCurvature) {
-                                            EvaluationSetting setting = new EvaluationSetting(-1, baseLearnerConfigPath, averagingStrategy, predictZeroRules, readdAllCovered,
+                                            EvaluationSetting setting = new EvaluationSetting(-1, -1, -1, baseLearnerConfigPath, averagingStrategy, predictZeroRules, readdAllCovered,
                                                     remainingInstancesPercentage, skipThresholdPercentage, boostFunctionValue, (int) label, boostAtLabel, curvature);
                                             tasks.add(setting);
                                         }
@@ -222,7 +226,7 @@ public class MainEvaluation {
                             } else {
                                 label = 3.0;
                                 for (boostAtLabel = minimumBoost; boostAtLabel <= maximumBoost; boostAtLabel += deltaBoost) {
-                                    EvaluationSetting setting = new EvaluationSetting(-1, baseLearnerConfigPath, averagingStrategy, predictZeroRules, readdAllCovered,
+                                    EvaluationSetting setting = new EvaluationSetting(-1, -1, -1, baseLearnerConfigPath, averagingStrategy, predictZeroRules, readdAllCovered,
                                             remainingInstancesPercentage, skipThresholdPercentage, boostFunctionValue, (int) label, boostAtLabel, curvature);
                                     tasks.add(setting);
                                 }
@@ -234,7 +238,7 @@ public class MainEvaluation {
         }
         //}
         System.out.println("Created " + tasks.size() + " tasks...");
-        NUMBER_OF_THREADS = tasks.size();
+        NUMBER_OF_THREADS = Math.min(250, tasks.size()); // a maximum of 250 threads
 
         ExecutorService executorService = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
         for (int i = 0; i < NUMBER_OF_THREADS; i++) {
@@ -254,7 +258,7 @@ public class MainEvaluation {
             Thread.sleep(1000*20);
         }
 
-        System.out.println("Found Best Setting");
+        System.out.println("Found Best Setting " + bestSetting.value);
 
         // create csv file
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
@@ -263,6 +267,8 @@ public class MainEvaluation {
         System.out.println(filename);
         file.createNewFile();
         fileWriter = new FileWriter(file);
+
+
 
         // create csv writer
         csvWriter = new CSVWriter(fileWriter,
@@ -316,6 +322,7 @@ public class MainEvaluation {
             return null;
         EvaluationSetting setting = tasks.get(0);
         tasks.remove(0);
+        System.out.println("Remaining Tasks: " + tasks.size());
         return setting;
     }
 
@@ -340,6 +347,13 @@ public class MainEvaluation {
             value = convertValue(setting.evaluationMeasureValue, value);
             setting.value = value;
 
+            double hamming = multipleEvaluation.getMean("Hamming Loss");
+            hamming = convertValue("config/hamming_accuracy.xml", hamming);
+            setting.hamming = hamming;
+
+            double subset = multipleEvaluation.getMean("Subset Accuracy");
+            setting.subset = subset;
+
             updateBestSetting(setting);
         }
         finished();
@@ -348,9 +362,23 @@ public class MainEvaluation {
     private static EvaluationSetting bestSetting = null;
 
     public synchronized static void updateBestSetting(EvaluationSetting setting) {
-        System.out.println("Updating Best Setting " + setting.value);
-        if (bestSetting == null || setting.value > bestSetting.value)
-            bestSetting = setting;
+        if (bestSetting != null)
+            System.out.println("Updating Best Setting " + bestSetting.value + "," + bestSetting.hamming + "," + bestSetting.subset + " ("+ setting.value + "," + setting.hamming + "," + setting.subset + ")");
+        if (bestSetting == null || setting.value >= bestSetting.value) {
+            if (bestSetting != null && setting.value == bestSetting.value) {
+                if (setting.hamming >= bestSetting.hamming) {
+                    if (setting.hamming == bestSetting.hamming) {
+                        if (setting.subset >= bestSetting.subset) {
+                            bestSetting = setting;
+                        }
+                    } else {
+                        bestSetting = setting;
+                    }
+                }
+            } else {
+                bestSetting = setting;
+            }
+        }
     }
 
     public static String getMeasureName(String evaluationMeasure, String averagingStrategy) {

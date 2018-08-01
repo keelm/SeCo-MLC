@@ -60,6 +60,7 @@ public abstract class AveragingStrategy {
         return true;
     }
 
+    // correct 1's
     final void aggregateCorrect(final boolean covers, final Head head, final Instance instance, final int labelIndex,
                          final TwoClassConfusionMatrix confusionMatrix, final TwoClassConfusionMatrix stats) {
         double trueLabelValue = getLabelValue(instance, labelIndex); // true label value (WrappedInstance)

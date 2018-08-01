@@ -38,7 +38,7 @@ public class MaxBoosting extends BoostingStrategy {
     @Override
     public double getMaximumBoost(int headSize) {
         if (headSize <= maximum)
-            return boostFunctionValues.get((int) maximum);
+            return boostFunctionValues.get((int) (maximum > maximumNumberOfLabels ? maximumNumberOfLabels : maximum));
         return super.getMaximumBoost(headSize);
     }
 

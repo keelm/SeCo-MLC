@@ -1138,7 +1138,7 @@ public class SeCoAlgorithm implements Serializable {
     private JRipOneRuler ripper;
 
 
-    public static boolean DEBUG_STEP_BY_STEP = false;
+    public static boolean DEBUG_STEP_BY_STEP = true;
     public static boolean DEBUG_STEP_BY_STEP_V = false;
 
     public RuleSet<?> separateAndConquerMultilabel(Instances examples, int labelIndices[]) throws Exception {
@@ -1368,7 +1368,7 @@ public class SeCoAlgorithm implements Serializable {
         double previousMatrixDensity = 0;
         double numberOfRelevantLabelEntries = 0;
 
-        if (!predictZero) {
+        /*if (!predictZero) {
             for (Instance instance : originalExamples) {
                 for (int labelIndex : labelIndices) {
                     if (instance.value(labelIndex) == 1.0) {
@@ -1381,10 +1381,10 @@ public class SeCoAlgorithm implements Serializable {
                     }
                 }
             }
-        }
+        }*/
 
-
-        double numberOfTotalMatrixEntries = predictZero ? labelIndices.length * originalExamples.size() : numberOfRelevantLabelEntries;
+        double numberOfTotalMatrixEntries = labelIndices.length * originalExamples.size();
+        //double numberOfTotalMatrixEntries = predictZero ? labelIndices.length * originalExamples.size() : numberOfRelevantLabelEntries;
 
 
 
@@ -1435,6 +1435,7 @@ public class SeCoAlgorithm implements Serializable {
 
                         if (Utils.isMissingValue(covered.value(labelIndex))) {
                             covered.setValue(labelIndex, entry.getValue().getValue());
+
                             // count matrix density
                             if (setEntries.containsKey(labelIndex)) {
                                 setEntries.put(labelIndex, setEntries.get(labelIndex) + 1);
@@ -1466,7 +1467,7 @@ public class SeCoAlgorithm implements Serializable {
                 StringBuilder stringBuilder = new StringBuilder();
                 for (int labelIndex : setEntries.keySet()) {
                     double numberOfEntries = setEntries.get(labelIndex);
-                    double numberOfTotalEntries = predictZero ? originalExamples.size() : relevantEntries.get(labelIndex);
+                    double numberOfTotalEntries = originalExamples.size();
                     double density = numberOfEntries / numberOfTotalEntries; // label density
                     double ruleDifference = previousDensity.containsKey(labelIndex) ? density - previousDensity.get(labelIndex) : density;
                     previousDensity.put(labelIndex, density);
@@ -1479,7 +1480,8 @@ public class SeCoAlgorithm implements Serializable {
                 previousMatrixDensity = matrixDensity;
                 stringBuilder.append("Matrix: " + roundTo4Digits(matrixDensity) + " (+" + roundTo4Digits(matrixDensityDifference) + ")");
 
-                System.out.println(stringBuilder.toString());
+                if (DEBUG_STEP_BY_STEP)
+                    System.out.println(stringBuilder.toString());
 
                 theory.addRule(bestRuleOfMulti);
 
