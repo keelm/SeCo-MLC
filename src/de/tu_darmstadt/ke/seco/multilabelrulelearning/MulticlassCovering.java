@@ -119,8 +119,8 @@ public class MulticlassCovering {
 
     }
 
-    private static final boolean DEBUG_STEP_BY_STEP = true;
-    private static final boolean DEBUG_STEP_BY_STEP_V = true;
+    private static final boolean DEBUG_STEP_BY_STEP = false;
+    private static final boolean DEBUG_STEP_BY_STEP_V = false;
 
     private static HashSet<Integer> labelIndicesHash;
     private static Hashtable<Integer,Boolean> coveringCache;
@@ -225,7 +225,7 @@ public class MulticlassCovering {
     }
 
     public static boolean finished = false;
-    boolean fixHead = true;
+    boolean fixHead = false;
     Head fixedHead = null;
 
     public final MultiHeadRule findBestGlobalRule(final Instances instances,
@@ -276,12 +276,10 @@ public class MulticlassCovering {
                 if (closure != null) {
                     closure.refineFurther = false;
                 }
-                
 
                 // When starting off with a new rule, try empty body first
                 if (closure == null) {
-                    MultiHeadRule refinedRule = new MultiHeadRule(
-                            multiLabelEvaluation.getHeuristic());
+                    MultiHeadRule refinedRule = new MultiHeadRule(multiLabelEvaluation.getHeuristic());
                     Closure refinedClosure = new Closure(refinedRule, null);
                     refinedClosure = findBestHead(instances, labelIndices, refinedClosure);
 
@@ -308,6 +306,7 @@ public class MulticlassCovering {
                                     closure != null ? closure.metaData : null);
                             refinedClosure.addCondition(i, condition);
                             refinedClosure = findBestHead(instances, labelIndices, refinedClosure);
+                            //System.out.println(refinedClosure);
                             increaseEvaluationCount();
                             if (refinedClosure != null) {
                                 improved |= closures.offer(refinedClosure);

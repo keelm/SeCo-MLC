@@ -60,6 +60,58 @@ public abstract class AveragingStrategy {
         return true;
     }
 
+    /*final void aggregate(final boolean covers, final Head head, final Instance instance, final int labelIndex,
+                                final TwoClassConfusionMatrix confusionMatrix, final TwoClassConfusionMatrix stats) {
+        double trueValue = getLabelValue(instance, labelIndex); // true label value (WrappedInstance)
+        boolean isMissing = instance.isMissing(labelIndex);
+        double setValue = isMissing ? 0 : instance.value(labelIndex);
+
+        if (covers) { // the rule covers the instance
+            Condition labelAttribute = head.getCondition(labelIndex); // get the attribute of the head
+            double predictedValue = (labelAttribute == null) ? 0: labelAttribute.getValue(); // value of the attribute in the head
+
+            // rule does not correct the value as it is already set correctly
+            if (setValue == trueValue && trueValue == predictedValue) {
+                return;
+            }
+
+            if (trueValue == 0.0) {
+                //System.out.println(predictedValue + " " + setValue);
+                if (predictedValue == 0.0 && setValue == 1.0) {
+                    //System.out.println("TP");
+                    confusionMatrix.addTruePositives(instance.weight());
+                    return;
+                } else if (predictedValue == 1.0 && setValue == 0.0) {
+                    //System.out.println("FP");
+                    confusionMatrix.addFalsePositives(instance.weight());
+                    return;
+                } else if (predictedValue == 1.0 && setValue == 1.0) {
+                    //System.out.println("FN");
+                    confusionMatrix.addFalseNegatives(instance.weight());
+                    return;
+                }
+            }
+
+            if (trueValue == 1.0) {
+                if (predictedValue == 0.0 && setValue == 0.0) {
+                    confusionMatrix.addFalseNegatives(instance.weight());
+                    return;
+                } else if (predictedValue == 0.0 && setValue == 1.0) {
+                    confusionMatrix.addFalsePositives(instance.weight());
+                    return;
+                } else if (predictedValue == 1.0 && setValue == 0.0) {
+                    confusionMatrix.addTruePositives(instance.weight());
+                    return;
+                }
+            }
+
+        } else {
+            if (trueValue != setValue)
+                confusionMatrix.addFalseNegatives(instance.weight());
+        }
+
+    }*/
+
     // correct 1's
     final void aggregateCorrect(final boolean covers, final Head head, final Instance instance, final int labelIndex,
                          final TwoClassConfusionMatrix confusionMatrix, final TwoClassConfusionMatrix stats) {
@@ -67,6 +119,7 @@ public abstract class AveragingStrategy {
 
         boolean isMissing = instance.isMissing(labelIndex);
 
+        // nur wenn korrekt
         if (!isMissing)
             return;
 

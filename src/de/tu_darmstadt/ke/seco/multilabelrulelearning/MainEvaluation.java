@@ -123,11 +123,11 @@ public class MainEvaluation {
     private static boolean[] predictZeroRulesValues = new boolean[]{true, false};
     private static boolean[] readdAllCoveredValues = new boolean[]{true};
 
-    private static double remainingInstancesMinimum = 0.0;
-    private static double remainingInstancesMaximum = 0.2;
+    private static double remainingInstancesMinimum = 0.1;
+    private static double remainingInstancesMaximum = 0.1;
     private static double deltaRemainingInstances = 0.1;
 
-    private static double skipThresholdMinimum = -0.01;
+    private static double skipThresholdMinimum = 0.01;
     private static double skipThresholdMaximum = 0.01;
     private static double deltaSkipThreshold = 0.02;
 
@@ -142,8 +142,8 @@ public class MainEvaluation {
     private static int labelValue = 2;
 
     private static double minimumBoost = 1.01;
-    private static double maximumBoost = 1.30;
-    private static double deltaBoost = 0.01;
+    private static double maximumBoost = 1.21;
+    private static double deltaBoost = 0.02;
 
     private static double minimumCurvature = 2.0;
     private static double maximumCurvature = 2.0;
@@ -214,7 +214,9 @@ public class MainEvaluation {
                             boostFunction = boostFunctionValue;
 
                             if (boostFunction.equalsIgnoreCase("peak")) {
-                                for (label = 2.0; label < trainingData.getLabelIndices().length && label <= 10; label++) {
+                                for (label = 2.0; label < trainingData.getLabelIndices().length && label <= 5.0; label++) {
+                                    if (label == 4.0)
+                                        continue;
                                     for (boostAtLabel = minimumBoost; boostAtLabel <= maximumBoost; boostAtLabel += deltaBoost) {
                                         for (curvature = minimumCurvature; curvature <= maximumCurvature; curvature += deltaCurvature) {
                                             EvaluationSetting setting = new EvaluationSetting(-1, -1, -1, baseLearnerConfigPath, averagingStrategy, predictZeroRules, readdAllCovered,
@@ -238,7 +240,7 @@ public class MainEvaluation {
         }
         //}
         System.out.println("Created " + tasks.size() + " tasks...");
-        NUMBER_OF_THREADS = Math.min(250, tasks.size()); // a maximum of 250 threads
+        NUMBER_OF_THREADS = Math.min(100, tasks.size()); // a maximum of 100 threads
 
         ExecutorService executorService = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
         for (int i = 0; i < NUMBER_OF_THREADS; i++) {
@@ -362,14 +364,23 @@ public class MainEvaluation {
     private static EvaluationSetting bestSetting = null;
 
     public synchronized static void updateBestSetting(EvaluationSetting setting) {
-        if (bestSetting != null)
-            System.out.println("Updating Best Setting " + bestSetting.value + "," + bestSetting.hamming + "," + bestSetting.subset + " ("+ setting.value + "," + setting.hamming + "," + setting.subset + ")");
-        if (bestSetting == null || setting.value >= bestSetting.value) {
+        if (bestSetting != null) {
+            if (setting.useRelaxedPruning)
+                System.out.println("Updating Best Setting " + bestSetting.value + "," + bestSetting.hamming + "," + bestSetting.subset + "," + bestSetting.boost + " ("+ setting.value + "," + setting.hamming + "," + setting.subset + "," + setting.boost + ")");
+            else
+                System.out.println("Updating Best Setting " + bestSetting.value + "," + bestSetting.hamming + "," + bestSetting.subset + " ("+ setting.value + "," + setting.hamming + "," + setting.subset + ")");
+        } if (bestSetting == null || setting.value >= bestSetting.value) {
             if (bestSetting != null && setting.value == bestSetting.value) {
                 if (setting.hamming >= bestSetting.hamming) {
                     if (setting.hamming == bestSetting.hamming) {
                         if (setting.subset >= bestSetting.subset) {
-                            bestSetting = setting;
+                            if (setting.subset == bestSetting.subset) {
+                                if (setting.useRelaxedPruning && setting.boost < bestSetting.boost) {
+                                    bestSetting = setting;
+                                }
+                            } else {
+                                bestSetting = setting;
+                            }
                         }
                     } else {
                         bestSetting = setting;
