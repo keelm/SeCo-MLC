@@ -153,7 +153,7 @@ public class Main {
         System.out.println("\n");
 
         // create csv file
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss.SSS");
         filename = "results/experiments/" + xmlLabelsDefFilePath.split("/")[1].split("\\.")[0] + "_" + sdf.format(new Date()) + ".csv";
         File file = new File(filename);
         System.out.println(filename);

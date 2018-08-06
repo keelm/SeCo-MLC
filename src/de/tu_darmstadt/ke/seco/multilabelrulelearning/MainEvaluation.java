@@ -262,8 +262,10 @@ public class MainEvaluation {
 
         System.out.println("Found Best Setting " + bestSetting.value);
 
+        executorService.shutdown();
+
         // create csv file
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss.SSS");
         filename = "results/experiments/" + xmlLabelsDefFilePath.split("/")[1].split("\\.")[0] + "_" + getMeasureName(bestSetting.evaluationMeasureValue, bestSetting.averagingStrategyValue) + "_" + sdf.format(new Date()) + ".csv";
         File file = new File(filename);
         System.out.println(filename);
@@ -314,7 +316,7 @@ public class MainEvaluation {
 
         csvWriter.close();
         System.out.println("done");
-        executorService.shutdown();
+
     }
 
     private static int NUMBER_OF_THREADS = 64;
