@@ -60,7 +60,7 @@ public abstract class AveragingStrategy {
         return true;
     }
 
-    /*final void aggregate(final boolean covers, final Head head, final Instance instance, final int labelIndex,
+    final void aggregateCorrectZero(final boolean covers, final Head head, final Instance instance, final int labelIndex,
                                 final TwoClassConfusionMatrix confusionMatrix, final TwoClassConfusionMatrix stats) {
         double trueValue = getLabelValue(instance, labelIndex); // true label value (WrappedInstance)
         boolean isMissing = instance.isMissing(labelIndex);
@@ -76,9 +76,10 @@ public abstract class AveragingStrategy {
             }
 
             if (trueValue == 0.0) {
-                //System.out.println(predictedValue + " " + setValue);
+                if (setValue == 1.0)
+                    System.out.println("SDsdasd");
                 if (predictedValue == 0.0 && setValue == 1.0) {
-                    //System.out.println("TP");
+                    System.out.println("TP!!!");
                     confusionMatrix.addTruePositives(instance.weight());
                     return;
                 } else if (predictedValue == 1.0 && setValue == 0.0) {
@@ -110,10 +111,10 @@ public abstract class AveragingStrategy {
                 confusionMatrix.addFalseNegatives(instance.weight());
         }
 
-    }*/
+    }
 
     // correct 1's
-    final void aggregateCorrect(final boolean covers, final Head head, final Instance instance, final int labelIndex,
+    final void aggregateCoorrect(final boolean covers, final Head head, final Instance instance, final int labelIndex,
                          final TwoClassConfusionMatrix confusionMatrix, final TwoClassConfusionMatrix stats) {
         double trueLabelValue = getLabelValue(instance, labelIndex); // true label value (WrappedInstance)
 

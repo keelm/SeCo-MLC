@@ -96,6 +96,20 @@ public class MainEvaluation {
 
         public double curvature;
 
+        public void string(long id) {
+            System.out.println(id + " baselearner " + evaluationMeasureValue);
+            System.out.println(id + " remainingInstancesPercentage " + Double.toString(remainingInstancesPercentage));
+            System.out.println(id + " readdAllCovered " + Boolean.toString(readdAllCoveredValue));
+            System.out.println(id + " skipThresholdPercentage " + Double.toString(skipThresholdPercentage));
+        System.out.println(id + " predictZeroRules " + Boolean.toString(predictZeroRulesValue));
+        System.out.println(id + " averagingStrategy " + averagingStrategyValue);
+        System.out.println(id + " useRelaxedPruning " + Boolean.toString(useRelaxedPruning));
+        System.out.println(id + " boostFunction " + boostFunctionValue);
+        System.out.println(id + " label " + Double.toString(labelValue));
+        System.out.println(id + " boostAtLabel " + Double.toString(boost));
+        System.out.println(id + " curvature " + Double.toString(curvature));
+        }
+
         public void writeToCSV() {
             String[] headerRecord = {"Info", "Value"};
             csvWriter.writeNext(headerRecord);
@@ -240,7 +254,6 @@ public class MainEvaluation {
         }
         //}
         System.out.println("Created " + tasks.size() + " tasks...");
-        NUMBER_OF_THREADS = Math.min(100, tasks.size()); // a maximum of 100 threads
 
         ExecutorService executorService = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
         for (int i = 0; i < NUMBER_OF_THREADS; i++) {
@@ -248,7 +261,7 @@ public class MainEvaluation {
                 @Override
                 public void run() {
                     try {
-                        executeTasks(trainingData, testData);
+                        executeTasks(baseLearnerConfigPath, trainingData, testData);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -257,7 +270,8 @@ public class MainEvaluation {
         }
 
         while (finished != NUMBER_OF_THREADS) {
-            Thread.sleep(1000*20);
+            System.out.println("Checking if all finished...");
+            Thread.sleep(1000*60);
         }
 
         System.out.println("Found Best Setting " + bestSetting.value);
@@ -286,7 +300,7 @@ public class MainEvaluation {
         bestSetting.writeToCSV();
 
         if (!useRelaxedPruning) {
-            SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(bestSetting.evaluationMeasureValue);
+            SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(baseLearnerConfigPath);
             Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
                     bestSetting.remainingInstancesPercentage, bestSetting.readdAllCoveredValue, bestSetting.skipThresholdPercentage, bestSetting.predictZeroRulesValue,
                     useMultilabelHeads, evaluationStrategy, bestSetting.averagingStrategyValue,
@@ -300,7 +314,7 @@ public class MainEvaluation {
                 csvWriter.writeNext(new String[]{measure.getName(), Double.toString(measure.getValue())});
             }
         } else {
-            SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(bestSetting.evaluationMeasureValue);
+            SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(baseLearnerConfigPath);
             Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
                     bestSetting.remainingInstancesPercentage, bestSetting.readdAllCoveredValue, bestSetting.skipThresholdPercentage, bestSetting.predictZeroRulesValue,
                     useMultilabelHeads, evaluationStrategy, bestSetting.averagingStrategyValue,
@@ -319,7 +333,7 @@ public class MainEvaluation {
 
     }
 
-    private static int NUMBER_OF_THREADS = 64;
+    private static int NUMBER_OF_THREADS = 30;
 
     public synchronized static EvaluationSetting getSetting() {
         if (tasks.isEmpty())
@@ -332,13 +346,13 @@ public class MainEvaluation {
 
     private static final int CROSS_VALIDATION_FOLDS = 5;
 
-    public static void executeTasks(final MultiLabelInstances trainingData, final MultiLabelInstances testData) throws Exception {
+    public static void executeTasks(final String baseLearnerConfigPath, final MultiLabelInstances trainingData, final MultiLabelInstances testData) throws Exception {
         while (!tasks.isEmpty()) {
             EvaluationSetting setting = getSetting();
             if (setting == null || setting.value != -1)
                 continue;
 
-            SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(setting.evaluationMeasureValue);
+            SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(baseLearnerConfigPath);
             Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
                     setting.remainingInstancesPercentage, setting.readdAllCoveredValue, setting.skipThresholdPercentage, setting.predictZeroRulesValue,
                     true, EvaluationStrategy.RULE_DEPENDENT, setting.averagingStrategyValue,
@@ -346,7 +360,8 @@ public class MainEvaluation {
 
             Evaluator evaluator = new Evaluator();
             MultipleEvaluation multipleEvaluation = evaluator.crossValidate(multilabelLearner, trainingData, CROSS_VALIDATION_FOLDS);
-            String measureName = getMeasureName(setting.evaluationMeasureValue, setting.averagingStrategyValue);
+
+            String measureName = getMeasureName(baseLearnerConfigPath, setting.averagingStrategyValue);
             double value = multipleEvaluation.getMean(measureName);
             value = convertValue(setting.evaluationMeasureValue, value);
             setting.value = value;

@@ -1162,8 +1162,6 @@ public class SeCoAlgorithm implements Serializable {
         examples = new Instances(originalExamples, originalExamples.numInstances()); //so that I can do what I want on this
         ArrayList<Instance> examplesReferences = null; // only used for debugging
 
-        System.out.println("BLUB " + examples.size());
-
         if (DEBUG_STEP_BY_STEP)
             examplesReferences = new ArrayList<>();
 
@@ -1190,6 +1188,15 @@ public class SeCoAlgorithm implements Serializable {
         int trainingDataSize = examples.getInstances().size();
 
         Set<Integer> predictedLabelIndices = new HashSet<>();
+
+        /**
+         * Set complete matrix to zero initially.
+         */
+        /*for (Instance instance : examples)
+            for (int labelIndex : labelIndices)
+                instance.setValue(labelIndex, 0);*/
+        for (int labelIndex : labelIndices)
+            predictedLabelIndices.add(labelIndex);
 
         // Continue until a certain percentage of the training data is covered
         outerloop:
@@ -1235,9 +1242,13 @@ public class SeCoAlgorithm implements Serializable {
                         int labelIndex = entry.getKey();
                         predictedLabelIndices.add(labelIndex);
 
-                        if (Utils.isMissingValue(covered.value(labelIndex))) {
+
+
+                        // so that values may be corrected!
+                        //if (Utils.isMissingValue(covered.value(labelIndex))) {
                             covered.setValue(labelIndex, entry.getValue().getValue());
-                        }
+                        //}
+
                     }
 
                     if (predictZero) {
@@ -1257,6 +1268,9 @@ public class SeCoAlgorithm implements Serializable {
                 }
 
                 theory.addRule(bestRuleOfMulti);
+
+
+
 
                 if (DEBUG_STEP_BY_STEP) {
                     System.out.println(
@@ -1327,7 +1341,6 @@ public class SeCoAlgorithm implements Serializable {
 
     public MultiHeadRuleSet multiclassCoveringSeparateAndConquerMultilabel(Instances examples,
                                                                            int labelIndices[]) throws Exception {
-
         SeCoLogger.debug("entering separateAndConquerMultilabel");
         LinkedHashSet<Integer> labelIndicesAsSet = new LinkedHashSet<>(labelIndices.length);
         Arrays.stream(labelIndices).forEach(labelIndicesAsSet::add);

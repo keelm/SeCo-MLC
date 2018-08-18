@@ -288,8 +288,7 @@ public class MulticlassCovering {
                     }
                 }
 
-                for (int i : attributeIterable(instances, labelIndices,
-                        predictedLabels)) { // For all attributes
+                for (int i : attributeIterable(instances, labelIndices, predictedLabels)) { // For all attributes
                     Attribute attribute = instances.attribute(i);
 
                     for (Condition condition : attribute.isNumeric() ?
@@ -306,6 +305,7 @@ public class MulticlassCovering {
                                     closure != null ? closure.metaData : null);
                             refinedClosure.addCondition(i, condition);
                             refinedClosure = findBestHead(instances, labelIndices, refinedClosure);
+                            //System.out.println(refinedClosure);
                             //System.out.println(refinedClosure);
                             increaseEvaluationCount();
                             if (refinedClosure != null) {
@@ -364,6 +364,10 @@ public class MulticlassCovering {
         //System.out.println(fixHead + " " + closure.rule.getBody());
         if (fixHead) {
             multiLabelEvaluation.evaluate(instances, labelIndices, closure.rule, null);
+            if (closure.rule.getStats().getNumberOfTruePositives() <= 0)
+                return null;
+            if (closure.rule.getStats().getNumberOfTruePositives() <closure.rule.getStats().getNumberOfFalsePositives())
+                return null;
             return closure;
         }
 
@@ -573,6 +577,7 @@ public class MulticlassCovering {
                 }
             }
         }
+        //System.out.println(singleLabelHeads);
         return singleLabelHeads;
     }
 
@@ -642,8 +647,8 @@ public class MulticlassCovering {
                 if (refinedClosure != null) {
                     // if refined closure better than result -> set new result
                     if (refinedClosure.rule.getStats().getNumberOfTruePositives() > 0 &&
-                            (result == null || refinedClosure.rule.getBoostedRuleValue() >= result.rule.getBoostedRuleValue())) {
-
+                            (result == null || refinedClosure.rule.getBoostedRuleValue() >= result.rule.getBoostedRuleValue()) &&
+                            closure.rule.getStats().getNumberOfTruePositives() >= closure.rule.getStats().getNumberOfFalsePositives()) {
                         // add refined closure
                         // map value to closure
                         improvedHeads.put(refinedClosure.rule.getRuleValue(), refinedClosure);
