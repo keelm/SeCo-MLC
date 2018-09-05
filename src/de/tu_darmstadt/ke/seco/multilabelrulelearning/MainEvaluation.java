@@ -333,7 +333,7 @@ public class MainEvaluation {
 
     }
 
-    private static int NUMBER_OF_THREADS = 30;
+    private static int NUMBER_OF_THREADS = 40;
 
     public synchronized static EvaluationSetting getSetting() {
         if (tasks.isEmpty())

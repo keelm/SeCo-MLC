@@ -54,8 +54,8 @@ public abstract class BoostingStrategy {
      * @return The maximum value of the boost function in [headSize, headSize + lookahead].
      */
     public double getMaximumLookaheadBoost(int headSize, int lookahead) {
-        double maximumBoostFunctionValue = Double.MIN_VALUE;
-        for (int headLength = headSize; headLength <= headSize + lookahead && headLength <= maximumNumberOfLabels; headLength++) {
+        double maximumBoostFunctionValue = -1;
+        for (int headLength = headSize + 1; headLength <= headSize + lookahead && headLength <= maximumNumberOfLabels; headLength++) {
             double boostFunctionValue = boostFunctionValues.get(headLength);
             if (boostFunctionValue > maximumBoostFunctionValue)
                 maximumBoostFunctionValue = boostFunctionValue;
@@ -69,8 +69,8 @@ public abstract class BoostingStrategy {
      * @return The maximum boost function value.
      */
     public double getMaximumBoost(int headSize) {
-        double maximumBoostFunctionValue = Double.MIN_VALUE;
-        for (int headLength = headSize; headLength <= maximumNumberOfLabels; headLength++) {
+        double maximumBoostFunctionValue = -1;
+        for (int headLength = headSize + 1; headLength <= maximumNumberOfLabels; headLength++) {
             double boostFunctionValue = boostFunctionValues.get(headLength);
             if (boostFunctionValue > maximumBoostFunctionValue)
                 maximumBoostFunctionValue = boostFunctionValue;

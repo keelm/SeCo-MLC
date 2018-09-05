@@ -30,7 +30,7 @@ public class MaxBoosting extends BoostingStrategy {
 
     @Override
     public double getMaximumLookaheadBoost(int headSize, int lookahead) {
-        if (maximum >= headSize && maximum <= headSize + lookahead)
+        if (maximum > headSize && maximum <= headSize + lookahead)
             return boostFunctionValues.get((int) maximum);
         return super.getMaximumLookaheadBoost(headSize, lookahead);
     }

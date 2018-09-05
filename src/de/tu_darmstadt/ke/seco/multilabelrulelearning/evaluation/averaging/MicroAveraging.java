@@ -35,6 +35,7 @@ public class MicroAveraging extends AveragingStrategy {
             Instance instance = instances.get(i);
             boolean covers = rule.covers(instance);
 
+            // TODO: condition must be omitted for prepending
             if (!covers || !areAllLabelsAlreadyPredicted(instance, head)) {
                 for (int labelIndex : relevantLabels) {
                     aggregate(covers, head, instance, labelIndex, stats, null);

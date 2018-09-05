@@ -119,8 +119,8 @@ public class MulticlassCovering {
 
     }
 
-    private static final boolean DEBUG_STEP_BY_STEP = false;
-    private static final boolean DEBUG_STEP_BY_STEP_V = false;
+    private static final boolean DEBUG_STEP_BY_STEP = true;
+    private static final boolean DEBUG_STEP_BY_STEP_V = true;
 
     private static HashSet<Integer> labelIndicesHash;
     private static Hashtable<Integer,Boolean> coveringCache;
@@ -246,7 +246,7 @@ public class MulticlassCovering {
 
         while (improved) { // Until no improvement possible
             improved = refineRule(instances, labelIndices, predictedLabels, bestClosures);
-            if (!bestClosures.isEmpty()) {
+            if (!bestClosures.isEmpty()) { // fixing the head
                 fixHead = true;
                 fixedHead = ((Closure) bestClosures.toArray()[0]).rule.getHead();
             }
@@ -511,6 +511,16 @@ public class MulticlassCovering {
             this.evaluations += 1;
             multiClosure.rule.setRawRuleValue(rawRuleValue);
 
+            /*ArrayList<Condition> body = closure.rule.getBody(); // label condition boosting
+            for (Condition condition : body) {
+                de.tu_darmstadt.ke.seco.models.Attribute attr = condition.getAttr();
+                if (labelIndices.contains(attr.index()) && !bestHeadOfLessLength.containsCondition(attr.index())) {
+                    double labelBoostedRaw = multiClosure.rule.getRawRuleValue() * 1.1;
+                    multiClosure.rule.setRawRuleValue(labelBoostedRaw);
+                    break;
+                }
+            }*/
+
             // apply boosting
             boostingStrategy.evaluate(multiClosure.rule);
 
@@ -519,7 +529,7 @@ public class MulticlassCovering {
             multiClosure.rule.setRuleValue(heuristic, ruleValue);
 
             // update best closure
-            if (multiClosure.rule.getBoostedRuleValue() >= topClosure.rule.getBoostedRuleValue())
+            if (multiClosure.rule.getBoostedRuleValue() > topClosure.rule.getBoostedRuleValue())
                 topClosure = multiClosure;
 
 
@@ -573,7 +583,8 @@ public class MulticlassCovering {
                     multiLabelEvaluation.evaluate(instances, labelIndices, singleHeadClosure.rule, null);
                     singleHeadClosure.rule.setBoostedRuleValue(singleHeadClosure.rule.getRawRuleValue());
                     this.evaluations += 1;
-                    singleLabelHeads.put(singleHeadClosure.rule.getRawRuleValue(), singleHeadClosure);
+                    double rawRuleValue = singleHeadClosure.rule.getRawRuleValue();
+                    singleLabelHeads.put(rawRuleValue, singleHeadClosure);
                 }
             }
         }
