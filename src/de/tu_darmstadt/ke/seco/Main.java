@@ -5,9 +5,11 @@ import de.tu_darmstadt.ke.seco.algorithm.SeCoAlgorithm;
 import de.tu_darmstadt.ke.seco.algorithm.SeCoAlgorithmFactory;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.MainEvaluation;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.Weka379AdapterMultilabel;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.Weka379AdapterPrepending;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.averaging.AveragingStrategy;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.EvaluationStrategy;
 import mulan.classifier.MultiLabelLearner;
+import mulan.classifier.MultiLabelLearnerBase;
 import mulan.data.MultiLabelInstances;
 import mulan.evaluation.Evaluation;
 import mulan.evaluation.Evaluator;
@@ -40,11 +42,11 @@ public class Main {
 
         if (testData != null) {
             Evaluator evaluator = new Evaluator();
-            Evaluation evaluation = evaluator.evaluate(multilabelLearner, trainingData, trainingData);
+            Evaluation trainingEvaluation = evaluator.evaluate(multilabelLearner, trainingData, trainingData);
             System.out.println("\n\nEvaluation Results on train data:\n");
-            System.out.println(evaluation);
+            System.out.println(trainingEvaluation);
             evaluator = new Evaluator();
-            evaluation = evaluator.evaluate(multilabelLearner, testData, trainingData);
+            Evaluation evaluation = evaluator.evaluate(multilabelLearner, testData, trainingData);
             for (Measure measure : evaluation.getMeasures()) {
                 csvWriter.writeNext(new String[]{measure.getName(), Double.toString(measure.getValue())});
             }
@@ -54,6 +56,10 @@ public class Main {
 
             csvWriter.writeNext(new String[]{"avg. #evals per findBestHead()", Double.toString(evaluationsPerHead)});
             csvWriter.writeNext(new String[]{"#findBestHead()", Integer.toString(evaluatedHeads)});
+
+            for (Measure measure : trainingEvaluation.getMeasures()) {
+                csvWriter.writeNext(new String[]{measure.getName(), Double.toString(measure.getValue())});
+            }
         }
     }
 
@@ -128,8 +134,7 @@ public class Main {
         final double boostAtLabel = Double.valueOf(getOptionalArgument("boostAtLabel", args, "1.1"));
         final double curvature = Double.valueOf(getOptionalArgument("curvature", args, "2.0"));
         final int pruningDepth = Integer.valueOf(getOptionalArgument("pruningDepth", args, "-1"));
-
-
+        final boolean usePrepending = Boolean.valueOf((getOptionalArgument("prepending", args, "false")));
 
         System.out.println("Arguments:\n");
         System.out.println("-baselearner " + baseLearnerConfigPath);
@@ -150,6 +155,7 @@ public class Main {
         System.out.println("-boostAtLabel " + boostAtLabel);
         System.out.println("-curvature " + curvature);
         System.out.println("-pruningDepth " + pruningDepth);
+        System.out.println("-prepending " + usePrepending);
         System.out.println("\n");
 
         // create csv file
@@ -178,7 +184,7 @@ public class Main {
         csvWriter.writeNext(new String[]{"readdAllCovered", Boolean.toString(readdAllCovered)});
         csvWriter.writeNext(new String[]{"skipThresholdPercentage", Double.toString(skipThresholdPercentage)});
         csvWriter.writeNext(new String[]{"predictZeroRules", Boolean.toString(predictZeroRules)});
-        csvWriter.writeNext(new String[]{"useMultilabelHeads" ,Boolean.toString(useMultilabelHeads)});
+        csvWriter.writeNext(new String[]{"useMultilabelHeads", Boolean.toString(useMultilabelHeads)});
         csvWriter.writeNext(new String[]{"evaluationStrategy", evaluationStrategy});
         csvWriter.writeNext(new String[]{"averagingStrategy", averagingStrategy});
         csvWriter.writeNext(new String[]{"useRelaxedPruning ", Boolean.toString(useRelaxedPruning)});
@@ -193,12 +199,21 @@ public class Main {
         final MultiLabelInstances trainingData = new MultiLabelInstances(arffFilePath, xmlLabelsDefFilePath);
 
         System.out.println("SeCo: start experiment\n");
-        
-        SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(baseLearnerConfigPath);
-        Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
+
+        MultiLabelLearnerBase multilabelLearner = null;
+        if (usePrepending) {
+            SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(baseLearnerConfigPath);
+            multilabelLearner = new Weka379AdapterPrepending(baseLearnerAlgorithm,
+                    remainingInstancesPercentage, readdAllCovered, skipThresholdPercentage, predictZeroRules,
+                    useMultilabelHeads, evaluationStrategy, averagingStrategy,
+                    useRelaxedPruning, useBoostedHeuristicForRules, boostFunction, label, boostAtLabel, curvature, pruningDepth);
+        } else {
+            SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(baseLearnerConfigPath);
+            multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
                 remainingInstancesPercentage, readdAllCovered, skipThresholdPercentage, predictZeroRules,
                 useMultilabelHeads, evaluationStrategy, averagingStrategy,
                 useRelaxedPruning, useBoostedHeuristicForRules, boostFunction, label, boostAtLabel, curvature, pruningDepth);
+        }
 
         // Create test instances from dataset, if available
         final MultiLabelInstances testData = testArffFilePath != null ? new MultiLabelInstances(testArffFilePath, xmlLabelsDefFilePath) : null;

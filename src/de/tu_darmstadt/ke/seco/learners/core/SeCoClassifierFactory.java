@@ -5,6 +5,8 @@ import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Heuristic;
 import de.tu_darmstadt.ke.seco.models.*;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.MulticlassCovering;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.MultilabelSecoClassifier;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.PrependingSecoClassifier;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.prepending.PrependingMulticlassCovering;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 import de.tu_darmstadt.ke.seco.utils.Logger;
 import de.tu_darmstadt.ke.seco.utils.StopWatch;
@@ -281,6 +283,33 @@ public class SeCoClassifierFactory {
         seCoClassifier.m_theory = seCoClassifier.getSeCoAlgorithm().separateAndConquerMultilabel(instances, labelIndices);
 
         MulticlassCovering.finished = true;
+
+        seCoAlgorithm.getRuleStoppingCriterion().setProperty("reset", "true");
+        Logger.info("Complete theory:\n" + seCoClassifier.getTheory().toString());
+
+
+        stopWatch.stop();
+        seCoClassifier.setLearningTime(stopWatch.getElapsedTime());
+        Logger.info("Building classifier finished. Time used: " + stopWatch.getElapsedTime() + "ms.");
+        return seCoClassifier;
+    }
+
+    // prepending:
+    public static PrependingSecoClassifier buildSeCoClassifierPrepending(final SeCoAlgorithm seCoAlgorithm, Instances instances, int[] labelIndices) throws Exception {
+        Logger.info("Building classifier with algorithm:\n" + seCoAlgorithm);
+
+        final StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
+
+        final PrependingSecoClassifier seCoClassifier = new PrependingSecoClassifier(labelIndices, seCoAlgorithm);
+        seCoClassifier.setSeCoAlgorithm(seCoAlgorithm);
+
+        // TODO by m.zopf: if this should always be done, it should be placed in SeCoFactory
+        seCoAlgorithm.getRuleRefiner().setProperty("beamwidth", seCoAlgorithm.getRuleFilter().getProperty("beamwidth"));
+
+        seCoClassifier.m_theory = seCoClassifier.getSeCoAlgorithm().prependingMultilabel(instances, labelIndices);
+
+        PrependingMulticlassCovering.finished = true;
 
         seCoAlgorithm.getRuleStoppingCriterion().setProperty("reset", "true");
         Logger.info("Complete theory:\n" + seCoClassifier.getTheory().toString());

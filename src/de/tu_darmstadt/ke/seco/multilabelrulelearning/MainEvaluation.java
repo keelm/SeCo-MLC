@@ -299,7 +299,9 @@ public class MainEvaluation {
 
         bestSetting.writeToCSV();
 
-        if (!useRelaxedPruning) {
+        bestSetting.string(1);
+
+       /* if (!useRelaxedPruning) {
             SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(baseLearnerConfigPath);
             Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
                     bestSetting.remainingInstancesPercentage, bestSetting.readdAllCoveredValue, bestSetting.skipThresholdPercentage, bestSetting.predictZeroRulesValue,
@@ -326,7 +328,7 @@ public class MainEvaluation {
             for (Measure measure : evaluation.getMeasures()) {
                 csvWriter.writeNext(new String[]{measure.getName(), Double.toString(measure.getValue())});
             }
-        }
+        }*/
 
         csvWriter.close();
         System.out.println("done");

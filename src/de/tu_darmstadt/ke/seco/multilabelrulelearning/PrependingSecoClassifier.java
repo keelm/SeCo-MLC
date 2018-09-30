@@ -11,23 +11,23 @@ import mulan.data.MultiLabelInstances;
 import weka.core.Instance;
 import weka.core.Utils;
 
-public class MultilabelSecoClassifier extends SeCoClassifier implements MultiLabelLearner {
+public class PrependingSecoClassifier extends SeCoClassifier implements MultiLabelLearner {
 
     protected int[] m_labelindices;
     protected SeCoAlgorithm m_secoAlgo;
-    protected MultilabelSecoClassifier internalClassifier;
+    protected PrependingSecoClassifier internalClassifier;
 
 
-    public MultilabelSecoClassifier(int labelindices[], SeCoAlgorithm secoAlgo) {
+    public PrependingSecoClassifier(int labelindices[], SeCoAlgorithm secoAlgo) {
         m_labelindices = labelindices;
         m_secoAlgo = secoAlgo;
     }
 
-    public MultilabelSecoClassifier() {
+    public PrependingSecoClassifier() {
 
     }
 
-    public MultilabelSecoClassifier(String id) {
+    public PrependingSecoClassifier(String id) {
         super(id);
     }
 
@@ -39,7 +39,7 @@ public class MultilabelSecoClassifier extends SeCoClassifier implements MultiLab
     @Override
     public void build(MultiLabelInstances instances) throws Exception {
         internalClassifier = SeCoClassifierFactory
-                .buildSeCoClassifierMultilabel(m_secoAlgo, Instances.toSeCoInstances(instances.getDataSet()),
+                .buildSeCoClassifierPrepending(m_secoAlgo, Instances.toSeCoInstances(instances.getDataSet()),
                         m_labelindices);
         m_theory = internalClassifier.m_theory;
     }
@@ -53,9 +53,9 @@ public class MultilabelSecoClassifier extends SeCoClassifier implements MultiLab
     @Override
     public MultiLabelOutput makePrediction(Instance instance) throws Exception {
         Instance inst = (Instance) instance.copy();
-        //ensures that no label is set before. could also be not a so great idea...
+        // set every label to be irrelevant initially
         for (int i = 0; i < m_labelindices.length; i++)
-            inst.setValue(m_labelindices[i], Utils.missingValue());
+            inst.setValue(m_labelindices[i], 0.0);
         if (SeCoAlgorithm.DEBUG_STEP_BY_STEP)
             System.out.println("######instance to classify:\n" + inst);
         for (int i = 0; i < m_theory.numRules(); i++) {
@@ -73,13 +73,12 @@ public class MultilabelSecoClassifier extends SeCoClassifier implements MultiLab
                         System.out.println("rule fires: " + rule);
                     Condition head = singleHeadRule.getHead();
                     // TODO: must be omitted for prepending
-                    if (Utils.isMissingValue(inst.value(head.getAttr().index()))) {
-                        inst.setValue(head.getAttr(),
-                                head.getValue()); //value will always be 1.0 in the beginning setting
+                    //if (Utils.isMissingValue(inst.value(head.getAttr().index()))) {
+                        inst.setValue(head.getAttr(), head.getValue());
                         predicted = true;
                         if (SeCoAlgorithm.DEBUG_STEP_BY_STEP)
-                            System.out.println("label is set since not set before, new instance:\n " + inst);
-                    }
+                            System.out.println("label is set, new instance:\n " + inst);
+                    //}
                 }
                 if (i < m_theory.numRules() - 1) {
                     SingleHeadRule nextRule = (SingleHeadRule) m_theory.getRule(i + 1);
@@ -108,19 +107,18 @@ public class MultilabelSecoClassifier extends SeCoClassifier implements MultiLab
 
                     for (Condition condition : head) {
                         // TODO: must be omitted for prepending
-                        if (Utils.isMissingValue(inst.value(condition.getAttr().index()))) {
+                        //if (Utils.isMissingValue(inst.value(condition.getAttr().index()))) {
                             inst.setValue(condition.getAttr().index(), condition.getValue());
                             predicted = true;
                             if (SeCoAlgorithm.DEBUG_STEP_BY_STEP)
-                                System.out.println("label is set since not set before, new instance:\n " + inst);
-                        }
+                                System.out.println("label is set, new instance:\n " + inst);
+                        //}
                     }
 
                 }
                 if (i < m_theory.numRules() - 1) {
                     MultiHeadRule nextRule = (MultiHeadRule) m_theory.getRule(i + 1);
-                    if (multiHeadRule.getHead().size() > 0 &&
-                            "magicSkipHead".equals(nextRule.getHead().iterator().next().getAttr().name())) {
+                    if (multiHeadRule.getHead().size() > 0 && "magicSkipHead".equals(nextRule.getHead().iterator().next().getAttr().name())) {
                         i++; // skip this next rule, do everything we have to do here
                         if (predicted) {
                             if (SeCoAlgorithm.DEBUG_STEP_BY_STEP)

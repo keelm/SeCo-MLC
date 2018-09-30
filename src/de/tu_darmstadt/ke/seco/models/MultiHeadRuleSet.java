@@ -177,6 +177,6 @@ public class MultiHeadRuleSet extends RuleSet<MultiHeadRule> {
         return stringBuilder.toString();
     }
 
-    private static boolean csvWritten = false;
+    public static boolean csvWritten = false;
 
 }

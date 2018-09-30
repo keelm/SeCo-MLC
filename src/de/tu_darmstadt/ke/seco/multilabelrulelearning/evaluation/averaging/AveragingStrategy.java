@@ -32,7 +32,7 @@ public abstract class AveragingStrategy {
         return wrappedInstance.value(labelIndex);
     }
 
-    final Iterable<Integer> instancesIterable(final Instances instances) {
+    protected final Iterable<Integer> instancesIterable(final Instances instances) {
         return () -> new Iterator<Integer>() {
 
             private int i = 0;
@@ -50,7 +50,7 @@ public abstract class AveragingStrategy {
         };
     }
 
-    final boolean areAllLabelsAlreadyPredicted(final Instance instance, final Head head) {
+    protected final boolean areAllLabelsAlreadyPredicted(final Instance instance, final Head head) {
         for (Condition labelAttribute : head) {
             if (Utils.isMissingValue(instance.value(labelAttribute.getAttr().index()))) {
                 return false;
@@ -60,19 +60,18 @@ public abstract class AveragingStrategy {
         return true;
     }
 
-    // corrections with zero
-    final void aggregateCorrectWithZero(final boolean covers, final Head head, final Instance instance, final int labelIndex,
+    /**
+     * Aggregations for Prepending. Changed semantics of TP, FP, FN and TN.
+     * Only works for rule-dependent evaluation.
+     */
+    protected final void aggregatePrepending(final boolean covers, final Head head, final Instance instance, final int labelIndex,
                                 final TwoClassConfusionMatrix confusionMatrix, final TwoClassConfusionMatrix stats) {
         double trueValue = getLabelValue(instance, labelIndex); // true label value (WrappedInstance)
         boolean isMissing = instance.isMissing(labelIndex);
         double setValue = isMissing ? 0 : instance.value(labelIndex);
 
-
         Condition labelAttribute = head.getCondition(labelIndex); // get the attribute of the head
         double predictedValue = labelAttribute.getValue(); // value of the attribute in the head
-
-      /*  if (trueValue == 0.0 && predictedValue == 0.0 && setValue == 1.0)
-            System.out.println("ZERO CORRECTION " + covers);*/
 
         if (covers) { // the rule covers the instance
 
@@ -83,15 +82,12 @@ public abstract class AveragingStrategy {
 
             if (trueValue == 0.0) {
                 if (predictedValue == 0.0 && setValue == 1.0) {
-                    //System.out.println("TP!!!");
                     confusionMatrix.addTruePositives(instance.weight());
                     return;
                 } else if (predictedValue == 1.0 && setValue == 0.0) {
-                    //System.out.println("FP");
                     confusionMatrix.addFalsePositives(instance.weight());
                     return;
                 } else if (predictedValue == 1.0 && setValue == 1.0) {
-                    //System.out.println("FN");
                     confusionMatrix.addFalseNegatives(instance.weight());
                     return;
                 }
@@ -117,8 +113,10 @@ public abstract class AveragingStrategy {
 
     }
 
-    // correct 1's
-    final void aggregateCorrect(final boolean covers, final Head head, final Instance instance, final int labelIndex,
+    /**
+     * Prepending with only positive heads.
+     */
+    final void aggregatePrependingPositiveHeads(final boolean covers, final Head head, final Instance instance, final int labelIndex,
                          final TwoClassConfusionMatrix confusionMatrix, final TwoClassConfusionMatrix stats) {
         double trueLabelValue = getLabelValue(instance, labelIndex); // true label value (WrappedInstance)
 
@@ -146,8 +144,8 @@ public abstract class AveragingStrategy {
 
     }
 
-    final void aggregate(final boolean covers, final Head head, final Instance instance, final int labelIndex,
-                         final TwoClassConfusionMatrix confusionMatrix, final TwoClassConfusionMatrix stats) {
+    protected final void aggregate(final boolean covers, final Head head, final Instance instance, final int labelIndex,
+                                   final TwoClassConfusionMatrix confusionMatrix, final TwoClassConfusionMatrix stats) {
         double labelValue = getLabelValue(instance, labelIndex);
 
         if (covers) {
@@ -183,7 +181,7 @@ public abstract class AveragingStrategy {
                 }
             }
         } else {
-            //Condition labelAttribute = head.getCondition(labelIndex);
+
             if (labelValue == 1.0) {
                 confusionMatrix.addFalseNegatives(instance.weight());
 
@@ -228,6 +226,20 @@ public abstract class AveragingStrategy {
             return new ExampleBasedAveraging();
         } else if (strategy.equalsIgnoreCase(MACRO_AVERAGING)) {
             return new MacroAveraging();
+        }
+
+        throw new IllegalArgumentException("Invalid averaging strategy: " + strategy);
+    }
+
+    public static AveragingStrategy createPrepending(final String strategy) {
+        if (strategy.equalsIgnoreCase(MICRO_AVERAGING)) {
+            return new de.tu_darmstadt.ke.seco.multilabelrulelearning.prepending.evaluation.averaging.MicroAveraging();
+        } else if (strategy.equalsIgnoreCase(LABEL_BASED_AVERAGING)) {
+            return new de.tu_darmstadt.ke.seco.multilabelrulelearning.prepending.evaluation.averaging.LabelBasedAveraging();
+        } else if (strategy.equalsIgnoreCase(EXAMPLE_BASED_AVERAGING)) {
+            return new de.tu_darmstadt.ke.seco.multilabelrulelearning.prepending.evaluation.averaging.ExampleBasedAveraging();
+        } else if (strategy.equalsIgnoreCase(MACRO_AVERAGING)) {
+            return new de.tu_darmstadt.ke.seco.multilabelrulelearning.prepending.evaluation.averaging.MacroAveraging();
         }
 
         throw new IllegalArgumentException("Invalid averaging strategy: " + strategy);

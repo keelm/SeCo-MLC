@@ -1,12 +1,12 @@
-package de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.averaging;
+package de.tu_darmstadt.ke.seco.multilabelrulelearning.prepending.evaluation.averaging;
 
 import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Heuristic;
 import de.tu_darmstadt.ke.seco.models.Instances;
 import de.tu_darmstadt.ke.seco.models.MultiHeadRule;
 import de.tu_darmstadt.ke.seco.models.MultiHeadRule.Head;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.MultiLabelEvaluation.MetaData;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.averaging.AveragingStrategy;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
-import de.tu_darmstadt.ke.seco.utils.Logger;
 import weka.core.Instance;
 
 import java.util.Collection;
@@ -36,11 +36,11 @@ public class MicroAveraging extends AveragingStrategy {
             boolean covers = rule.covers(instance);
 
             // TODO: condition must be omitted for prepending!
-            if (!covers || !areAllLabelsAlreadyPredicted(instance, head)) {
+            //if (!covers || !areAllLabelsAlreadyPredicted(instance, head)) {
                 for (int labelIndex : relevantLabels) {
-                    aggregate(covers, head, instance, labelIndex, stats, null);
+                    aggregatePrepending(covers, head, instance, labelIndex, stats, null);
                 }
-            }
+            //}
 
             if (covers) {
                 coveredInstances.add(i);
