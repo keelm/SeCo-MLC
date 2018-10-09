@@ -9,7 +9,7 @@ import de.tu_darmstadt.ke.seco.models.*;
 import de.tu_darmstadt.ke.seco.models.MultiHeadRule.Head;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.MultiLabelEvaluation;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.MultiLabelEvaluation.MetaData;
-import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.BoostingStrategy;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.LiftingStrategy;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.RuleIndependentEvaluation;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 import weka.core.Attribute;
@@ -132,16 +132,17 @@ public class MulticlassCovering {
 
     public MulticlassCovering(final MultiLabelEvaluation multiLabelEvaluation,
                               final boolean predictZero,
-                              final BoostingStrategy boostingStrategy,
+                              final LiftingStrategy liftingStrategy,
                               final boolean useRelaxedPruning,
                               final boolean useBoostedHeuristicForRules,
-                              final int pruningDepth) {
+                              final int pruningDepth, final boolean fixableHead) {
         this.multiLabelEvaluation = multiLabelEvaluation;
         this.predictZero = predictZero;
-        this.boostingStrategy = boostingStrategy;
+        this.liftingStrategy = liftingStrategy;
         this.useRelaxedPruning = useRelaxedPruning;
-        this.useBoostedHeuristicForChoosingRules = useBoostedHeuristicForRules;
+        this.useLiftedHeuristic = useBoostedHeuristicForRules;
         this.pruningDepth = pruningDepth;
+        this.fixableHead = fixableHead;
     }
 
     public MulticlassCovering(final MultiLabelEvaluation multiLabelEvaluation, final boolean predictZero, int[] labelIndices) {
@@ -248,7 +249,7 @@ public class MulticlassCovering {
         while (improved) { // Until no improvement possible
             improved = refineRule(instances, labelIndices, predictedLabels, bestClosures);
             if (useRelaxedPruning && !bestClosures.isEmpty()) { // fixing the head
-                fixHead = true; // true for normal, false for prepending
+                fixHead = fixableHead; // true for normal, false for prepending
                 fixedHead = ((Closure) bestClosures.toArray()[0]).rule.getHead();
             }
 
@@ -381,7 +382,7 @@ public class MulticlassCovering {
 
                 return findBestRelaxedHeadDecomposable(instances, labelIndices, closure);
             } else if (characteristic == Characteristic.ANTI_MONOTONOUS) {
-                return findBestRelaxedHeadAntiMonotonic(instances, labelIndices, closure, null, new HashSet<>(), new LinkedList<>());
+                return findBestRelaxedHeadAntiMonotonic(instances, labelIndices, closure, null, new HashSet<>(), new LinkedList<>(), new LinkedList<>());
             } else {
                 throw new RuntimeException("Only anti-monotonous or decomposable evaluation metrics are supported for learning multi-label head rules");
             }
@@ -406,15 +407,15 @@ public class MulticlassCovering {
     public boolean useRelaxedPruning = true;
 
     /**
-     * The boosting strategy to use. Defines how much boost to apply depending on the number of labels in the head.
+     * The lifting strategy to use. Defines how much of a lift to apply depending on the number of labels in the head.
      */
-    public BoostingStrategy boostingStrategy;
+    public LiftingStrategy liftingStrategy;
 
     /**
-     * True if the boosted heuristic value is to be used for evaluating rules.
-     * False otherwise, corresponds to the unboosted heuristic value being used for assessing rules.
+     * True if the lifted heuristic value is to be used for evaluating rules.
+     * False otherwise, corresponds to the normal heuristic value being used for assessing rules.
      */
-    public boolean useBoostedHeuristicForChoosingRules = true;
+    public boolean useLiftedHeuristic = true;
 
     /**
      * Variables for tracking the number of evaluations per execution of findBestHead().
@@ -427,14 +428,86 @@ public class MulticlassCovering {
     /**
      * Trade off between finding the best possible head and efficiency.
      * A higher value implies higher chances of finding the best possible head
-     * but also reduced efficiency. Number of subsequent boost function values checked.
+     * but also reduced efficiency. Number of subsequent lift function values checked.
      * If set to -1 the best possible head is guaranteed!
      */
     public int pruningDepth = -1;
 
-    // TODO: refactor
-    private Closure findBestRelaxedHeadDecomposable(final Instances instances, final LinkedHashSet<Integer> labelIndices, final Closure closure) {
+    public boolean fixableHead = true;
 
+    private Closure findBestRelaxedHeadDecomposable(final Instances instances, final LinkedHashSet<Integer> labelIndices, final Closure closure) {
+        Heuristic heuristic = multiLabelEvaluation.getHeuristic();
+        // save all single label heads heuristic values and closures
+        SortedMultimap singleLabelHeads = findAllSingleLabelHeads(instances, labelIndices, closure);
+        // data structures for keeping track of the so far induced heads
+        Closure bestClosure = singleLabelHeads.get(singleLabelHeads.firstKey());
+        Closure currentClosure = singleLabelHeads.get(singleLabelHeads.firstKey());
+        // remove single label head
+        singleLabelHeads.remove(currentClosure.rule.getRuleValue(), currentClosure);
+        // best single label head already not enough true positives
+        if (currentClosure.rule.getStats().getNumberOfTruePositives() <= 0)
+            return null;
+        // for all remaining head lengths
+        for (int n = 2; n <= labelIndices.size(); n++) {
+            Closure bestRemainingSingleHeadClosure = null;
+            Condition conditionToBeAdded = null;
+            // get the best remaining single label condition for which the attribute is not already contained in the head
+            boolean labelAlreadyInHead = true;
+            boolean finish = false;
+            while (labelAlreadyInHead) {
+                // no more single labels to add
+                if (singleLabelHeads.isEmpty()) {
+                    finish = true;
+                    break;
+                }
+                // check if condition already in head
+                Double bestRemainingSingleHeadHeuristicValue = singleLabelHeads.firstKey();
+                bestRemainingSingleHeadClosure = singleLabelHeads.get(bestRemainingSingleHeadHeuristicValue);
+                Head bestRemainingSingleHead = bestRemainingSingleHeadClosure.rule.getHead();
+                Condition bestRemainingCondition = (Condition) bestRemainingSingleHead.getConditions().toArray()[0];
+                int attributeIndex = bestRemainingCondition.getAttr().index();
+                Collection<Integer> labelIndicesInHead = currentClosure.rule.getHead().getLabelIndices();
+                labelAlreadyInHead = labelIndicesInHead.contains(attributeIndex);
+                singleLabelHeads.remove(bestRemainingSingleHeadHeuristicValue, bestRemainingSingleHeadClosure);
+                conditionToBeAdded = bestRemainingCondition;
+            }
+            // no more single labels to add
+            if (finish)
+                break;
+            // create new closure
+            Closure newClosure = new Closure ((MultiHeadRule) currentClosure.rule.copy(), null);
+            // add best remaining single label to head
+            newClosure.rule.getHead().addCondition(conditionToBeAdded);
+            // add statistics from best remaining single label head
+            newClosure.rule.getStats().addTruePositives(bestRemainingSingleHeadClosure.rule.getStats().getNumberOfTruePositives());
+            newClosure.rule.getStats().addFalsePositives(bestRemainingSingleHeadClosure.rule.getStats().getNumberOfFalsePositives());
+            newClosure.rule.getStats().addTrueNegatives(bestRemainingSingleHeadClosure.rule.getStats().getNumberOfTrueNegatives());
+            newClosure.rule.getStats().addFalseNegatives(bestRemainingSingleHeadClosure.rule.getStats().getNumberOfFalseNegatives());
+            // set rule values and head
+            double rawRuleValue = heuristic.evaluateRule(newClosure.rule);
+            this.evaluations += 1;
+            newClosure.rule.setRawRuleValue(rawRuleValue);
+            // apply lift
+            liftingStrategy.evaluate(newClosure.rule);
+            // set rule value depending on whether or not to use the lifted heuristic value
+            double ruleValue = useLiftedHeuristic ?  newClosure.rule.getLiftedRuleValue() : newClosure.rule.getRawRuleValue();
+            newClosure.rule.setRuleValue(heuristic, ruleValue);
+            // update best closure
+            if (newClosure.rule.getLiftedRuleValue() > bestClosure.rule.getLiftedRuleValue())
+                bestClosure = newClosure;
+            // prune if the best lifted heuristic value cannot be reached anymore
+            double maximumLiftValue = liftingStrategy.getMaximumLift(newClosure.rule.getHead().size());
+            double maximumLiftedHeuristicValue = newClosure.rule.getRawRuleValue() * maximumLiftValue;
+            // if best value cannot be achieved anymore
+            if (maximumLiftedHeuristicValue < bestClosure.rule.getLiftedRuleValue())
+                return bestClosure.rule.getStats().getNumberOfTruePositives() >= bestClosure.rule.getStats().getNumberOfFalsePositives() ? bestClosure : null;
+            // update current closure
+            currentClosure = newClosure;
+        }
+        return bestClosure.rule.getStats().getNumberOfTruePositives() >= bestClosure.rule.getStats().getNumberOfFalsePositives() ? bestClosure : null;
+    }
+
+    private Closure findBestRelaxedHeadDecomposableOld(final Instances instances, final LinkedHashSet<Integer> labelIndices, final Closure closure) {
         // save all single label heads heuristic values and closures
         SortedMultimap singleLabelHeads = findAllSingleLabelHeads(instances, labelIndices, closure);
         // data structures for keeping track of the so far induced heads
@@ -513,21 +586,21 @@ public class MulticlassCovering {
 
 
             // apply boosting
-            boostingStrategy.evaluate(multiClosure.rule);
+            liftingStrategy.evaluate(multiClosure.rule);
 
             // set rule value depending on whether or not to use boosted heuristic
-            double ruleValue = useBoostedHeuristicForChoosingRules ?  multiClosure.rule.getBoostedRuleValue() : multiClosure.rule.getRawRuleValue();
+            double ruleValue = useLiftedHeuristic ?  multiClosure.rule.getLiftedRuleValue() : multiClosure.rule.getRawRuleValue();
             multiClosure.rule.setRuleValue(heuristic, ruleValue);
 
             // update best closure
-            if (multiClosure.rule.getBoostedRuleValue() > topClosure.rule.getBoostedRuleValue())
+            if (multiClosure.rule.getLiftedRuleValue() > topClosure.rule.getLiftedRuleValue())
                 topClosure = multiClosure;
 
 
 
             // prune if the best value cannot be reached anymore
-            double maximumBoostValue = boostingStrategy.getMaximumBoost(multiClosure.rule.getHead().size());
-            if (multiClosure.rule.getRawRuleValue() * maximumBoostValue < topClosure.rule.getBoostedRuleValue()) {
+            double maximumBoostValue = liftingStrategy.getMaximumLift(multiClosure.rule.getHead().size());
+            if (multiClosure.rule.getRawRuleValue() * maximumBoostValue < topClosure.rule.getLiftedRuleValue()) {
                 // TODO: >= !
                 if (topClosure.rule.getStats().getNumberOfTruePositives() >= topClosure.rule.getStats().getNumberOfFalsePositives()) {
                     return topClosure;
@@ -537,9 +610,9 @@ public class MulticlassCovering {
             }
 
             // add to the sorted map
-            if (boostedMultiLabelHeads.containsKey(multiClosure.rule.getBoostedRuleValue()))
-                boostedMultiLabelHeads.remove(multiClosure.rule.getBoostedRuleValue());
-            boostedMultiLabelHeads.put(multiClosure.rule.getBoostedRuleValue(), multiClosure);
+            if (boostedMultiLabelHeads.containsKey(multiClosure.rule.getLiftedRuleValue()))
+                boostedMultiLabelHeads.remove(multiClosure.rule.getLiftedRuleValue());
+            boostedMultiLabelHeads.put(multiClosure.rule.getLiftedRuleValue(), multiClosure);
 
             closuresWithHeadOfLengthN.put(n, multiClosure);
         }
@@ -574,7 +647,7 @@ public class MulticlassCovering {
                     singleHeadRule.setHead(head);
                     Closure singleHeadClosure = new Closure(singleHeadRule, null);
                     multiLabelEvaluation.evaluate(instances, labelIndices, singleHeadClosure.rule, null);
-                    singleHeadClosure.rule.setBoostedRuleValue(singleHeadClosure.rule.getRawRuleValue());
+                    singleHeadClosure.rule.setLiftedRuleValue(singleHeadClosure.rule.getRawRuleValue());
                     this.evaluations += 1;
                     double rawRuleValue = singleHeadClosure.rule.getRawRuleValue();
                     singleLabelHeads.put(rawRuleValue, singleHeadClosure);
@@ -587,10 +660,11 @@ public class MulticlassCovering {
 
     private Closure findBestRelaxedHeadAntiMonotonic(final Instances instances, final LinkedHashSet<Integer> labelIndices,
                                                      final Closure closure, final Closure bestClosure,
-                                                     final Set<Integer> evaluatedHeads,
+                                                     final Set<Integer> evaluatedHeads, final List<Head> decreasedHeads,
                                                      final List<Head> prunedHeads) throws Exception {
         // best head so far
         Closure result = bestClosure;
+
         SortedSetMultimap<Double, Closure> improvedHeads = TreeMultimap.create(Comparator.reverseOrder(), Comparator.reverseOrder());
         // for all possible label conditions
         for (int labelIndex : labelIndices) {
@@ -625,11 +699,11 @@ public class MulticlassCovering {
                             // evaluate rule with head
                             MetaData metaData = multiLabelEvaluation.evaluate(instances, labelIndices, currentClosure.rule, isRuleIndependent ? currentClosure.metaData : null);
                             //System.out.println(currentClosure +"" + currentClosure.rule.getHead().getLabelIndices() + " best: " + bestClosure);
-                            boostingStrategy.evaluate(currentClosure.rule);
+                            liftingStrategy.evaluate(currentClosure.rule);
                             evaluations += 1;
 
-                            if (useBoostedHeuristicForChoosingRules)
-                                currentClosure.rule.setRuleValue(currentClosure.rule.getHeuristic(), currentClosure.rule.getBoostedRuleValue());
+                            if (useLiftedHeuristic)
+                                currentClosure.rule.setRuleValue(currentClosure.rule.getHeuristic(), currentClosure.rule.getLiftedRuleValue());
                             else
                                 currentClosure.rule.setRuleValue(currentClosure.rule.getHeuristic(), currentClosure.rule.getRawRuleValue());
 
@@ -645,10 +719,18 @@ public class MulticlassCovering {
                     }
                 }
 
+                System.out.println(closure + " " + refinedClosure);
+
                 if (refinedClosure != null) {
+
+                    // check if normal heuristic value has declined
+                    if (refinedClosure.rule.getRawRuleValue() < closure.rule.getRawRuleValue()) {
+                        decreasedHeads.add(refinedClosure.rule.getHead());
+                    }
+
                     // if refined closure better than result -> set new result
                     if (refinedClosure.rule.getStats().getNumberOfTruePositives() > 0 &&
-                            (result == null || (refinedClosure.rule.getBoostedRuleValue() >= result.rule.getBoostedRuleValue()) &&
+                            (result == null || (refinedClosure.rule.getLiftedRuleValue() >= result.rule.getLiftedRuleValue()) &&
                             closure.rule.getStats().getNumberOfTruePositives() >= closure.rule.getStats().getNumberOfFalsePositives())) {
                         // TODO: > for prepending !
                         // add refined closure
@@ -661,10 +743,15 @@ public class MulticlassCovering {
                         MultiHeadRule rule = refinedClosure.rule;
                         Head head = rule.getHead();
                         int numberOfLabelsInTheHead = head.size();
-                        double maxBoost = pruningDepth == -1 ? boostingStrategy.getMaximumBoost(numberOfLabelsInTheHead) : boostingStrategy.getMaximumLookaheadBoost(numberOfLabelsInTheHead, pruningDepth);
+                        double maxBoost = pruningDepth == -1 ? liftingStrategy.getMaximumLift(numberOfLabelsInTheHead) : liftingStrategy.getMaximumLookaheadLift(numberOfLabelsInTheHead, pruningDepth);
                         double nextMaxRuleValue = rule.getRawRuleValue() * maxBoost;
-                        if (result != null && nextMaxRuleValue < result.rule.getBoostedRuleValue())
+                        if (result != null && nextMaxRuleValue < result.rule.getLiftedRuleValue()
+                                && hasHeuristicValueDecreased(decreasedHeads, refinedClosure.rule.getHead())) {
                             prunedHeads.add(refinedClosure.rule.getHead());
+                        } else if (refinedClosure.rule.getStats().getNumberOfTruePositives() > 0
+                            && closure.rule.getStats().getNumberOfTruePositives() >= closure.rule.getStats().getNumberOfFalsePositives()){
+                            improvedHeads.put(refinedClosure.rule.getRuleValue(), refinedClosure);
+                        }
                     }
 
 
@@ -686,11 +773,30 @@ public class MulticlassCovering {
                 result = refinedClosure;
             }
 
-            result = findBestRelaxedHeadAntiMonotonic(instances, labelIndices, refinedClosure, result, evaluatedHeads, prunedHeads);
+            result = findBestRelaxedHeadAntiMonotonic(instances, labelIndices, refinedClosure, result, evaluatedHeads, decreasedHeads, prunedHeads);
             first = false;
         }
 
         return result;
+    }
+
+    private boolean hasHeuristicValueDecreased(final List<Head> decreasedHeads, final Head head) {
+        for (Head decreasedHead : decreasedHeads) {
+            boolean isSubset = true;
+
+            for (Condition condition : decreasedHead) {
+                if (!head.containsCondition(condition.getAttr().index())) {
+                    isSubset = false;
+                    break;
+                }
+            }
+
+            if (isSubset) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -734,24 +840,16 @@ public class MulticlassCovering {
                 }
             }
 
-            if (currentClosure != null &&
-                    currentClosure.rule.getStats().getNumberOfTruePositives() > 0) {
+            if (currentClosure != null && currentClosure.rule.getStats().getNumberOfTruePositives() > 0) {
                 if (result == null) {
                     result = currentClosure;
                 } else {
                     if (currentClosure.rule.getRuleValue() == result.rule.getRuleValue()) {
-                        result.rule.getHead()
-                                .addCondition(currentClosure.rule.getHead().iterator().next());
-                        result.rule.getStats()
-                                .addTruePositives(
-                                        currentClosure.rule.getStats().getNumberOfTruePositives());
-                        result.rule.getStats().addFalsePositives(
-                                currentClosure.rule.getStats().getNumberOfFalsePositives());
-                        result.rule.getStats()
-                                .addTrueNegatives(
-                                        currentClosure.rule.getStats().getNumberOfTrueNegatives());
-                        result.rule.getStats().addFalseNegatives(
-                                currentClosure.rule.getStats().getNumberOfFalseNegatives());
+                        result.rule.getHead().addCondition(currentClosure.rule.getHead().iterator().next());
+                        result.rule.getStats().addTruePositives(currentClosure.rule.getStats().getNumberOfTruePositives());
+                        result.rule.getStats().addFalsePositives(currentClosure.rule.getStats().getNumberOfFalsePositives());
+                        result.rule.getStats().addTrueNegatives(currentClosure.rule.getStats().getNumberOfTrueNegatives());
+                        result.rule.getStats().addFalseNegatives(currentClosure.rule.getStats().getNumberOfFalseNegatives());
                     } else if (currentClosure.compareTo(result) > 0) {
                         result = currentClosure;
                     }

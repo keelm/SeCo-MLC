@@ -56,7 +56,7 @@ public class Weka379AdapterMultilabel extends MultiLabelLearnerBase implements S
                                     final double label,
                                     final double boostAtLabel,
                                     final double curvature,
-                                    final int pruningDepth) {
+                                    final int pruningDepth, final boolean fixableHead) {
         if (seCoAlgorithm == null)
             throw new IllegalArgumentException("seCoAlgorithm must not be null.");
 
@@ -75,7 +75,7 @@ public class Weka379AdapterMultilabel extends MultiLabelLearnerBase implements S
         seCoAlgorithm.setBoostAtLabel(boostAtLabel);
         seCoAlgorithm.setCurvature(curvature);
         seCoAlgorithm.setPruningDepth(pruningDepth);
-
+        seCoAlgorithm.setFixableHead(fixableHead);
     }
 
     public Capabilities getCapabilities() {

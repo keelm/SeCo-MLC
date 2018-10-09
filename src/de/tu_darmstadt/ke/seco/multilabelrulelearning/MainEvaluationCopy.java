@@ -198,7 +198,7 @@ public class MainEvaluationCopy {
                                     Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
                                             remainingInstancesPercentage, readdAllCovered, skipThresholdPercentage, predictZeroRules,
                                             useMultilabelHeads, evaluationStrategy, averagingStrategy,
-                                            useRelaxedPruning, useBoostedHeuristicForRules, boostFunction, label, boostAtLabel, curvature, pruningDepth);
+                                            useRelaxedPruning, useBoostedHeuristicForRules, boostFunction, label, boostAtLabel, curvature, pruningDepth, true);
 
                                     Evaluator evaluator = new Evaluator();
                                     MultipleEvaluation multipleEvaluation = evaluator.crossValidate(multilabelLearner, trainingData, 10);
@@ -228,7 +228,7 @@ public class MainEvaluationCopy {
                                                         Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
                                                                 remainingInstancesPercentage, readdAllCovered, skipThresholdPercentage, predictZeroRules,
                                                                 useMultilabelHeads, evaluationStrategy, averagingStrategy,
-                                                                useRelaxedPruning, useBoostedHeuristicForRules, boostFunction, label, boostAtLabel, curvature, pruningDepth);
+                                                                useRelaxedPruning, useBoostedHeuristicForRules, boostFunction, label, boostAtLabel, curvature, pruningDepth, true);
 
                                                         Evaluator evaluator = new Evaluator();
                                                         MultipleEvaluation multipleEvaluation = evaluator.crossValidate(multilabelLearner, trainingData, 10);
@@ -254,7 +254,7 @@ public class MainEvaluationCopy {
                                                 Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
                                                         remainingInstancesPercentage, readdAllCovered, skipThresholdPercentage, predictZeroRules,
                                                         useMultilabelHeads, evaluationStrategy, averagingStrategy,
-                                                        useRelaxedPruning, useBoostedHeuristicForRules, boostFunction, label, boostAtLabel, curvature, pruningDepth);
+                                                        useRelaxedPruning, useBoostedHeuristicForRules, boostFunction, label, boostAtLabel, curvature, pruningDepth, true);
 
                                                 Evaluator evaluator = new Evaluator();
                                                 MultipleEvaluation multipleEvaluation = evaluator.crossValidate(multilabelLearner, trainingData, 10);
@@ -305,7 +305,7 @@ public class MainEvaluationCopy {
                     Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
                             bestSetting.remainingInstancesPercentage, bestSetting.readdAllCoveredValue, bestSetting.skipThresholdPercentage, bestSetting.predictZeroRulesValue,
                             useMultilabelHeads, evaluationStrategy, bestSetting.averagingStrategyValue,
-                            useRelaxedPruning, useBoostedHeuristicForRules, boostFunction, label, boostAtLabel, curvature, pruningDepth);
+                            useRelaxedPruning, useBoostedHeuristicForRules, boostFunction, label, boostAtLabel, curvature, pruningDepth, true);
 
 
                     Evaluator evaluator = new Evaluator();

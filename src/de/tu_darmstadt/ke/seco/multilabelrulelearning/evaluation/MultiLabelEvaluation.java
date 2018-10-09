@@ -5,7 +5,7 @@ import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Heuristic.Charact
 import de.tu_darmstadt.ke.seco.models.Instances;
 import de.tu_darmstadt.ke.seco.models.MultiHeadRule;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.averaging.AveragingStrategy;
-import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.BoostingStrategy;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.LiftingStrategy;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.EvaluationStrategy;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 
@@ -33,14 +33,14 @@ public class MultiLabelEvaluation {
 
     private final AveragingStrategy averagingStrategy;
 
-    private final BoostingStrategy boostingStrategy;
+    private final LiftingStrategy liftingStrategy;
 
     public MultiLabelEvaluation(final Heuristic heuristic, final EvaluationStrategy evaluationStrategy, final
     AveragingStrategy averagingStrategy) {
         this.heuristic = heuristic;
         this.evaluationStrategy = evaluationStrategy;
         this.averagingStrategy = averagingStrategy;
-        this.boostingStrategy = null;
+        this.liftingStrategy = null;
     }
 
     public final MetaData evaluate(final Instances instances, final LinkedHashSet<Integer> labelIndices, final MultiHeadRule rule,

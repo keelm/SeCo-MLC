@@ -30,7 +30,7 @@ import de.tu_darmstadt.ke.seco.multilabelrulelearning.MulticlassCovering;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.SparseInstanceWrapper;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.MultiLabelEvaluation;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.averaging.AveragingStrategy;
-import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.BoostingStrategy;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.LiftingStrategy;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.EvaluationStrategy;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.prepending.PrependingMulticlassCovering;
 import de.tu_darmstadt.ke.seco.stats.RuleStats;
@@ -1209,8 +1209,8 @@ public class SeCoAlgorithm implements Serializable {
             EvaluationStrategy evaluationStrategy = EvaluationStrategy.create(getEvaluationStrategy());
             AveragingStrategy averagingStrategy = AveragingStrategy.createPrepending(getAveragingStrategy());
             MultiLabelEvaluation multiLabelEvaluation = new MultiLabelEvaluation(getHeuristic(), evaluationStrategy, averagingStrategy);
-            BoostingStrategy boostingStrategy = BoostingStrategy.create(labelIndices.length, boostFunction, label, boostAtLabel, curvature);
-            PrependingMulticlassCovering multiclassCovering = new PrependingMulticlassCovering(multiLabelEvaluation, isPredictZero(), boostingStrategy, useRelaxedPruning, useBoostedHeuristicForRules, pruningDepth);
+            LiftingStrategy liftingStrategy = LiftingStrategy.create(labelIndices.length, boostFunction, label, boostAtLabel, curvature);
+            PrependingMulticlassCovering multiclassCovering = new PrependingMulticlassCovering(multiLabelEvaluation, isPredictZero(), liftingStrategy, useRelaxedPruning, useBoostedHeuristicForRules, pruningDepth);
 
             try {
                 int beamWidth = Integer.valueOf(getBeamWidth());
@@ -1319,8 +1319,8 @@ public class SeCoAlgorithm implements Serializable {
             EvaluationStrategy evaluationStrategy = EvaluationStrategy.create(getEvaluationStrategy());
             AveragingStrategy averagingStrategy = AveragingStrategy.create(getAveragingStrategy());
             MultiLabelEvaluation multiLabelEvaluation = new MultiLabelEvaluation(getHeuristic(), evaluationStrategy, averagingStrategy);
-            BoostingStrategy boostingStrategy = BoostingStrategy.create(labelIndices.length, boostFunction, label, boostAtLabel, curvature);
-            MulticlassCovering multiclassCovering = new MulticlassCovering(multiLabelEvaluation, isPredictZero(), boostingStrategy, useRelaxedPruning, useBoostedHeuristicForRules, pruningDepth);
+            LiftingStrategy liftingStrategy = LiftingStrategy.create(labelIndices.length, boostFunction, label, boostAtLabel, curvature);
+            MulticlassCovering multiclassCovering = new MulticlassCovering(multiLabelEvaluation, isPredictZero(), liftingStrategy, useRelaxedPruning, useBoostedHeuristicForRules, pruningDepth, fixableHead);
 
             try {
                 int beamWidth = Integer.valueOf(getBeamWidth());
@@ -1851,6 +1851,7 @@ public class SeCoAlgorithm implements Serializable {
     private double boostAtLabel;
     private double curvature;
     private int pruningDepth;
+    private boolean fixableHead;
 
     public void setRelaxedPruning(boolean useRelaxedPruning) {
         this.useRelaxedPruning = useRelaxedPruning;
@@ -1878,6 +1879,10 @@ public class SeCoAlgorithm implements Serializable {
 
     public void setPruningDepth(int pruningDepth) {
         this.pruningDepth = pruningDepth;
+    }
+
+    public void setFixableHead(boolean fixableHead) {
+        this.fixableHead = fixableHead;
     }
 
 }

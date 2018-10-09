@@ -128,13 +128,14 @@ public class Main {
         final String averagingStrategy = getOptionalArgument("averagingStrategy", args, AveragingStrategy.MICRO_AVERAGING);
         // relaxed pruning options
         final boolean useRelaxedPruning = Boolean.valueOf((getOptionalArgument("useRelaxedPruning", args, "false")));
-        final boolean useBoostedHeuristicForRules = Boolean.valueOf(getOptionalArgument("useBoostedHeuristicForRules", args, "true"));
-        final String boostFunction = getOptionalArgument("boostFunction", args, "llm");
+        final boolean useBoostedHeuristicForRules = Boolean.valueOf(getOptionalArgument("useLiftedHeuristicForRules", args, "true"));
+        final String boostFunction = getOptionalArgument("liftFunction", args, "llm");
         final double label = Double.valueOf(getOptionalArgument("label", args, "3.0"));
-        final double boostAtLabel = Double.valueOf(getOptionalArgument("boostAtLabel", args, "1.1"));
+        final double boostAtLabel = Double.valueOf(getOptionalArgument("liftAtLabel", args, "1.1"));
         final double curvature = Double.valueOf(getOptionalArgument("curvature", args, "2.0"));
         final int pruningDepth = Integer.valueOf(getOptionalArgument("pruningDepth", args, "-1"));
         final boolean usePrepending = Boolean.valueOf((getOptionalArgument("prepending", args, "false")));
+        final boolean fixableHead =  Boolean.valueOf((getOptionalArgument("fixHead", args, "true")));
 
         System.out.println("Arguments:\n");
         System.out.println("-baselearner " + baseLearnerConfigPath);
@@ -149,13 +150,14 @@ public class Main {
         System.out.println("-evaluationStrategy " + evaluationStrategy);
         System.out.println("-averagingStrategy " + averagingStrategy);
         System.out.println("-useRelaxedPruning " + useRelaxedPruning);
-        System.out.println("-useBoostedHeuristicForRules " + useBoostedHeuristicForRules);
-        System.out.println("-boostFunction " + boostFunction);
+        System.out.println("-useLiftedHeuristicForRules " + useBoostedHeuristicForRules);
+        System.out.println("-liftFunction " + boostFunction);
         System.out.println("-label " + label);
-        System.out.println("-boostAtLabel " + boostAtLabel);
+        System.out.println("-liftAtLabel " + boostAtLabel);
         System.out.println("-curvature " + curvature);
         System.out.println("-pruningDepth " + pruningDepth);
         System.out.println("-prepending " + usePrepending);
+        System.out.println("-fixHead " + fixableHead);
         System.out.println("\n");
 
         // create csv file
@@ -188,12 +190,13 @@ public class Main {
         csvWriter.writeNext(new String[]{"evaluationStrategy", evaluationStrategy});
         csvWriter.writeNext(new String[]{"averagingStrategy", averagingStrategy});
         csvWriter.writeNext(new String[]{"useRelaxedPruning ", Boolean.toString(useRelaxedPruning)});
-        csvWriter.writeNext(new String[]{"useBoostedHeuristicForRules", Boolean.toString(useBoostedHeuristicForRules)});
-        csvWriter.writeNext(new String[]{"boostFunction", boostFunction});
+        csvWriter.writeNext(new String[]{"useLiftedHeuristicForRules", Boolean.toString(useBoostedHeuristicForRules)});
+        csvWriter.writeNext(new String[]{"liftFunction", boostFunction});
         csvWriter.writeNext(new String[]{"label", Double.toString(label)});
-        csvWriter.writeNext(new String[]{"boostAtLabel", Double.toString(boostAtLabel)});
+        csvWriter.writeNext(new String[]{"liftAtLabel", Double.toString(boostAtLabel)});
         csvWriter.writeNext(new String[]{"curvature", Double.toString(curvature)});
         csvWriter.writeNext(new String[]{"pruningDepth", Integer.toString(pruningDepth)});
+        csvWriter.writeNext(new String[]{"fixHead", Boolean.toString(fixableHead)});
 
         // create training instances from dataset
         final MultiLabelInstances trainingData = new MultiLabelInstances(arffFilePath, xmlLabelsDefFilePath);
@@ -212,7 +215,7 @@ public class Main {
             multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
                 remainingInstancesPercentage, readdAllCovered, skipThresholdPercentage, predictZeroRules,
                 useMultilabelHeads, evaluationStrategy, averagingStrategy,
-                useRelaxedPruning, useBoostedHeuristicForRules, boostFunction, label, boostAtLabel, curvature, pruningDepth);
+                useRelaxedPruning, useBoostedHeuristicForRules, boostFunction, label, boostAtLabel, curvature, pruningDepth, fixableHead);
         }
 
         // Create test instances from dataset, if available

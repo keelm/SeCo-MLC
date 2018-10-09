@@ -241,21 +241,21 @@ public class MultiHeadRule extends Rule {
     }
 
     /**
-     * The rule value after the boost function is applied.
+     * The rule value after the lift function is applied.
      */
-    private double boostedRuleValue;
+    private double liftedRuleValue;
 
     /**
-     * The rule value before the boost function is applied.
+     * The rule value before the lift function is applied.
      */
     private double rawRuleValue;
 
-    public void setBoostedRuleValue(double value) {
-        boostedRuleValue = value;
+    public void setLiftedRuleValue(double value) {
+        liftedRuleValue = value;
     }
 
-    public double getBoostedRuleValue() {
-        return boostedRuleValue;
+    public double getLiftedRuleValue() {
+        return liftedRuleValue;
     }
 
     public void setRawRuleValue(double value) {
