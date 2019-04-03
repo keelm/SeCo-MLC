@@ -17,6 +17,7 @@
 package de.tu_darmstadt.ke.seco.models;
 
 import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Heuristic;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.MulticlassCovering;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 import weka.core.Instance;
 
