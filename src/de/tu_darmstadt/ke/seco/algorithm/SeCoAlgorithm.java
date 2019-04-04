@@ -1127,6 +1127,16 @@ public class SeCoAlgorithm implements Serializable {
     }
 
 
+    private boolean useBottomUp = false;
+    
+    public void setUseBottomUp(boolean useBottomUp) {
+    	this.useBottomUp = useBottomUp;
+    }
+    
+    public boolean isBottomUpUsed() {
+    	return useBottomUp;
+    }
+    
     boolean predictZero = true;
 
     boolean useSkippingRules = true;
@@ -1141,12 +1151,26 @@ public class SeCoAlgorithm implements Serializable {
 
     public RuleSet<?> separateAndConquerMultilabel(Instances examples, int labelIndices[]) throws Exception {
         if (useMultilabelHeads) {
-            return multiclassCoveringSeparateAndConquerMultilabel(examples, labelIndices);
+            if (useBottomUp) {
+            	return multiclassCoveringSeparateAndConquerMultilabelBottomUp(examples, labelIndices);
+            } else {
+            	return multiclassCoveringSeparateAndConquerMultilabel(examples, labelIndices);
+            }
         } else {
             return standardSeparateAndConquerMultilabel(examples, labelIndices);
         }
     }
 
+    
+    public MultiHeadRuleSet multiclassCoveringSeparateAndConquerMultilabelBottomUp(Instances examples, int labelIndices[]) throws Exception {
+    	System.out.println("########using Bottom-Up approach to learn rules");
+    	//TODO: implement Bottom-Up algorithm
+    	
+    	
+    	
+    	return multiclassCoveringSeparateAndConquerMultilabel(examples, labelIndices);
+    }
+    
     public MultiHeadRuleSet multiclassCoveringSeparateAndConquerMultilabel(Instances examples,
                                                                            int labelIndices[]) throws Exception {
         SeCoLogger.debug("entering separateAndConquerMultilabel");

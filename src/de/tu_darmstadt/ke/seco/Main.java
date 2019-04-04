@@ -81,6 +81,8 @@ public class Main {
      *                 Whether zero rules should be predicted or not
      *             -useMultilabelHeads [optional]:
      *                 Whether multi-label head rule should be learned or not
+     *             -useBottomUp [optional]:
+     *                 Whether the rules should be learned with bottom-up or not
      * @throws Exception The exception, which is thrown, if any error occurs
      */
     public static void main(final String[] args) throws Exception {
@@ -99,6 +101,7 @@ public class Main {
                 EvaluationStrategy.RULE_DEPENDENT);
         final String averagingStrategy = getOptionalArgument("averagingStrategy", args,
                 AveragingStrategy.MICRO_AVERAGING);
+        final boolean useBottomUp = Boolean.valueOf(getOptionalArgument("useBottomUp", args, "false"));
 
         System.out.println("Arguments:\n");
         System.out.println("-baselearner " + baseLearnerConfigPath);
@@ -112,6 +115,7 @@ public class Main {
         System.out.println("-useMultilabelHeads " + useMultilabelHeads);
         System.out.println("-evaluationStrategy " + evaluationStrategy);
         System.out.println("-averagingStrategy " + averagingStrategy);
+        System.out.println("-useBottomUp " + useBottomUp);
         System.out.println("\n");
 
         // Create training instances from dataset
@@ -123,7 +127,7 @@ public class Main {
         SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(baseLearnerConfigPath);
         Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
                 remainingInstancesPercentage, readAllCovered, skipThresholdPercentage, predictZeroRules,
-                useMultilabelHeads, evaluationStrategy, averagingStrategy);
+                useMultilabelHeads, evaluationStrategy, averagingStrategy, useBottomUp);
 
         // Create test instances from dataset, if available
         final MultiLabelInstances testData =

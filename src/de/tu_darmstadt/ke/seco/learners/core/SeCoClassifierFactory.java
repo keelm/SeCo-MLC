@@ -190,7 +190,7 @@ public class SeCoClassifierFactory {
         return seCoClassifier;
     }
 
-    // multilable:
+    // multilabel:
     public static SeCoClassifier buildSeCoClassifierMultiClass(final SeCoAlgorithm seCoAlgorithm, Instances instances) throws Exception {
         Logger.info("Building classifier with algorithm:\n" + seCoAlgorithm);
 
@@ -244,7 +244,7 @@ public class SeCoClassifierFactory {
         // orderedInstances = seCoClassifier.getSeCoAlgorithm().getNewInstances();
         // }
 
-        // in multilable prediction, predict always 'label is set' and not 'label is not set'
+        // in multilabel prediction, predict always 'label is set' and not 'label is not set'
         SingleHeadRuleSet learnedTheory = seCoClassifier.getSeCoAlgorithm().separateAndConquerMultiClass(orderedInstances);
 
         ((SingleHeadRuleSet) seCoClassifier.getTheory()).getRules().addAll(learnedTheory.getRules());
@@ -262,7 +262,7 @@ public class SeCoClassifierFactory {
         return seCoClassifier;
     }
 
-    // multilable:
+    // multilabel:
     public static MultilabelSecoClassifier buildSeCoClassifierMultilabel(final SeCoAlgorithm seCoAlgorithm, Instances instances, int[] labelIndices) throws Exception {
         Logger.info("Building classifier with algorithm:\n" + seCoAlgorithm);
 
