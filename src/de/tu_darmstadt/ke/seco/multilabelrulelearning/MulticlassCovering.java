@@ -2,6 +2,7 @@ package de.tu_darmstadt.ke.seco.multilabelrulelearning;
 
 import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Heuristic.Characteristic;
 import de.tu_darmstadt.ke.seco.models.*;
+import de.tu_darmstadt.ke.seco.models.Random;
 import de.tu_darmstadt.ke.seco.models.MultiHeadRule.Head;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.MultiLabelEvaluation;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.MultiLabelEvaluation.MetaData;
@@ -123,6 +124,8 @@ public class MulticlassCovering {
     private final MultiLabelEvaluation multiLabelEvaluation;
 
     private final boolean predictZero;
+    
+    protected Random random;
 
     public MulticlassCovering(final MultiLabelEvaluation multiLabelEvaluation,
                               final boolean predictZero) {
@@ -192,6 +195,108 @@ public class MulticlassCovering {
 		return hashCode;
 	}
 
+	
+	// or no uncovered rule contains the needed Head
+	// && examples.getInstances().contains(exampleHead)) {	
+	public final MultiHeadRule findBestRuleBottomUp(final Instances instances,
+											final LinkedHashSet<Integer> labelIndices,
+											final Set<Integer> predictedLabels,
+											final int beamWidth) throws Exception {
+		Queue<Closure> bestClosures = new FixedPriorityQueue<>(beamWidth);
+		boolean improved = true;
+		
+		while (improved) {
+            improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures);
+
+            if (improved && DEBUG_STEP_BY_STEP_V)
+                System.out.println(
+                        "Generalized rule conditions (beam width = " + beamWidth + "): " +
+                                Arrays.toString(bestClosures.toArray()));
+        }
+
+        MultiHeadRule bestRule = getBestRule(bestClosures);
+        if (DEBUG_STEP_BY_STEP)
+            System.out.println("Found best rule: " + bestRule + "\n");
+        return bestRule;
+	}
+	
+	public boolean refineRuleBottomUp(final Instances instances,
+									  final LinkedHashSet<Integer> labelIndices,
+            						  final Set<Integer> predictedLabels,
+            						  final Queue<Closure> closures) throws
+			Exception {
+		boolean improved = false;
+		Head currentHead = null;
+		
+		for (Closure closure : beamWidthIterable(closures)) {
+			if (closure == null || closure.refineFurther) {
+				if (closure != null) {
+					closure.refineFurther = false;
+				}
+				
+				// New rule is a positive example transformed into a rule
+				if (closure == null) {
+					// choose random positive example and add it as new rule
+					final int i = random.nextInt(instances.numInstances());
+					final Instance inst = instances.instance(i);
+					
+					// refinedRule here is the *new* rule
+					MultiHeadRule refinedRule = new MultiHeadRule(multiLabelEvaluation.getHeuristic());	
+					// TODO: add body and head to rule
+					
+					Closure refinedClosure = new Closure(refinedRule, null);
+					
+					// save head of the new rule
+					currentHead = refinedRule.getHead();
+					
+					if (refinedClosure != null) {
+						improved |= closures.offer(refinedClosure);
+					}
+				}
+					
+				// Remove one condition from rule
+				// TODO: iterate only over conditions contained in rule
+				for (int i : attributeIterable(instances, labelIndices,
+                        predictedLabels)) { // For all attributes
+                    Attribute attribute = instances.attribute(i);
+
+                    for (Condition condition : attribute.isNumeric() ?
+                            numericConditionsIterable(instances, labelIndices, attribute) :
+                            nominalConditionsIterable(attribute)) {
+                    	
+                    	// TODO: use refinedClosure??
+                    	if (closure != null && closure.containsCondition(condition)) {
+                    		
+                    		// TODO: redundant? if null, create new rule from positive example
+                    		MultiHeadRule refinedRule =
+                                    closure != null ? (MultiHeadRule) closure.rule.copy() :
+                                            new MultiHeadRule(multiLabelEvaluation.getHeuristic());
+                            // remove condition
+                            // TODO: check generalize function
+                            // TODO: get condition index by iterating over rule conditions
+                            int cond = 0;
+                            refinedRule.generalize(cond);
+                            Closure refinedClosure = new Closure(refinedRule,
+                                    closure != null ? closure.metaData : null);
+                            
+                            // set head
+                            // this shouldn't be necessary, since the head keeps the same
+                            closure.rule.setHead(currentHead);
+                            // need to remove condition from closure aswell?
+                            
+                    		if (refinedClosure != null) {
+                    			improved |= closures.offer(refinedClosure);
+                    		}
+                    	}
+                    }					
+				}
+			
+			}
+		}
+		
+		return improved;
+	}
+	
     
     /**
      * @param beamWidthPercentage The beam width as a percentage of the number of attributes
