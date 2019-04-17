@@ -19,6 +19,7 @@ package de.tu_darmstadt.ke.seco.models;
 import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Heuristic;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 import de.tu_darmstadt.ke.seco.utils.Utils;
+import weka.core.Attribute;
 import weka.core.Instance;
 
 import java.io.Serializable;
@@ -116,7 +117,63 @@ public class MultiHeadRule extends Rule {
         super(heuristic);
         setHead(null);
     }
+    
+    /*
+     * Creates a MultiHeadRule from the given instance
+     * 
+     * @param example instance that will be transformed into a MultiHeadRule (must have access to a data set)
+	 * @throws Exception
+     */
+    public MultiHeadRule(final Heuristic heuristic, final Instance example, final LinkedHashSet<Integer> labelIndices) throws Exception {
+		this(heuristic);
+		final Instances dataset = (Instances) example.dataset(); // TODO by m.zopf: This is a design problem. One should not go from the interface instance to the collection, because information about the concrete instances in the collection is lost and we need a cast
 
+		// set head
+		Head head = new Head();
+		
+		
+			
+		// TODO: don't use labelIndices, use dataset.enumerateAttributes and somehow identify those attribues
+		// that are labels
+		// de.tu_darmstadt.ke.seco.models.Attribute att = Attribute.toSeCoAttribute(dataset.attribute(label));
+			
+		//final Enumeration<de.tu_darmstadt.ke.seco.models.Attribute> attrs = dataset.classAttribute();
+		
+		//while (attrs.hasMoreElements()) {
+		
+			/*
+			final Attribute atti = dataset.attribute(0);//attrs.nextElement();
+			
+			if (atti.isNominal())
+				head.addCondition(new NominalCondition((de.tu_darmstadt.ke.seco.models.Attribute) atti, example.value(atti)));
+			else if (atti.isNumeric())
+				head.addCondition(new NumericCondition((de.tu_darmstadt.ke.seco.models.Attribute) atti, example.value(atti)));
+			else
+				throw new Exception("only numeric and nominal attributes supported !");
+			*/
+		
+		//}
+		setHead(head);
+		
+		// set body
+		final Enumeration<de.tu_darmstadt.ke.seco.models.Attribute> atts = dataset.enumerateAttributesWithoutClass();
+		
+		while (atts.hasMoreElements()) {
+			final Attribute att = atts.nextElement();
+			
+			Condition cond;
+			
+			if (att.isNominal())
+				cond = new NominalCondition((de.tu_darmstadt.ke.seco.models.Attribute) att, example.value(att));
+			else if (att.isNumeric())
+				cond = new NumericCondition((de.tu_darmstadt.ke.seco.models.Attribute) att, example.value(att));
+			else
+				throw new Exception("only numeric and nominal attributes supported !");
+			
+			addCondition(cond);
+		}
+	}
+    
     /**
      * Sets the head of the rule.
      */

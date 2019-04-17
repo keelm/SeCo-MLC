@@ -196,8 +196,6 @@ public class MulticlassCovering {
 	}
 
 	
-	// or no uncovered rule contains the needed Head
-	// && examples.getInstances().contains(exampleHead)) {	
 	public final MultiHeadRule findBestRuleBottomUp(final Instances instances,
 											final LinkedHashSet<Integer> labelIndices,
 											final Set<Integer> predictedLabels,
@@ -226,7 +224,6 @@ public class MulticlassCovering {
             						  final Queue<Closure> closures) throws
 			Exception {
 		boolean improved = false;
-		Head currentHead = null;
 		
 		for (Closure closure : beamWidthIterable(closures)) {
 			if (closure == null || closure.refineFurther) {
@@ -234,63 +231,45 @@ public class MulticlassCovering {
 					closure.refineFurther = false;
 				}
 				
-				// New rule is a positive example transformed into a rule
+				// New rule is an example transformed into a rule
 				if (closure == null) {
-					// choose random positive example and add it as new rule
-					final int i = random.nextInt(instances.numInstances());
+					// choose random example and add it as new rule
+					random = new Random();
+					int i = random.nextInt(instances.numInstances());
 					final Instance inst = instances.instance(i);
 					
-					// refinedRule here is the *new* rule
-					MultiHeadRule refinedRule = new MultiHeadRule(multiLabelEvaluation.getHeuristic());	
-					// TODO: add body and head to rule
-					
+					// refinedRule here is the *new* rule TODO
+					MultiHeadRule refinedRule = new MultiHeadRule(multiLabelEvaluation.getHeuristic(), inst, labelIndices);				
 					Closure refinedClosure = new Closure(refinedRule, null);
 					
-					// save head of the new rule
-					currentHead = refinedRule.getHead();
+					// TODO: evaluate new rule
+					multiLabelEvaluation.evaluate(instances, labelIndices, refinedClosure.rule, null);
 					
 					if (refinedClosure != null) {
 						improved |= closures.offer(refinedClosure);
 					}
 				}
 					
-				// Remove one condition from rule
-				// TODO: iterate only over conditions contained in rule
-				for (int i : attributeIterable(instances, labelIndices,
-                        predictedLabels)) { // For all attributes
-                    Attribute attribute = instances.attribute(i);
-
-                    for (Condition condition : attribute.isNumeric() ?
-                            numericConditionsIterable(instances, labelIndices, attribute) :
-                            nominalConditionsIterable(attribute)) {
-                    	
-                    	// TODO: use refinedClosure??
-                    	if (closure != null && closure.containsCondition(condition)) {
-                    		
-                    		// TODO: redundant? if null, create new rule from positive example
-                    		MultiHeadRule refinedRule =
-                                    closure != null ? (MultiHeadRule) closure.rule.copy() :
-                                            new MultiHeadRule(multiLabelEvaluation.getHeuristic());
-                            // remove condition
-                            // TODO: check generalize function
-                            // TODO: get condition index by iterating over rule conditions
-                            int cond = 0;
-                            refinedRule.generalize(cond);
-                            Closure refinedClosure = new Closure(refinedRule,
-                                    closure != null ? closure.metaData : null);
-                            
-                            // set head
-                            // this shouldn't be necessary, since the head keeps the same
-                            closure.rule.setHead(currentHead);
-                            // need to remove condition from closure aswell?
-                            
-                    		if (refinedClosure != null) {
-                    			improved |= closures.offer(refinedClosure);
-                    		}
-                    	}
-                    }					
-				}
-			
+				// iterate over conditions of the rule
+				if (closure != null) {
+					// TODO: reassure that these conditions do not include the labels
+					Iterator<Condition> c = closure.rule.iterator();
+					while (c.hasNext()) {
+						int index = closure.rule.getBody().indexOf(c.next());
+						MultiHeadRule refinedRule = (MultiHeadRule) closure.rule.copy();
+						
+						// remove condition
+						refinedRule.generalize(index);
+						Closure refinedClosure = new Closure(refinedRule, closure.metaData);
+						
+						// TODO: evaluate rule, understand the evaluate method
+						multiLabelEvaluation.evaluate(instances, labelIndices, refinedClosure.rule, closure.metaData);
+						
+						if (refinedClosure != null) {
+                			improved |= closures.offer(refinedClosure);
+                		}
+					}
+				}			
 			}
 		}
 		
