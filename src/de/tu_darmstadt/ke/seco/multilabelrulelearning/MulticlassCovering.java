@@ -233,13 +233,9 @@ public class MulticlassCovering {
 				
 				// New rule is an example transformed into a rule
 				if (closure == null) {
-					// choose random example and add it as new rule
-					random = new Random();
-					int i = random.nextInt(instances.numInstances());
-					final Instance inst = instances.instance(i);
 					
-					// refinedRule here is the *new* rule TODO
-					MultiHeadRule refinedRule = new MultiHeadRule(multiLabelEvaluation.getHeuristic(), inst, labelIndices);				
+					// refinedRule here is the *new* rule
+					MultiHeadRule refinedRule = createMultiHeadRuleFromRandomInstance(instances, labelIndices);
 					Closure refinedClosure = new Closure(refinedRule, null);
 					
 					// TODO: evaluate new rule
@@ -276,6 +272,53 @@ public class MulticlassCovering {
 		return improved;
 	}
 	
+	/*
+	 * TODO: consider predictZero
+	 */
+	public MultiHeadRule createMultiHeadRuleFromRandomInstance(final Instances instances,
+															   final LinkedHashSet<Integer> labelIndices) throws Exception {
+		// choose a random instance
+		random = new Random();
+		int i = random.nextInt(instances.numInstances());
+		final Instance inst = instances.instance(i);
+		
+		// create MultiHeadRule from chosen instance
+		MultiHeadRule rule = new MultiHeadRule(multiLabelEvaluation.getHeuristic());
+		Head head = new Head();
+		for (int labelIndex : labelIndices) {
+			double value = inst.value(labelIndex);
+			Attribute attribute = inst.attribute(labelIndex);
+			//////// add predictZero /////////
+			if (attribute.isNominal())
+				head.addCondition(new NominalCondition(toSeCoAttribute(attribute), value));
+			else if (attribute.isNumeric())
+				head.addCondition(new NumericCondition(toSeCoAttribute(attribute), value));
+			else
+				throw new Exception("only numeric and nominal attributes supported !");
+		}
+		rule.setHead(head);
+		
+		final Instances dataset = (Instances) inst.dataset();
+		
+		final Enumeration<de.tu_darmstadt.ke.seco.models.Attribute> atts = dataset.enumerateAttributesWithoutClass();
+		
+		while (atts.hasMoreElements()) {
+			final Attribute att = atts.nextElement();
+			
+			Condition cond;
+			
+			if (att.isNominal())
+				cond = new NominalCondition((de.tu_darmstadt.ke.seco.models.Attribute) att, inst.value(att));
+			else if (att.isNumeric())
+				cond = new NumericCondition((de.tu_darmstadt.ke.seco.models.Attribute) att, inst.value(att));
+			else
+				throw new Exception("only numeric and nominal attributes supported !");
+			
+			rule.addCondition(cond);
+		}
+		
+		return rule;
+	}
     
     /**
      * @param beamWidthPercentage The beam width as a percentage of the number of attributes
