@@ -8,6 +8,7 @@ import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.MultiLabelEvalu
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.MultiLabelEvaluation.MetaData;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.RuleIndependentEvaluation;
 import weka.core.Attribute;
+import weka.core.DenseInstance;
 import weka.core.Instance;
 
 import javax.annotation.Nonnull;
@@ -218,6 +219,7 @@ public class MulticlassCovering {
         return bestRule;
 	}
 	
+	
 	public boolean refineRuleBottomUp(final Instances instances,
 									  final LinkedHashSet<Integer> labelIndices,
             						  final Set<Integer> predictedLabels,
@@ -231,14 +233,14 @@ public class MulticlassCovering {
 					closure.refineFurther = false;
 				}
 				
-				// New rule is an example transformed into a rule
+				// new rule is an example transformed into a rule
 				if (closure == null) {
 					
-					// refinedRule here is the *new* rule
+					// refinedRule here is the new rule
 					MultiHeadRule refinedRule = createMultiHeadRuleFromRandomInstance(instances, labelIndices);
 					Closure refinedClosure = new Closure(refinedRule, null);
 					
-					// TODO: evaluate new rule
+					// evaluate the rule, no need to compare since body and head are initialized from new rule
 					multiLabelEvaluation.evaluate(instances, labelIndices, refinedClosure.rule, null);
 					
 					if (refinedClosure != null) {
@@ -248,17 +250,19 @@ public class MulticlassCovering {
 					
 				// iterate over conditions of the rule
 				if (closure != null) {
-					// TODO: reassure that these conditions do not include the labels
-					Iterator<Condition> c = closure.rule.iterator();
+					// only iterate over the body since the head remains the same
+					Iterator<Condition> c = closure.rule.getBody().iterator();
 					while (c.hasNext()) {
 						int index = closure.rule.getBody().indexOf(c.next());
+						
+						// TODO: re-add removed condition from last iteration or is it kept in closure.rule even if refinedClosure replaces one closure in closures
 						MultiHeadRule refinedRule = (MultiHeadRule) closure.rule.copy();
 						
 						// remove condition
 						refinedRule.generalize(index);
 						Closure refinedClosure = new Closure(refinedRule, closure.metaData);
 						
-						// TODO: evaluate rule, understand the evaluate method
+						// evaluate the rule
 						multiLabelEvaluation.evaluate(instances, labelIndices, refinedClosure.rule, closure.metaData);
 						
 						if (refinedClosure != null) {
@@ -272,8 +276,12 @@ public class MulticlassCovering {
 		return improved;
 	}
 	
+	
 	/*
-	 * TODO: consider predictZero
+	 * creates a MultiHeadRule from a randomly chosen instance
+	 * @param instances all instances
+	 * @param labelIndices the indices of the possible labels for the Head
+	 * @return the MultiHeadRule which represents the randomly chosen instance
 	 */
 	public MultiHeadRule createMultiHeadRuleFromRandomInstance(final Instances instances,
 															   final LinkedHashSet<Integer> labelIndices) throws Exception {
@@ -281,23 +289,39 @@ public class MulticlassCovering {
 		random = new Random();
 		int i = random.nextInt(instances.numInstances());
 		final Instance inst = instances.instance(i);
+
+		DenseInstanceWrapper wrappedInstance = (DenseInstanceWrapper) inst;		
 		
 		// create MultiHeadRule from chosen instance
 		MultiHeadRule rule = new MultiHeadRule(multiLabelEvaluation.getHeuristic());
+		
+		// set head
 		Head head = new Head();
 		for (int labelIndex : labelIndices) {
-			double value = inst.value(labelIndex);
+			
 			Attribute attribute = inst.attribute(labelIndex);
-			//////// add predictZero /////////
-			if (attribute.isNominal())
-				head.addCondition(new NominalCondition(toSeCoAttribute(attribute), value));
-			else if (attribute.isNumeric())
-				head.addCondition(new NumericCondition(toSeCoAttribute(attribute), value));
-			else
-				throw new Exception("only numeric and nominal attributes supported !");
+			double value = wrappedInstance.getWrappedInstance().value(labelIndex);
+			if (!predictZero) {
+				if (value!=0) {
+					if (attribute.isNominal())
+						head.addCondition(new NominalCondition(toSeCoAttribute(attribute), value));
+					else if (attribute.isNumeric())
+						head.addCondition(new NumericCondition(toSeCoAttribute(attribute), value));
+					else
+						throw new Exception("only numeric and nominal attributes supported !");
+				}
+			} else {
+				if (attribute.isNominal())
+					head.addCondition(new NominalCondition(toSeCoAttribute(attribute), value));
+				else if (attribute.isNumeric())
+					head.addCondition(new NumericCondition(toSeCoAttribute(attribute), value));
+				else
+					throw new Exception("only numeric and nominal attributes supported !");
+			}
 		}
 		rule.setHead(head);
 		
+		// set body
 		final Instances dataset = (Instances) inst.dataset();
 		
 		final Enumeration<de.tu_darmstadt.ke.seco.models.Attribute> atts = dataset.enumerateAttributesWithoutClass();
