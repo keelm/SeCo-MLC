@@ -1293,7 +1293,7 @@ public class SeCoAlgorithm implements Serializable {
                     else System.out.println(coveredButLabelsNotFullyCoveredInstances.size());
                 }
             	
-            	// use blank rules to skip positive examples that can't be fit in the theory (?)
+            	// use blank rules to skip examples that can't be fit in the theory (?)
             	if (useSkippingRules) {
                     if (DEBUG_STEP_BY_STEP)
                         System.out.println(

@@ -250,24 +250,42 @@ public class MulticlassCovering {
 					
 				// iterate over conditions of the rule
 				if (closure != null) {
+					
+					// double closureValue = closure.rule.getRuleValue();
+					
+					// System.out.println("Value of the current closure: " + closureValue);
+					
+					// TODO: iterates also over head ... REMOVE
 					// only iterate over the body since the head remains the same
 					Iterator<Condition> c = closure.rule.getBody().iterator();
 					while (c.hasNext()) {
-						int index = closure.rule.getBody().indexOf(c.next());
-						
-						// TODO: re-add removed condition from last iteration or is it kept in closure.rule even if refinedClosure replaces one closure in closures
-						MultiHeadRule refinedRule = (MultiHeadRule) closure.rule.copy();
-						
-						// remove condition
-						refinedRule.generalize(index);
-						Closure refinedClosure = new Closure(refinedRule, closure.metaData);
-						
-						// evaluate the rule
-						multiLabelEvaluation.evaluate(instances, labelIndices, refinedClosure.rule, closure.metaData);
-						
-						if (refinedClosure != null) {
-                			improved |= closures.offer(refinedClosure);
-                		}
+						Condition cond = c.next();
+						if (!labelIndices.contains(cond.getAttr().index())) {
+							int index = closure.rule.getBody().indexOf(cond);
+							if (!labelIndices.contains(index)) {
+								
+								// TODO: re-add removed condition from last iteration or is it kept in closure.rule even if refinedClosure replaces one closure in closures
+								// MultiHeadRule refinedRule = (MultiHeadRule) closure.rule.copy();
+								
+								MultiHeadRule refinedRule = (MultiHeadRule) closure.rule.clone();
+								//System.out.println("RR" + refinedRule);
+								
+								// remove condition
+								refinedRule = (MultiHeadRule) refinedRule.generalize(index);
+								//System.out.println("GR" + refinedRule);
+								Closure refinedClosure = new Closure(refinedRule, closure.metaData);
+							
+								// evaluate the rule
+								multiLabelEvaluation.evaluate(instances, labelIndices, refinedClosure.rule, closure.metaData);
+								
+								double closureValue = refinedClosure.rule.getRuleValue();
+								System.out.println("Value of the current closure: " + closureValue);
+								
+								if (refinedClosure != null) {
+	                				improved |= closures.offer(refinedClosure);
+	                			}
+							}
+						}
 					}
 				}			
 			}
@@ -290,6 +308,7 @@ public class MulticlassCovering {
 		int i = random.nextInt(instances.numInstances());
 		final Instance inst = instances.instance(i);
 
+		// TODO: check if it's a SparseInstance, use getLabelValue from AveragingStrategy
 		DenseInstanceWrapper wrappedInstance = (DenseInstanceWrapper) inst;		
 		
 		// create MultiHeadRule from chosen instance
@@ -329,16 +348,19 @@ public class MulticlassCovering {
 		while (atts.hasMoreElements()) {
 			final Attribute att = atts.nextElement();
 			
-			Condition cond;
+			// don't add condition if it's a label
+			if (!labelIndices.contains(att.index())) {
+				Condition cond;
 			
-			if (att.isNominal())
-				cond = new NominalCondition((de.tu_darmstadt.ke.seco.models.Attribute) att, inst.value(att));
-			else if (att.isNumeric())
-				cond = new NumericCondition((de.tu_darmstadt.ke.seco.models.Attribute) att, inst.value(att));
-			else
-				throw new Exception("only numeric and nominal attributes supported !");
-			
-			rule.addCondition(cond);
+				if (att.isNominal())
+					cond = new NominalCondition((de.tu_darmstadt.ke.seco.models.Attribute) att, inst.value(att));
+				else if (att.isNumeric())
+					cond = new NumericCondition((de.tu_darmstadt.ke.seco.models.Attribute) att, inst.value(att));
+				else
+					throw new Exception("only numeric and nominal attributes supported !");
+				
+				rule.addCondition(cond);
+			}
 		}
 		
 		return rule;
