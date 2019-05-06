@@ -1252,7 +1252,7 @@ public class SeCoAlgorithm implements Serializable {
             	
             	Head head = bestRuleOfMulti.getHead();
             	
-            	// save all used positive labels, mark all (positive) labels that are still unused
+            	// save all used labels, mark all labels that are still unused
             	for (Instance covered : coveredInstances) {
                     for (Map.Entry<Integer, Condition> entry : head.entries()) {
                         int labelIndex = entry.getKey();
@@ -1317,7 +1317,7 @@ public class SeCoAlgorithm implements Serializable {
                             }
                         }
                     } else {
-                        //dont add examples and add a special rule (since most covered examples were fully label-covered)
+                        //don't add examples and add a special rule (since most covered examples were fully label-covered)
                         MultiHeadRule skipRule = new MultiHeadRule(null);
                         Head skipHead = new Head();
                         skipHead.addCondition(new NominalCondition(new Attribute("magicSkipHead"), 0));
@@ -1481,7 +1481,7 @@ public class SeCoAlgorithm implements Serializable {
                             }
                         }
                     } else {
-                        //dont add examples and add a special rule (since most covered examples were fully label-covered)
+                        //don't add examples and add a special rule (since most covered examples were fully label-covered)
                         MultiHeadRule skipRule = new MultiHeadRule(null);
                         Head skipHead = new Head();
                         skipHead.addCondition(new NominalCondition(new Attribute("magicSkipHead"), 0));

@@ -251,28 +251,19 @@ public class MulticlassCovering {
 				// iterate over conditions of the rule
 				if (closure != null) {
 					
-					// double closureValue = closure.rule.getRuleValue();
-					
-					// System.out.println("Value of the current closure: " + closureValue);
-					
-					// TODO: iterates also over head ... REMOVE
 					// only iterate over the body since the head remains the same
 					Iterator<Condition> c = closure.rule.getBody().iterator();
 					while (c.hasNext()) {
 						Condition cond = c.next();
+						
+						// don't iterate if it's a label
 						if (!labelIndices.contains(cond.getAttr().index())) {
 							int index = closure.rule.getBody().indexOf(cond);
 							if (!labelIndices.contains(index)) {
-								
-								// TODO: re-add removed condition from last iteration or is it kept in closure.rule even if refinedClosure replaces one closure in closures
-								// MultiHeadRule refinedRule = (MultiHeadRule) closure.rule.copy();
-								
-								MultiHeadRule refinedRule = (MultiHeadRule) closure.rule.clone();
-								//System.out.println("RR" + refinedRule);
+								MultiHeadRule refinedRule = (MultiHeadRule) closure.rule.copy();
 								
 								// remove condition
 								refinedRule = (MultiHeadRule) refinedRule.generalize(index);
-								//System.out.println("GR" + refinedRule);
 								Closure refinedClosure = new Closure(refinedRule, closure.metaData);
 							
 								// evaluate the rule
