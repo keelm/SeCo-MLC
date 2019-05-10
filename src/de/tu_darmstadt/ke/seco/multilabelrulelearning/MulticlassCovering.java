@@ -196,6 +196,19 @@ public class MulticlassCovering {
 		return hashCode;
 	}
 
+	public final MultiHeadRule findBestRuleBottomUp(final Instances instances,
+            								final LinkedHashSet<Integer> labelIndices,
+            								final Set<Integer> predictedLabels,
+            								final float beamWidthPercentage) throws Exception {
+		if (beamWidthPercentage < 0)
+			throw new IllegalArgumentException("Beam width must be at least 0.0");
+		else if (beamWidthPercentage > 1)
+			throw new IllegalArgumentException("Beam width must be at maximum 1.0");
+		int numAttributes = instances.numAttributes();
+		int beamWidth = Math
+				.max(1, Math.min(numAttributes, Math.round(numAttributes * beamWidthPercentage)));
+		return findBestRuleBottomUp(instances, labelIndices, predictedLabels, beamWidth);
+	}
 	
 	public final MultiHeadRule findBestRuleBottomUp(final Instances instances,
 											final LinkedHashSet<Integer> labelIndices,
@@ -207,7 +220,7 @@ public class MulticlassCovering {
 		while (improved) {
             improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures);
 
-            if (improved && DEBUG_STEP_BY_STEP_V)
+            if (improved && DEBUG_STEP_BY_STEP_V) {}
                 System.out.println(
                         "Generalized rule conditions (beam width = " + beamWidth + "): " +
                                 Arrays.toString(bestClosures.toArray()));
@@ -227,6 +240,10 @@ public class MulticlassCovering {
 			Exception {
 		boolean improved = false;
 		
+		// beamWidthIterable(closure) returns a fixed array, while the closure might change (when improved=true)
+        // in this case, the new closure will be transformed to an array in the next function call of refineRuleBottomUp
+        // until no improvement of closure == the best rule is found for THIS SPECIFIC random rule
+        // closures here are all the rules that were derived from THIS SPECIFIC random rule
 		for (Closure closure : beamWidthIterable(closures)) {
 			if (closure == null || closure.refineFurther) {
 				if (closure != null) {
@@ -263,6 +280,7 @@ public class MulticlassCovering {
 								MultiHeadRule refinedRule = (MultiHeadRule) closure.rule.copy();
 								
 								// remove condition
+								// TODO: adapt for numerical attributes
 								refinedRule = (MultiHeadRule) refinedRule.generalize(index);
 								Closure refinedClosure = new Closure(refinedRule, closure.metaData);
 							
@@ -299,8 +317,10 @@ public class MulticlassCovering {
 		int i = random.nextInt(instances.numInstances());
 		final Instance inst = instances.instance(i);
 
-		// TODO: check if it's a SparseInstance, use getLabelValue from AveragingStrategy
-		DenseInstanceWrapper wrappedInstance = (DenseInstanceWrapper) inst;		
+		// adapted from AveragingStrategy
+		Instance wrappedInstance =
+                inst instanceof DenseInstanceWrapper ? ((DenseInstanceWrapper) inst).getWrappedInstance() :
+                        ((SparseInstanceWrapper) inst).getWrappedInstance();
 		
 		// create MultiHeadRule from chosen instance
 		MultiHeadRule rule = new MultiHeadRule(multiLabelEvaluation.getHeuristic());
@@ -310,7 +330,7 @@ public class MulticlassCovering {
 		for (int labelIndex : labelIndices) {
 			
 			Attribute attribute = inst.attribute(labelIndex);
-			double value = wrappedInstance.getWrappedInstance().value(labelIndex);
+			double value = wrappedInstance.value(labelIndex);
 			if (!predictZero) {
 				if (value!=0) {
 					if (attribute.isNominal())
@@ -410,7 +430,7 @@ public class MulticlassCovering {
                                final Queue<Closure> closures) throws
             Exception {
         boolean improved = false;
-
+        
         for (Closure closure : beamWidthIterable(closures)) {
             if (closure == null || closure.refineFurther) {
                 if (closure != null) {
