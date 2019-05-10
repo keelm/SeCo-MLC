@@ -37,6 +37,8 @@ import de.tu_darmstadt.ke.seco.utils.Logger;
 import de.tu_darmstadt.ke.seco.utils.SeCoLogger;
 import weka.core.*;
 
+import java.io.File;
+import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.*;
 import java.util.Map.Entry;
@@ -1165,7 +1167,7 @@ public class SeCoAlgorithm implements Serializable {
         examples = new Instances(originalExamples,
                 originalExamples.numInstances()); //so that I can do what I want on this
         ArrayList<Instance> examplesReferences = null; // only used for debugging
-
+        
         if (DEBUG_STEP_BY_STEP)
             examplesReferences = new ArrayList<>();
 
@@ -1285,7 +1287,7 @@ public class SeCoAlgorithm implements Serializable {
                         for (Instance inst : coveredButLabelsNotFullyCoveredInstances) System.out.println(inst);
                     else System.out.println(coveredButLabelsNotFullyCoveredInstances.size());
                 }
-
+                /*
                 if (useSkippingRules) {
                     if (DEBUG_STEP_BY_STEP)
                         System.out.println(
@@ -1325,9 +1327,22 @@ public class SeCoAlgorithm implements Serializable {
                         examples.addDirectly(coveredButLabelsNotFullyCoveredInstances.get(i));
                     }
                 }
-
+				*/
+                /////////
+                
+                PrintStream out = new PrintStream(new File("Model.txt"));
+                PrintStream console = System.out;
+                System.setOut(console);
+                
+                /////////
                 if (DEBUG_STEP_BY_STEP)
-                    System.out.println(theory);
+                	System.out.println(theory);
+                
+                /////////
+                
+                System.setOut(console);
+                
+                /////////
             } else {
                 break;
             }

@@ -239,7 +239,7 @@ public class MulticlassCovering {
             						  final Queue<Closure> closures) throws
 			Exception {
 		boolean improved = false;
-		
+		boolean better = false;
 		// beamWidthIterable(closure) returns a fixed array, while the closure might change (when improved=true)
         // in this case, the new closure will be transformed to an array in the next function call of refineRuleBottomUp
         // until no improvement of closure == the best rule is found for THIS SPECIFIC random rule
@@ -273,7 +273,7 @@ public class MulticlassCovering {
 					while (c.hasNext()) {
 						Condition cond = c.next();
 						
-						// don't iterate if it's a label
+						// don't iterate if it's a label, redundant, can be removed
 						if (!labelIndices.contains(cond.getAttr().index())) {
 							int index = closure.rule.getBody().indexOf(cond);
 							if (!labelIndices.contains(index)) {
@@ -282,15 +282,17 @@ public class MulticlassCovering {
 								// remove condition
 								// TODO: adapt for numerical attributes
 								refinedRule = (MultiHeadRule) refinedRule.generalize(index);
-								Closure refinedClosure = new Closure(refinedRule, closure.metaData);
+								Closure refinedClosure = new Closure(refinedRule, null /*closure.metaData ?*/);
 							
 								// evaluate the rule
-								multiLabelEvaluation.evaluate(instances, labelIndices, refinedClosure.rule, closure.metaData);
+								multiLabelEvaluation.evaluate(instances, labelIndices, refinedClosure.rule, null /*closure.metaData ?*/);
 								
+								/*
 								double closureValue = refinedClosure.rule.getRuleValue();
 								System.out.println("Value of the current closure: " + closureValue);
-								
-								if (refinedClosure != null) {
+								*/
+								better |= refinedClosure.rule.getRuleValue() > closure.rule.getRuleValue();
+								if (refinedClosure != null && better) {
 	                				improved |= closures.offer(refinedClosure);
 	                			}
 							}
@@ -306,7 +308,7 @@ public class MulticlassCovering {
 	
 	/*
 	 * creates a MultiHeadRule from a randomly chosen instance
-	 * @param instances all instances
+	 * @param instances all uncovered instances
 	 * @param labelIndices the indices of the possible labels for the Head
 	 * @return the MultiHeadRule which represents the randomly chosen instance
 	 */
@@ -349,6 +351,7 @@ public class MulticlassCovering {
 					throw new Exception("only numeric and nominal attributes supported !");
 			}
 		}
+		
 		rule.setHead(head);
 		
 		// set body

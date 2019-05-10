@@ -71,7 +71,7 @@ public class Main {
      *                 Path to XML file containing labels meta-data (e.g. /data/genbase.xml)
      *             -remainingInstancesPercentage [optional]:
      *                 The percentage of the training dataset which must not be covered when the algorithm terminates
-     *             -readAllCovered [optional]:
+     *             -reAddAllCovered [optional]:
      *                 Whether all already covered rules should be used for the next separate-and-conquer iteration or
      *                 not
      *             -skipThresholdPercentage [optional]:
@@ -92,7 +92,7 @@ public class Main {
         final String testArffFilePath = getOptionalArgument("test-arff", args, null);
         final double remainingInstancesPercentage = Double
                 .valueOf(getOptionalArgument("remainingInstancesPercentage", args, "0.05"));
-        final boolean readAllCovered = Boolean.valueOf(getOptionalArgument("readAllCovered", args, "false"));
+        final boolean reAddAllCovered = Boolean.valueOf(getOptionalArgument("reAddAllCovered", args, "false"));
         final double skipThresholdPercentage = Double
                 .valueOf(getOptionalArgument("skipThresholdPercentage", args, "-1.0"));
         final boolean predictZeroRules = Boolean.valueOf(getOptionalArgument("predictZeroRules", args, "false"));
@@ -109,7 +109,7 @@ public class Main {
         System.out.println("-xml " + xmlLabelsDefFilePath);
         System.out.println("-test-arff " + testArffFilePath);
         System.out.println("-remainingInstancesPercentage " + remainingInstancesPercentage);
-        System.out.println("-readAllCovered " + readAllCovered);
+        System.out.println("-reAddAllCovered " + reAddAllCovered);
         System.out.println("-skipThresholdPercentage " + skipThresholdPercentage);
         System.out.println("-predictZeroRules " + predictZeroRules);
         System.out.println("-useMultilabelHeads " + useMultilabelHeads);
@@ -126,7 +126,7 @@ public class Main {
         
         SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(baseLearnerConfigPath);
         Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
-                remainingInstancesPercentage, readAllCovered, skipThresholdPercentage, predictZeroRules,
+                remainingInstancesPercentage, reAddAllCovered, skipThresholdPercentage, predictZeroRules,
                 useMultilabelHeads, evaluationStrategy, averagingStrategy, useBottomUp);
 
         // Create test instances from dataset, if available
