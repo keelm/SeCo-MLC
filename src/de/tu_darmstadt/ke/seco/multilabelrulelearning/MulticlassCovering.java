@@ -127,6 +127,7 @@ public class MulticlassCovering {
     private final boolean predictZero;
     
     protected Random random;
+    private HashMap<Attribute, ArrayList<Double>> sorted;
 
     public MulticlassCovering(final MultiLabelEvaluation multiLabelEvaluation,
                               final boolean predictZero) {
@@ -217,6 +218,8 @@ public class MulticlassCovering {
 		Queue<Closure> bestClosures = new FixedPriorityQueue<>(beamWidth);
 		boolean improved = true;
 		
+		sorted = sortNumericAttributes(instances, labelIndices);
+		
 		while (improved) {
             improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures);
 
@@ -291,8 +294,17 @@ public class MulticlassCovering {
 								double closureValue = refinedClosure.rule.getRuleValue();
 								System.out.println("Value of the current closure: " + closureValue);
 								*/
-								better |= refinedClosure.rule.getRuleValue() > closure.rule.getRuleValue();
-								if (refinedClosure != null && better) {
+								
+								// TODO: double check "better" for cases with beamWidth > 1
+								// checkt, dass wenn die Queue voll ist nur > rules reinkommen, nicht =
+								// checkt, dass wenn die Queue nicht voll ist, auch <= reinkommen
+								// führt zu spezielleren Regeln?
+								// double min = Double.POSITIVE_INFINITY;
+								// for (Closure findMin : beamWidthIterable(closures)) {
+								// 	 min = findMin.rule.getRuleValue() < min ? findMin.rule.getRuleValue() : min;
+								// }
+								better |= refinedClosure.rule.getRuleValue() > closure.rule.getRuleValue(); // better |= refinedClosure.rule.getRuleValue() > min;
+								if (refinedClosure != null && better) { //&& (better || closures.size()!=5)) {
 	                				improved |= closures.offer(refinedClosure);
 	                			}
 							}
@@ -333,11 +345,14 @@ public class MulticlassCovering {
 			
 			Attribute attribute = inst.attribute(labelIndex);
 			double value = wrappedInstance.value(labelIndex);
+			
 			if (!predictZero) {
 				if (value!=0) {
 					if (attribute.isNominal())
 						head.addCondition(new NominalCondition(toSeCoAttribute(attribute), value));
 					else if (attribute.isNumeric())
+						
+						// TODO: adapt for numerical attributes, should not happen for multilabels?
 						head.addCondition(new NumericCondition(toSeCoAttribute(attribute), value));
 					else
 						throw new Exception("only numeric and nominal attributes supported !");
@@ -346,6 +361,8 @@ public class MulticlassCovering {
 				if (attribute.isNominal())
 					head.addCondition(new NominalCondition(toSeCoAttribute(attribute), value));
 				else if (attribute.isNumeric())
+					
+					// TODO: adapt for numerical attributes, should not happen for multilabels?
 					head.addCondition(new NumericCondition(toSeCoAttribute(attribute), value));
 				else
 					throw new Exception("only numeric and nominal attributes supported !");
@@ -367,18 +384,86 @@ public class MulticlassCovering {
 				Condition cond;
 			
 				if (att.isNominal())
-					cond = new NominalCondition((de.tu_darmstadt.ke.seco.models.Attribute) att, inst.value(att));
-				else if (att.isNumeric())
-					cond = new NumericCondition((de.tu_darmstadt.ke.seco.models.Attribute) att, inst.value(att));
-				else
+					rule.addCondition(new NominalCondition((de.tu_darmstadt.ke.seco.models.Attribute) att, inst.value(att)));
+				else if (att.isNumeric()) {
+					double min = 0;
+					double max = 0;
+					double val = inst.value(att);
+					boolean minFound = false;
+					for (int j = 0; j < sorted.get(att).size(); j++) {
+						// IndexOutOfBounds, wenn der erste und zweite Attribute-Wert gleich sind und der erste
+						// intervall-Wert durch Abzug der Differenz des ersten und zweiten Wertes vom ersten Wert
+						// berechnet wird (dann gilt (sorted.get ==  val) und j-1 existiert nicht
+						if (sorted.get(att).get(j)>=val && !minFound) {
+							min = sorted.get(att).get(j-1);
+							minFound = true;
+						}
+						if (sorted.get(att).get(j)>val) {
+							max = sorted.get(att).get(j);
+							break;
+						}
+					}
+					
+					// use true for <=, false for >=
+					rule.addCondition(new NumericCondition((de.tu_darmstadt.ke.seco.models.Attribute) att, min, false));
+					rule.addCondition(new NumericCondition((de.tu_darmstadt.ke.seco.models.Attribute) att, max, true));
+				} else
 					throw new Exception("only numeric and nominal attributes supported !");
-				
-				rule.addCondition(cond);
 			}
 		}
 		
 		return rule;
 	}
+	
+	public HashMap<Attribute, ArrayList<Double>> sortNumericAttributes(final Instances instances,
+																	final LinkedHashSet<Integer> labelIndices) {
+		final Instance inst = instances.instance(0);
+		final Instances dataset = (Instances) inst.dataset();   
+		final Enumeration<de.tu_darmstadt.ke.seco.models.Attribute> atts = dataset.enumerateAttributesWithoutClass();
+		HashMap<Attribute, ArrayList<Double>> sortedListForAttribute = new HashMap<Attribute, ArrayList<Double>>();
+		while (atts.hasMoreElements()) {
+			final Attribute att = atts.nextElement();
+			if (!labelIndices.contains(att.index())) {
+				if (att.isNumeric()) {
+					ArrayList<Double> sortedAttribute = new ArrayList<Double>(instances.size());
+					for (Instance in : instances) {
+						sortedAttribute.add(in.value(att));
+					}
+					sortedAttribute.sort(new Comparator<Double>() {
+						@Override
+						public int compare(Double a, Double b) {
+							if (a > b)
+								return 1;
+							else if (a < b)
+								return -1;
+							else
+								return 0;
+						}
+					});
+					ArrayList<Double> intervalsAttribute = new ArrayList<Double>(instances.size()+1);
+					for (int index = 0; index < instances.size()-1; index++) {
+						// -1 ersetzen durch (durchschnittliche?) Differenz, aufpassen wenn zwei gleich Werte am Anfang oder Ende sind
+						if (index == 0) {
+							intervalsAttribute.add(index, sortedAttribute.get(index) - 1);
+						}
+						intervalsAttribute.add(index+1, (sortedAttribute.get(index) + sortedAttribute.get(index+1)) / 2);
+						if (index == sortedAttribute.size()-2) {
+							intervalsAttribute.add(sortedAttribute.get(index+1) + 1);
+						}
+					}
+					if (instances.size() == 1) {
+						intervalsAttribute.add(0, sortedAttribute.get(0) - 1);
+						intervalsAttribute.add(1, sortedAttribute.get(0) + 1);
+					}
+					sortedListForAttribute.put(att, intervalsAttribute);
+					// sortedAttribute.indexOf(closure.rule.conditions(attribute));
+					// int currentNumericIndex;  // immer als erstes Element in ArrayList speichern? um nicht aus dem Value den Index zurückerrechnen zu müssen?
+				}
+			}
+		}
+		return sortedListForAttribute;
+	}
+	
     
     /**
      * @param beamWidthPercentage The beam width as a percentage of the number of attributes
