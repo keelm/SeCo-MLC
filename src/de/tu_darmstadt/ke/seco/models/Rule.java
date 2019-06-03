@@ -390,6 +390,17 @@ public abstract class Rule implements Comparable<Rule>, Cloneable, Iterable<Cond
         s.setPredecessor(this);
         return s;
     }
+    
+    public final Rule generalizeNumeric (final int index, final double value) {
+    	final Rule s = (Rule) this.copy();
+    	Condition oldCond = new NumericCondition(s.getCondition(index).getAttr(), value, s.getCondition(index).cmp());
+    	s.deleteCondition(index);
+    	// oldCond.setValue(value);
+    	s.addCondition(oldCond);
+    	// s.getCondition(index).setValue(value);
+    	s.setPredecessor(this);
+    	return s;
+    }
 
     /**
      * delete the nth condition from the body of the rule

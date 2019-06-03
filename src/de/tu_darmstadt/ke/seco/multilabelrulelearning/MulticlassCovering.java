@@ -223,15 +223,17 @@ public class MulticlassCovering {
 		while (improved) {
             improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures);
 
-            if (improved && DEBUG_STEP_BY_STEP_V) {}
+            if (improved && DEBUG_STEP_BY_STEP_V) {
                 System.out.println(
                         "Generalized rule conditions (beam width = " + beamWidth + "): " +
                                 Arrays.toString(bestClosures.toArray()));
+            }
         }
 
         MultiHeadRule bestRule = getBestRule(bestClosures);
-        if (DEBUG_STEP_BY_STEP)
+        if (DEBUG_STEP_BY_STEP) {
             System.out.println("Found best rule: " + bestRule + "\n");
+        }
         return bestRule;
 	}
 	
@@ -275,16 +277,55 @@ public class MulticlassCovering {
 					Iterator<Condition> c = closure.rule.getBody().iterator();
 					while (c.hasNext()) {
 						Condition cond = c.next();
-						
+						// double old_val = 0;
+						// boolean set = false;
 						// don't iterate if it's a label, redundant, can be removed
 						if (!labelIndices.contains(cond.getAttr().index())) {
 							int index = closure.rule.getBody().indexOf(cond);
 							if (!labelIndices.contains(index)) {
+								
+								/*
+								 * TODO: Deep Copy notwendig, da hier die Condition nicht entfernt wird, sondern der Wert verändert wird
+								 * und sich damit immer auch in closure mit verändert, da die Adresse die gleiche ist
+								 */
 								MultiHeadRule refinedRule = (MultiHeadRule) closure.rule.copy();
 								
 								// remove condition
 								// TODO: adapt for numerical attributes
-								refinedRule = (MultiHeadRule) refinedRule.generalize(index);
+								if (cond.getAttr().isNumeric()) {
+									// set minimum lower
+									if (cond.cmp()==false) {
+										try {
+											// old_val = cond.getValue();
+											// refinedRule.getCondition(refinedRule.getBody().indexOf(cond)).setValue(sorted.get(cond.getAttr()).get(sorted.get(cond.getAttr()).indexOf(cond.getValue()) - 1));
+											// set = true;
+											double value = sorted.get(cond.getAttr()).get(sorted.get(cond.getAttr()).indexOf(cond.getValue()) - 1);
+											while (value==sorted.get(cond.getAttr()).indexOf(cond.getValue())) {
+												value = sorted.get(cond.getAttr()).get(sorted.get(cond.getAttr()).indexOf(value) - 1);
+											}
+											refinedRule = (MultiHeadRule) refinedRule.generalizeNumeric(index, value);
+										} catch(Exception e) {
+											refinedRule = (MultiHeadRule) refinedRule.generalize(index);
+										}
+									}
+									// set maximum higher
+									if (cond.cmp()==true) {
+										try {	
+											// old_val = cond.getValue();
+											// refinedRule.getCondition(refinedRule.getBody().indexOf(cond)).setValue(sorted.get(cond.getAttr()).get(sorted.get(cond.getAttr()).indexOf(cond.getValue()) + 1));
+											// set = true;
+											double value = sorted.get(cond.getAttr()).get(sorted.get(cond.getAttr()).indexOf(cond.getValue()) + 1);
+											while (value==sorted.get(cond.getAttr()).indexOf(cond.getValue())) {
+												value = sorted.get(cond.getAttr()).get(sorted.get(cond.getAttr()).indexOf(value) + 1);
+											}
+											refinedRule = (MultiHeadRule) refinedRule.generalizeNumeric(index, value);
+										} catch(Exception e) {
+											refinedRule = (MultiHeadRule) refinedRule.generalize(index);
+										}
+									}
+								} else {
+									refinedRule = (MultiHeadRule) refinedRule.generalize(index);
+								}
 								Closure refinedClosure = new Closure(refinedRule, null /*closure.metaData ?*/);
 							
 								// evaluate the rule
@@ -301,12 +342,15 @@ public class MulticlassCovering {
 								// führt zu spezielleren Regeln?
 								// double min = Double.POSITIVE_INFINITY;
 								// for (Closure findMin : beamWidthIterable(closures)) {
-								// 	 min = findMin.rule.getRuleValue() < min ? findMin.rule.getRuleValue() : min;
+								//     min = findMin.rule.getRuleValue() < min ? findMin.rule.getRuleValue() : min;
 								// }
+								
+								// ruleComparison: > or >=
 								better |= refinedClosure.rule.getRuleValue() > closure.rule.getRuleValue(); // better |= refinedClosure.rule.getRuleValue() > min;
-								if (refinedClosure != null && better) { //&& (better || closures.size()!=5)) {
+								if (refinedClosure != null && better) {// && (better || closures.size()<5)) {
 	                				improved |= closures.offer(refinedClosure);
 	                			}
+								// if (set) closure.rule.getCondition(index).setValue(old_val);
 							}
 						}
 					}
@@ -380,9 +424,7 @@ public class MulticlassCovering {
 			final Attribute att = atts.nextElement();
 			
 			// don't add condition if it's a label
-			if (!labelIndices.contains(att.index())) {
-				Condition cond;
-			
+			if (!labelIndices.contains(att.index())) {			
 				if (att.isNominal())
 					rule.addCondition(new NominalCondition((de.tu_darmstadt.ke.seco.models.Attribute) att, inst.value(att)));
 				else if (att.isNumeric()) {

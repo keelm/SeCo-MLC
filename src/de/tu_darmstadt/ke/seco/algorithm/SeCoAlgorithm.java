@@ -1287,7 +1287,7 @@ public class SeCoAlgorithm implements Serializable {
                         for (Instance inst : coveredButLabelsNotFullyCoveredInstances) System.out.println(inst);
                     else System.out.println(coveredButLabelsNotFullyCoveredInstances.size());
                 }
-                /*
+                
                 if (useSkippingRules) {
                     if (DEBUG_STEP_BY_STEP)
                         System.out.println(
@@ -1323,16 +1323,18 @@ public class SeCoAlgorithm implements Serializable {
                     }
                 } else {
                     // Re-add instances to training set for next iteration
+                	/*
                     for (int i = 0; i < coveredButLabelsNotFullyCoveredInstances.size(); i++) {
                         examples.addDirectly(coveredButLabelsNotFullyCoveredInstances.get(i));
                     }
+                    */
                 }
-				*/
+				
                 /////////
                 
                 PrintStream out = new PrintStream(new File("Model.txt"));
                 PrintStream console = System.out;
-                System.setOut(console);
+                System.setOut(out);
                 
                 /////////
                 if (DEBUG_STEP_BY_STEP)
