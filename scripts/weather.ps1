@@ -1,0 +1,3 @@
+﻿cd ..
+# Start-Process -FilePath jar -ArgumentList "cvfe Bottom-Up.jar seco mlheads github.src.de.tu_darmstadt.ke.seco.Main C:\Users\Pascal\Documents\Studium\BachelorOfScienceInformatik\Bachelorarbeit\Repo\SeCo-MLC\bin\de\tu_darmstadt\ke\seco\*.class"
+Start-Process -FilePath java -ArgumentList "-jar Bottom-Up.jar -baselearner config/precision.xml -arff data/weather.arff -xml data/weather.xml -test-arff data/weather.arff -remainingInstancesPercentage 0.1 -reAddAllCovered false -skipThresholdPercentage -1 -predictZeroRules false -useMultilabelHeads true -averagingStrategy micro-averaging -evaluationStrategy rule-dependent -useBottomUp true" -RedirectStandardError scripts/error.txt 

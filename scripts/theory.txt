@@ -1,0 +1,35 @@
+number of rules....................: 13
+referred attributes..............: 52
+average rule length..............: 6.0
+#stopRules.......................: 0
+#zeroLabelPredictions............: 17
+#partLabelRulesNotFul............: 0
+#fullLabelRules..................: 0
+#nonLabelRules...................: 13
+%partLabelRulesNotFul............: 0.0
+%fullLabelRules..................: 0.0
+%nonLabelRules...................: 1.0
+number of conditions.............: 78
+#nonLabelConditions..............: 78
+#labelConditions.................: 0
+%nonLabelConditions..............: 1.0
+%labelConditions.................: 0.0
+#multiHeadRules..................: 4
+%multiHeadRules..................: 0.3076923076923077
+average #labels..................: 1.3076923076923077
+average #labels per multiHeadRule: 2.0
+RuleSet..............: [play = 1] :- outlook = sunny, temperature >= 73.5, temperature <= 77.5, humidity >= 67.5, humidity <= 72.5, windy = TRUE. [[1.0 0.0][8.0 5.0]] Value: 1.0
+                       [play = 1] :- outlook = overcast, temperature >= 71.5, temperature <= 73.5, humidity >= 88.0, humidity <= 90.5, windy = TRUE. [[1.0 0.0][7.0 5.0]] Value: 1.0
+                       [play = 1, playmaybe = 1] :- outlook = rainy, temperature >= 66.5, temperature <= 68.5, humidity >= 77.5, humidity <= 82.5, windy = FALSE. [[2.0 0.0][9.0 13.0]] Value: 1.0
+                       [dontplay = 1] :- outlook = sunny, temperature >= 84.0, temperature <= 86.0, humidity >= 82.5, humidity <= 85.5, windy = FALSE. [[1.0 0.0][4.0 6.0]] Value: 1.0
+                       [dontplay = 1] :- outlook = sunny, temperature >= 71.5, temperature <= 73.5, humidity >= 93.0, humidity <= 95.5, windy = FALSE. [[1.0 0.0][3.0 6.0]] Value: 1.0
+                       [play = 1, playmaybe = 1] :- outlook = rainy, temperature >= 69.5, temperature <= 70.5, humidity >= 93.5, humidity <= 97.0, windy = FALSE. [[2.0 0.0][7.0 9.0]] Value: 1.0
+                       [play = 1] :- outlook = overcast, temperature >= 80.5, temperature <= 82.0, humidity >= 72.5, humidity <= 77.5, windy = FALSE. [[1.0 0.0][4.0 3.0]] Value: 1.0
+                       [dontplay = 1] :- outlook = rainy, temperature >= 64.5, temperature <= 67.0, humidity >= 67.5, humidity <= 75.0, windy = TRUE. [[1.0 0.0][2.0 4.0]] Value: 1.0
+                       [play = 1] :- outlook = rainy, temperature >= 73.0, temperature <= 77.5, humidity >= 75.0, humidity <= 83.0, windy = FALSE. [[1.0 0.0][3.0 2.0]] Value: 1.0
+                       [play = 1, playmaybe = 1] :- outlook = overcast, temperature >= 81.5, temperature <= 84.0, humidity >= 78.0, humidity <= 88.0, windy = FALSE. [[2.0 0.0][3.0 5.0]] Value: 1.0
+                       [play = 1, playmaybe = 1] :- outlook = overcast, temperature >= 63.0, temperature <= 66.5, humidity >= 64.0, humidity <= 67.5, windy = TRUE. [[2.0 0.0][1.0 5.0]] Value: 1.0
+                       [play = 1] :- outlook = sunny, temperature >= 68.0, temperature <= 70.0, humidity >= 69.0, humidity <= 80.0, windy = FALSE. [[1.0 0.0][0.0 2.0]] Value: 1.0
+                       [dontplay = 1] :- outlook = rainy, temperature >= 70.0, temperature <= 75.5, humidity >= 90.5, humidity <= 92.0, windy = TRUE. [[1.0 0.0][1.0 0.0]] Value: 1.0
+defaultRule..........: null
+building the model took secs: 0.434

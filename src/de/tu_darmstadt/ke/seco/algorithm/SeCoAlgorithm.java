@@ -1330,21 +1330,12 @@ public class SeCoAlgorithm implements Serializable {
                     */
                 }
 				
-                /////////
-                
-                PrintStream out = new PrintStream(new File("Model.txt"));
-                PrintStream console = System.out;
+                PrintStream out = new PrintStream(new File("scripts/theory.txt"));
                 System.setOut(out);
                 
-                /////////
                 if (DEBUG_STEP_BY_STEP)
                 	System.out.println(theory);
-                
-                /////////
-                
-                System.setOut(console);
-                
-                /////////
+                System.setOut(System.out);
             } else {
                 break;
             }

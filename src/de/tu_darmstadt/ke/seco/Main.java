@@ -11,6 +11,8 @@ import mulan.evaluation.Evaluation;
 import mulan.evaluation.Evaluator;
 import weka.core.Utils;
 
+import java.io.File;
+import java.io.PrintStream;
 import java.util.Random;
 
 /**
@@ -23,7 +25,9 @@ public class Main {
 
     private static void evaluate(final MultiLabelInstances trainingData, final MultiLabelInstances testData,
                                  final MultiLabelLearner multilabelLearner) throws Exception {
-        System.out.println("Learned Model:\n");
+    	PrintStream out = new PrintStream(new File("scripts/result.txt"));
+        System.setOut(out);
+    	System.out.println("Learned Model:\n");
         System.out.println(multilabelLearner);
 
         if (testData != null) {
