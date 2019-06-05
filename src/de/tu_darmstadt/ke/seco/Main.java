@@ -43,8 +43,8 @@ public class Main {
         if (testData != null) {
             Evaluator evaluator = new Evaluator();
             Evaluation trainingEvaluation = evaluator.evaluate(multilabelLearner, trainingData, trainingData);
-            System.out.println("\n\nEvaluation Results on train data:\n");
-            System.out.println(trainingEvaluation);
+            //System.out.println("\n\nEvaluation Results on train data:\n");
+            //System.out.println(trainingEvaluation);
             evaluator = new Evaluator();
             Evaluation evaluation = evaluator.evaluate(multilabelLearner, testData, trainingData);
             for (Measure measure : evaluation.getMeasures()) {
@@ -226,6 +226,7 @@ public class Main {
         multilabelLearner.build(trainingData);
         long estimatedTime = System.currentTimeMillis() - startTime;
         System.out.println("building the model took secs: "+estimatedTime/1000.0);
+        csvWriter.writeNext(new String[]{"building time", Double.toString(estimatedTime/1000.0)});
 
         // Evaluate model on test instances, if available
         startTime = System.currentTimeMillis();

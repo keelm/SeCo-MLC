@@ -201,7 +201,7 @@ public class MainEvaluation {
         // relaxed pruning options
         boolean useRelaxedPruning = Boolean.valueOf((getOptionalArgument("useRelaxedPruning", args, "false")));
         boolean useBoostedHeuristicForRules = Boolean.valueOf(getOptionalArgument("useBoostedHeuristicForRules", args, "true"));
-        String boostFunction = getOptionalArgument("boostFunction", args, "llm");
+        String boostFunction = getOptionalArgument("boostFunction", args, "kln");
         double label = Double.valueOf(getOptionalArgument("label", args, "3.0"));
         double boostAtLabel = Double.valueOf(getOptionalArgument("boostAtLabel", args, "1.1"));
         double curvature = Double.valueOf(getOptionalArgument("curvature", args, "2.0"));
