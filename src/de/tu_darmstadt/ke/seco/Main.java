@@ -28,8 +28,8 @@ import java.util.Random;
 import static de.tu_darmstadt.ke.seco.multilabelrulelearning.MulticlassCovering.*;
 
 /**
- * Runner class for building multilabel learners using XML config files, running it on a given dataset and outputting
- * the learned theory.
+ * Runner class for building multi-label learners using XML config files,
+ * running it on a given data set and outputting the learned theory.
  *
  * @author Michael Rapp
  */
@@ -47,14 +47,16 @@ public class Main {
             //System.out.println(trainingEvaluation);
             evaluator = new Evaluator();
             Evaluation evaluation = evaluator.evaluate(multilabelLearner, testData, trainingData);
-            for (Measure measure : evaluation.getMeasures()) {
+
+            // save test results to csv file
+            for (Measure measure : evaluation.getMeasures())
                 csvWriter.writeNext(new String[]{measure.getName(), Double.toString(measure.getValue())});
-            }
+
             System.out.println("\n\nEvaluation Results on test data:\n");
             System.out.println(evaluation);
 
 
-            csvWriter.writeNext(new String[]{"avg. #evals per findBestHead()", Double.toString(evaluationsPerHead)});
+            csvWriter.writeNext(new String[]{"avg. #'evals' per findBestHead()", Double.toString(evaluationsPerHead)});
             csvWriter.writeNext(new String[]{"#findBestHead()", Integer.toString(evaluatedHeads)});
 
             for (Measure measure : trainingEvaluation.getMeasures()) {
@@ -85,8 +87,8 @@ public class Main {
     }
 
     /**
-     * Builds a multilabel learner according to a specific XML config files, runs it of the specified dataset and
-     * outputs the learned theory.
+     * Builds a multi-label learner according to a specific XML config files,
+     * runs it on the specified data set and outputs the learned theory.
      *
      * @param args -baselearner:
      *                 Path to base learner XML config file (e.g. /config/precision.xml)
@@ -120,22 +122,25 @@ public class Main {
         final String xmlLabelsDefFilePath = getOptionalArgument("xml", args, arffFilePath.replace(".arff", ".xml"));
         final String testArffFilePath = getOptionalArgument("test-arff", args, null);
         final double remainingInstancesPercentage = Double.valueOf(getOptionalArgument("remainingInstancesPercentage", args, "0.05"));
-        final boolean readdAllCovered = Boolean.valueOf(getOptionalArgument("readdAllCovered", args, "false"));
+        final boolean reAddAllCovered = Boolean.valueOf(getOptionalArgument("reAddAllCovered", args, "false"));
         final double skipThresholdPercentage = Double.valueOf(getOptionalArgument("skipThresholdPercentage", args, "-1.0"));
         final boolean predictZeroRules = Boolean.valueOf(getOptionalArgument("predictZeroRules", args, "false"));
         final boolean useMultilabelHeads = Boolean.valueOf(getOptionalArgument("useMultilabelHeads", args, "false"));
         final String evaluationStrategy = getOptionalArgument("evaluationStrategy", args, EvaluationStrategy.RULE_DEPENDENT);
         final String averagingStrategy = getOptionalArgument("averagingStrategy", args, AveragingStrategy.MICRO_AVERAGING);
-        // relaxed pruning options
+
+        /** Relaxed Pruning Options **/
         final boolean useRelaxedPruning = Boolean.valueOf((getOptionalArgument("useRelaxedPruning", args, "false")));
-        final boolean useBoostedHeuristicForRules = Boolean.valueOf(getOptionalArgument("useLiftedHeuristicForRules", args, "true"));
-        final String boostFunction = getOptionalArgument("liftFunction", args, "llm");
+        final boolean useLiftedHeuristic = Boolean.valueOf(getOptionalArgument("useLiftedHeuristic", args, "true"));
+        final String liftFunction = getOptionalArgument("liftFunction", args, "kln");
         final double label = Double.valueOf(getOptionalArgument("label", args, "3.0"));
-        final double boostAtLabel = Double.valueOf(getOptionalArgument("liftAtLabel", args, "1.1"));
+        final double liftAtLabel = Double.valueOf(getOptionalArgument("liftAtLabel", args, "1.1"));
         final double curvature = Double.valueOf(getOptionalArgument("curvature", args, "2.0"));
         final int pruningDepth = Integer.valueOf(getOptionalArgument("pruningDepth", args, "-1"));
-        final boolean usePrepending = Boolean.valueOf((getOptionalArgument("prepending", args, "false")));
         final boolean fixableHead =  Boolean.valueOf((getOptionalArgument("fixHead", args, "true")));
+
+        /** Prepending Options **/
+        final boolean usePrepending = Boolean.valueOf((getOptionalArgument("prepending", args, "false")));
 
         System.out.println("Arguments:\n");
         System.out.println("-baselearner " + baseLearnerConfigPath);
@@ -143,21 +148,22 @@ public class Main {
         System.out.println("-xml " + xmlLabelsDefFilePath);
         System.out.println("-test-arff " + testArffFilePath);
         System.out.println("-remainingInstancesPercentage " + remainingInstancesPercentage);
-        System.out.println("-readdAllCovered " + readdAllCovered);
+        System.out.println("-reAddAllCovered " + reAddAllCovered);
         System.out.println("-skipThresholdPercentage " + skipThresholdPercentage);
         System.out.println("-predictZeroRules " + predictZeroRules);
         System.out.println("-useMultilabelHeads " + useMultilabelHeads);
         System.out.println("-evaluationStrategy " + evaluationStrategy);
         System.out.println("-averagingStrategy " + averagingStrategy);
+        System.out.println("Relaxed Pruning Arguments:");
         System.out.println("-useRelaxedPruning " + useRelaxedPruning);
-        System.out.println("-useLiftedHeuristicForRules " + useBoostedHeuristicForRules);
-        System.out.println("-liftFunction " + boostFunction);
+        System.out.println("-useLiftedHeuristic " + useLiftedHeuristic);
+        System.out.println("-liftFunction " + liftFunction);
         System.out.println("-label " + label);
-        System.out.println("-liftAtLabel " + boostAtLabel);
+        System.out.println("-liftAtLabel " + liftAtLabel);
         System.out.println("-curvature " + curvature);
         System.out.println("-pruningDepth " + pruningDepth);
-        System.out.println("-prepending " + usePrepending);
         System.out.println("-fixHead " + fixableHead);
+        System.out.println("-prepending " + usePrepending);
         System.out.println("\n");
 
         // create csv file
@@ -183,42 +189,44 @@ public class Main {
         csvWriter.writeNext(new String[]{"xml", xmlLabelsDefFilePath});
         csvWriter.writeNext(new String[]{"test-arff", testArffFilePath});
         csvWriter.writeNext(new String[]{"remainingInstancesPercentage", Double.toString(remainingInstancesPercentage)});
-        csvWriter.writeNext(new String[]{"readdAllCovered", Boolean.toString(readdAllCovered)});
+        csvWriter.writeNext(new String[]{"reAddAllCovered", Boolean.toString(reAddAllCovered)});
         csvWriter.writeNext(new String[]{"skipThresholdPercentage", Double.toString(skipThresholdPercentage)});
         csvWriter.writeNext(new String[]{"predictZeroRules", Boolean.toString(predictZeroRules)});
         csvWriter.writeNext(new String[]{"useMultilabelHeads", Boolean.toString(useMultilabelHeads)});
         csvWriter.writeNext(new String[]{"evaluationStrategy", evaluationStrategy});
         csvWriter.writeNext(new String[]{"averagingStrategy", averagingStrategy});
         csvWriter.writeNext(new String[]{"useRelaxedPruning ", Boolean.toString(useRelaxedPruning)});
-        csvWriter.writeNext(new String[]{"useLiftedHeuristicForRules", Boolean.toString(useBoostedHeuristicForRules)});
-        csvWriter.writeNext(new String[]{"liftFunction", boostFunction});
+        csvWriter.writeNext(new String[]{"useLiftedHeuristic", Boolean.toString(useLiftedHeuristic)});
+        csvWriter.writeNext(new String[]{"liftFunction", liftFunction});
         csvWriter.writeNext(new String[]{"label", Double.toString(label)});
-        csvWriter.writeNext(new String[]{"liftAtLabel", Double.toString(boostAtLabel)});
+        csvWriter.writeNext(new String[]{"liftAtLabel", Double.toString(liftAtLabel)});
         csvWriter.writeNext(new String[]{"curvature", Double.toString(curvature)});
         csvWriter.writeNext(new String[]{"pruningDepth", Integer.toString(pruningDepth)});
         csvWriter.writeNext(new String[]{"fixHead", Boolean.toString(fixableHead)});
+        csvWriter.writeNext(new String[]{"prepending", Boolean.toString(usePrepending)});
 
-        // create training instances from dataset
+        // create training instances from data set
         final MultiLabelInstances trainingData = new MultiLabelInstances(arffFilePath, xmlLabelsDefFilePath);
 
         System.out.println("SeCo: start experiment\n");
 
         MultiLabelLearnerBase multilabelLearner = null;
+        // use different algorithm for prepending
         if (usePrepending) {
             SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(baseLearnerConfigPath);
             multilabelLearner = new Weka379AdapterPrepending(baseLearnerAlgorithm,
-                    remainingInstancesPercentage, readdAllCovered, skipThresholdPercentage, predictZeroRules,
+                    remainingInstancesPercentage, reAddAllCovered, skipThresholdPercentage, predictZeroRules,
                     useMultilabelHeads, evaluationStrategy, averagingStrategy,
-                    useRelaxedPruning, useBoostedHeuristicForRules, boostFunction, label, boostAtLabel, curvature, pruningDepth);
+                    useRelaxedPruning, useLiftedHeuristic, liftFunction, label, liftAtLabel, curvature, pruningDepth);
         } else {
             SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(baseLearnerConfigPath);
             multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
-                remainingInstancesPercentage, readdAllCovered, skipThresholdPercentage, predictZeroRules,
-                useMultilabelHeads, evaluationStrategy, averagingStrategy,
-                useRelaxedPruning, useBoostedHeuristicForRules, boostFunction, label, boostAtLabel, curvature, pruningDepth, fixableHead);
+                    remainingInstancesPercentage, reAddAllCovered, skipThresholdPercentage, predictZeroRules,
+                    useMultilabelHeads, evaluationStrategy, averagingStrategy,
+                    useRelaxedPruning, useLiftedHeuristic, liftFunction, label, liftAtLabel, curvature, pruningDepth, fixableHead);
         }
 
-        // Create test instances from dataset, if available
+        // Create test instances from data set, if available
         final MultiLabelInstances testData = testArffFilePath != null ? new MultiLabelInstances(testArffFilePath, xmlLabelsDefFilePath) : null;
 
         // Learn model from training instances

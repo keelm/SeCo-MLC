@@ -155,6 +155,7 @@ public class MainEvaluation {
 
     private static int labelValue = 2;
 
+    // TODO: floating point precision -> use list/array
     private static double minimumBoost = 1.01;
     private static double maximumBoost = 1.21;
     private static double deltaBoost = 0.02;

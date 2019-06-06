@@ -22,10 +22,8 @@ import static de.tu_darmstadt.ke.seco.models.Attribute.toSeCoAttribute;
 
 public class MulticlassCovering {
 
-    /**
-     * An increasingly sorted queue with a fixed size. If adding a new element extends the maximum
-     * size, the smallest element is thrown away.
-     */
+    /** An increasingly sorted queue with a fixed size.
+     *  If adding a new element extends the maximum size, the smallest element is thrown away. */
     private class FixedPriorityQueue<T extends Comparable<T>> extends PriorityQueue<T> {
 
         private static final long serialVersionUID = -5614452897067090251L;
@@ -55,31 +53,19 @@ public class MulticlassCovering {
 
     }
 
-    /**
-     * Encloses a rule and additional metadata.
-     */
+    /** Encloses a rule and additional metadata. */
     public class Closure implements Comparable<Closure> {
 
-        /**
-         * The rule.
-         **/
+        /** The rule. * */
         private MultiHeadRule rule;
 
-        /**
-         * Meta data, which is associated with the rule.
-         **/
+        /** Meta data, which is associated with the rule. **/
         private MetaData metaData;
 
-        /**
-         * The indices of the attributes, which are used as the rule's conditions, mapped to the
-         * conditions.
-         */
+        /** The indices of the attributes, which are used as the rule's conditions, mapped to the conditions. */
         private Map<Integer, Collection<Condition>> conditions;
 
-
-        /**
-         * True, if the rule should be further refined in the next step, false otherwise.
-         */
+        /** True, if the rule should be further refined in the next step, false otherwise. */
         private boolean refineFurther;
 
         Closure(final MultiHeadRule rule, final MetaData metaData) {
@@ -121,7 +107,9 @@ public class MulticlassCovering {
     }
 
     private static final boolean DEBUG_STEP_BY_STEP = true;
-    private static final boolean DEBUG_STEP_BY_STEP_V = false;
+    private static final boolean DEBUG_STEP_BY_STEP_V = true;
+    /** Determines whether or not to display rule candidates during the training process. **/
+    private static final boolean DEBUG_STEP_BY_STEP_C = true;
 
     private static HashSet<Integer> labelIndicesHash;
     private static Hashtable<Integer,Boolean> coveringCache;
@@ -130,17 +118,25 @@ public class MulticlassCovering {
 
     private final boolean predictZero;
 
+    /** Parameters of the relaxed pruning approach.
+     * @param liftingStrategy The lift function.
+     * @param useRelaxedPruning Whether or not to use relaxed pruning.
+     * @param useLiftedHeuristic Whether or not to assess rules by the lifted or normal heuristic value.
+     * @param pruningDepth The depth for which is checked when pruning in combination with an anti-monotonic measure.
+     * @param fixableHead Whether or not to fix the head during the rule refinement process.
+     */
     public MulticlassCovering(final MultiLabelEvaluation multiLabelEvaluation,
                               final boolean predictZero,
                               final LiftingStrategy liftingStrategy,
                               final boolean useRelaxedPruning,
-                              final boolean useBoostedHeuristicForRules,
+                              final boolean useLiftedHeuristic,
                               final int pruningDepth, final boolean fixableHead) {
         this.multiLabelEvaluation = multiLabelEvaluation;
         this.predictZero = predictZero;
+
         this.liftingStrategy = liftingStrategy;
         this.useRelaxedPruning = useRelaxedPruning;
-        this.useLiftedHeuristic = useBoostedHeuristicForRules;
+        this.useLiftedHeuristic = useLiftedHeuristic;
         this.pruningDepth = pruningDepth;
         this.fixableHead = fixableHead;
     }
@@ -208,14 +204,11 @@ public class MulticlassCovering {
 	}
 
     
-    /**
-     * @param beamWidthPercentage The beam width as a percentage of the number of attributes
-     */
+    /** @param beamWidthPercentage The beam width as a percentage of the number of attributes */
     public final MultiHeadRule findBestGlobalRule(final Instances instances,
                                                   final LinkedHashSet<Integer> labelIndices,
                                                   final Set<Integer> predictedLabels,
-                                                  final float beamWidthPercentage) throws
-            Exception {
+                                                  final float beamWidthPercentage) throws Exception {
         if (beamWidthPercentage < 0)
             throw new IllegalArgumentException("Beam width must be at least 0.0");
         else if (beamWidthPercentage > 1)
@@ -223,18 +216,22 @@ public class MulticlassCovering {
         int numAttributes = instances.numAttributes();
         int beamWidth = Math
                 .max(1, Math.min(numAttributes, Math.round(numAttributes * beamWidthPercentage)));
+
         return findBestGlobalRule(instances, labelIndices, predictedLabels, beamWidth);
     }
 
+
     public static boolean finished = false;
+    /** Whether the head is fixed for the current iteration. **/
     boolean fixHead = false;
+    /** The head that is used for the subsequent body refinement process. **/
     Head fixedHead = null;
+
 
     public final MultiHeadRule findBestGlobalRule(final Instances instances,
                                                   final LinkedHashSet<Integer> labelIndices,
                                                   final Set<Integer> predictedLabels,
-                                                  final int beamWidth) throws
-            Exception {
+                                                  final int beamWidth) throws Exception {
         if (beamWidth < 1)
             throw new IllegalArgumentException("Beam width must be at least 1");
         else if (beamWidth > instances.numAttributes())
@@ -244,20 +241,20 @@ public class MulticlassCovering {
             System.out.println(instances.size() + " instances remaining");
         Queue<Closure> bestClosures = new FixedPriorityQueue<>(beamWidth);
         boolean improved = true;
+
+        // no fixed head initially (only after first iteration)
         fixHead = false;
 
-        while (improved) { // Until no improvement possible
+        while (improved) { // until no improvement possible
             improved = refineRule(instances, labelIndices, predictedLabels, bestClosures);
-            if (useRelaxedPruning && !bestClosures.isEmpty()) { // fixing the head
-                fixHead = fixableHead; // true for normal, false for prepending
+            // fix the head if using relaxed pruning
+            if (useRelaxedPruning && !bestClosures.isEmpty()) {
+                fixHead = fixableHead; // true for normal, false (!) for prepending
                 fixedHead = ((Closure) bestClosures.toArray()[0]).rule.getHead();
             }
 
-
             if (improved && DEBUG_STEP_BY_STEP_V)
-                System.out.println(
-                        "Specialized rule conditions (beam width = " + beamWidth + "): " +
-                                Arrays.toString(bestClosures.toArray()));
+                System.out.println("Specialized rule conditions (beam width = " + beamWidth + "): " + Arrays.toString(bestClosures.toArray()));
         }
 
         MultiHeadRule bestRule = getBestRule(bestClosures);
@@ -267,10 +264,10 @@ public class MulticlassCovering {
         return bestRule;
     }
 
+
     private boolean refineRule(final Instances instances, final LinkedHashSet<Integer> labelIndices,
                                final Set<Integer> predictedLabels,
-                               final Queue<Closure> closures) throws
-            Exception {
+                               final Queue<Closure> closures) throws Exception {
         boolean improved = false;
 
         for (Closure closure : beamWidthIterable(closures)) {
@@ -279,7 +276,7 @@ public class MulticlassCovering {
                     closure.refineFurther = false;
                 }
 
-                // When starting off with a new rule, try empty body first
+                // when starting off with a new rule, try empty body first
                 if (closure == null) {
                     MultiHeadRule refinedRule = new MultiHeadRule(multiLabelEvaluation.getHeuristic());
                     Closure refinedClosure = new Closure(refinedRule, null);
@@ -307,6 +304,8 @@ public class MulticlassCovering {
                                     closure != null ? closure.metaData : null);
                             refinedClosure.addCondition(i, condition);
                             refinedClosure = findBestHead(instances, labelIndices, refinedClosure);
+                            if (DEBUG_STEP_BY_STEP_C)
+                                System.out.println(refinedClosure);
 
                             increaseEvaluationCount();
                             if (refinedClosure != null) {
@@ -360,41 +359,40 @@ public class MulticlassCovering {
 
     }
 
+
     private Closure findBestHead(final Instances instances, final LinkedHashSet<Integer> labelIndices,
                                  final Closure closure) throws Exception {
-        //System.out.println(fixHead + " " + closure.rule.getBody());
+        // if the head is fixed, evaluate (on training data) straight away
         if (fixHead) {
             multiLabelEvaluation.evaluate(instances, labelIndices, closure.rule, null);
+            this.evaluations++;
+            // rules must have at least one TP
             if (closure.rule.getStats().getNumberOfTruePositives() <= 0)
                 return null;
-            // TODO: <= for prepending
+            // ensure that the number of TP >= FP
             if (closure.rule.getStats().getNumberOfTruePositives() < closure.rule.getStats().getNumberOfFalsePositives())
                 return null;
             return closure;
         }
 
-
         closure.rule.setHead(null);
         Characteristic characteristic = multiLabelEvaluation.getCharacteristic();
 
+        // use different methods for finding the best head according to the chosen approach
         if (useRelaxedPruning) {
-            if (characteristic == Characteristic.DECOMPOSABLE) {
-                //return findBestRelaxedHeadAntiMonotonic(instances, labelIndices, closure, null, new HashSet<>(), new LinkedList<>());
-
+            if (characteristic == Characteristic.DECOMPOSABLE)
                 return findBestRelaxedHeadDecomposable(instances, labelIndices, closure);
-            } else if (characteristic == Characteristic.ANTI_MONOTONOUS) {
+            else if (characteristic == Characteristic.ANTI_MONOTONOUS)
                 return findBestRelaxedHeadAntiMonotonic(instances, labelIndices, closure, null, new HashSet<>(), new LinkedList<>(), new LinkedList<>());
-            } else {
+            else
                 throw new RuntimeException("Only anti-monotonous or decomposable evaluation metrics are supported for learning multi-label head rules");
-            }
         } else {
-            if (characteristic == Characteristic.DECOMPOSABLE) {
+            if (characteristic == Characteristic.DECOMPOSABLE)
                 return decomposite(instances, labelIndices, closure);
-            } else if (characteristic == Characteristic.ANTI_MONOTONOUS) {
+            else if (characteristic == Characteristic.ANTI_MONOTONOUS)
                 return prunedSearch(instances, labelIndices, closure, null, new HashSet<>(), new LinkedList<>());
-            } else {
+            else
                 throw new RuntimeException("Only anti-monotonous or decomposable evaluation metrics are supported for learning multi-label head rules");
-            }
         }
     }
 
@@ -402,45 +400,41 @@ public class MulticlassCovering {
      * EvaluationSetting for learning more multi-label heads.
      *************************************************/
 
-    /**
-     * True if relaxed pruning is to applied. False otherwise, correspond to pruning as implemented by [Rapp, 2016].
-     */
+    /** True if relaxed pruning is to applied. False otherwise, corresponds to pruning as implemented by [Rapp, 2016]. */
     public boolean useRelaxedPruning = true;
 
-    /**
-     * The lifting strategy to use. Defines how much of a lift to apply depending on the number of labels in the head.
-     */
+    /** The lifting strategy to use. Defines how much of a lift to apply depending on the number of labels in the head. */
     public LiftingStrategy liftingStrategy;
 
-    /**
-     * True if the lifted heuristic value is to be used for evaluating rules.
-     * False otherwise, corresponds to the normal heuristic value being used for assessing rules.
-     */
+    /** True if the lifted heuristic value is to be used for evaluating rules.
+     *  False otherwise, corresponds to the normal heuristic value being used for assessing rules. */
     public boolean useLiftedHeuristic = true;
 
-    /**
-     * Variables for tracking the number of evaluations per execution of findBestHead().
-     * Corresponds approximately to the number of different heads evaluated in the search space.
-     */
+    /** Variables for tracking the number of evaluations per execution of findBestHead().
+     *  Corresponds approximately to the number of different heads evaluated in the search space. */
     public static int evaluations = 0;
     public static int evaluatedHeads = 0;
     public static double evaluationsPerHead = 0;
 
-    /**
-     * Trade off between finding the best possible head and efficiency.
-     * A higher value implies higher chances of finding the best possible head
-     * but also reduced efficiency. Number of subsequent lift function values checked.
-     * If set to -1 the best possible head is guaranteed!
-     */
+    /** Trade off between finding the best possible head and efficiency.
+     *  A higher value implies higher chances of finding the best possible head
+     *  but also reduced efficiency. Number of subsequent lift function values checked.
+     *  If set to -1 the best possible head is guaranteed. */
     public int pruningDepth = -1;
 
+    /** True if the head is fixed during the rule refinement process. **/
     public boolean fixableHead = true;
 
+    // TODO: track pruning?
+
+    /** Finds the best performing relaxed head if using a decomposable evaluation metric. */
     private Closure findBestRelaxedHeadDecomposable(final Instances instances, final LinkedHashSet<Integer> labelIndices, final Closure closure) {
         Heuristic heuristic = multiLabelEvaluation.getHeuristic();
         // save all single label heads heuristic values and closures
         SortedMultimap singleLabelHeads = findAllSingleLabelHeads(instances, labelIndices, closure);
-        //System.out.println(singleLabelHeads);
+        // print out all candidates
+        //if (DEBUG_STEP_BY_STEP_C)
+            //System.out.println(singleLabelHeads);
         // data structures for keeping track of the so far induced heads
         Closure bestClosure = singleLabelHeads.get(singleLabelHeads.firstKey());
         Closure currentClosure = singleLabelHeads.get(singleLabelHeads.firstKey());
@@ -449,9 +443,9 @@ public class MulticlassCovering {
         // best single label head already not enough true positives
         if (currentClosure.rule.getStats().getNumberOfTruePositives() <= 0)
             return null;
+        double heuristic_value_sum = currentClosure.rule.getRawRuleValue();
         // for all remaining head lengths
         for (int n = 2; n <= labelIndices.size(); n++) {
-            //System.out.println(bestClosure.rule.getRawRuleValue());
             Closure bestRemainingSingleHeadClosure = null;
             Condition conditionToBeAdded = null;
             // get the best remaining single label condition for which the attribute is not already contained in the head
@@ -487,18 +481,24 @@ public class MulticlassCovering {
             newClosure.rule.getStats().addTrueNegatives(bestRemainingSingleHeadClosure.rule.getStats().getNumberOfTrueNegatives());
             newClosure.rule.getStats().addFalseNegatives(bestRemainingSingleHeadClosure.rule.getStats().getNumberOfFalseNegatives());
             // set rule values and head
-            // TODO: just average?
-            multiLabelEvaluation.evaluate(instances, labelIndices, newClosure.rule, null);
+            heuristic_value_sum += bestRemainingSingleHeadClosure.rule.getRawRuleValue();
+            double rawRuleValue = heuristic_value_sum / n;
+            newClosure.rule.setRawRuleValue(rawRuleValue);
+            // TODO: just average!
+
+            //multiLabelEvaluation.evaluate(instances, labelIndices, newClosure.rule, null);
+            // TODO: problem, numerical precision, difference of e.g. up to 0.04
+
             //double rawRuleValue = heuristic.evaluateRule(newClosure.rule);
             this.evaluations += 1;
-            //newClosure.rule.setRawRuleValue(rawRuleValue);
+
             // apply lift
             liftingStrategy.evaluate(newClosure.rule);
             // set rule value depending on whether or not to use the lifted heuristic value
             double ruleValue = useLiftedHeuristic ?  newClosure.rule.getLiftedRuleValue() : newClosure.rule.getRawRuleValue();
             newClosure.rule.setRuleValue(heuristic, ruleValue);
             // update best closure
-            // TODO: should be >=?
+            // TODO: should be >=?1
             if (newClosure.rule.getLiftedRuleValue() >= bestClosure.rule.getLiftedRuleValue())
                 bestClosure = newClosure;
             // prune if the best lifted heuristic value cannot be reached anymore
@@ -514,10 +514,8 @@ public class MulticlassCovering {
         return bestClosure.rule.getStats().getNumberOfTruePositives() >= bestClosure.rule.getStats().getNumberOfFalsePositives() ? bestClosure : null;
     }
 
-    /**
-     * Evaluates all single label head rules and returns them sorted in descending order
-     * in accordance to the heuristic value.
-     */
+
+    /** Evaluates all single label head rules and returns them sorted in descending order in accordance to the heuristic value. */
     private SortedMultimap findAllSingleLabelHeads(final Instances instances, final LinkedHashSet<Integer> labelIndices, final Closure closure) {
         // save all single label heads heuristic values and closures
         SortedMultimap singleLabelHeads = new SortedMultimap();
@@ -542,7 +540,6 @@ public class MulticlassCovering {
                 }
             }
         }
-        //System.out.println(singleLabelHeads);
         return singleLabelHeads;
     }
 
@@ -687,9 +684,8 @@ public class MulticlassCovering {
         return false;
     }
 
-    /**
-     * Calculates the metrics for tracking the number of evaluations per findBestHead().
-     */
+    // TODO: update, e.g. for fixed head
+    /** Calculates the metrics for tracking the number of evaluations per findBestHead(). */
     private void increaseEvaluationCount() {
         double tmp = evaluationsPerHead * MulticlassCovering.evaluatedHeads;
         MulticlassCovering.evaluatedHeads++;
@@ -697,6 +693,7 @@ public class MulticlassCovering {
         evaluationsPerHead = tmp / MulticlassCovering.evaluatedHeads;
         evaluations = 0;
     }
+
 
     private Closure decomposite(final Instances instances, final LinkedHashSet<Integer> labelIndices,
                                 final Closure closure) {
