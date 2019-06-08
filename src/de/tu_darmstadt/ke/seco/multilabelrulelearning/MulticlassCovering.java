@@ -305,7 +305,7 @@ public class MulticlassCovering {
                             refinedClosure.addCondition(i, condition);
                             refinedClosure = findBestHead(instances, labelIndices, refinedClosure);
                             if (DEBUG_STEP_BY_STEP_C)
-                                System.out.println(refinedClosure);
+                                System.out.println("Refined Rule: " + refinedClosure);
 
                             increaseEvaluationCount();
                             if (refinedClosure != null) {
@@ -375,7 +375,7 @@ public class MulticlassCovering {
             return closure;
         }
 
-        closure.rule.setHead(null);
+        closure.rule.setHead(new Head());
         Characteristic characteristic = multiLabelEvaluation.getCharacteristic();
 
         // use different methods for finding the best head according to the chosen approach
@@ -433,19 +433,15 @@ public class MulticlassCovering {
         // save all single label heads heuristic values and closures
         SortedMultimap singleLabelHeads = findAllSingleLabelHeads(instances, labelIndices, closure);
         // print out all candidates
-        //if (DEBUG_STEP_BY_STEP_C)
-            //System.out.println(singleLabelHeads);
+        if (DEBUG_STEP_BY_STEP_C)
+            System.out.println("Single Label Heads: " + singleLabelHeads);
         // data structures for keeping track of the so far induced heads
-        Closure bestClosure = singleLabelHeads.get(singleLabelHeads.firstKey());
-        Closure currentClosure = singleLabelHeads.get(singleLabelHeads.firstKey());
-        // remove single label head
-        singleLabelHeads.remove(currentClosure.rule.getRuleValue(), currentClosure);
-        // best single label head already not enough true positives
-        if (currentClosure.rule.getStats().getNumberOfTruePositives() <= 0)
-            return null;
-        double heuristic_value_sum = currentClosure.rule.getRawRuleValue();
-        // for all remaining head lengths
-        for (int n = 2; n <= labelIndices.size(); n++) {
+        Closure bestClosure = null;
+        Closure currentClosure = new Closure ((MultiHeadRule) closure.rule.copy(), null);
+        currentClosure.rule.setStats(new TwoClassConfusionMatrix());
+        double heuristic_value_sum = 0.0;
+        // for all head lengths
+        for (int n = 1; n <= labelIndices.size(); n++) {
             Closure bestRemainingSingleHeadClosure = null;
             Condition conditionToBeAdded = null;
             // get the best remaining single label condition for which the attribute is not already contained in the head
@@ -464,7 +460,8 @@ public class MulticlassCovering {
                 Condition bestRemainingCondition = (Condition) bestRemainingSingleHead.getConditions().toArray()[0];
                 int attributeIndex = bestRemainingCondition.getAttr().index();
                 Collection<Integer> labelIndicesInHead = currentClosure.rule.getHead().getLabelIndices();
-                labelAlreadyInHead = labelIndicesInHead.contains(attributeIndex);
+                // try to add next single label head if already contained or too few TPs
+                labelAlreadyInHead = labelIndicesInHead.contains(attributeIndex) || bestRemainingSingleHeadClosure.rule.getStats().getNumberOfTruePositives() == 0;
                 singleLabelHeads.remove(bestRemainingSingleHeadHeuristicValue, bestRemainingSingleHeadClosure);
                 conditionToBeAdded = bestRemainingCondition;
             }
@@ -490,7 +487,9 @@ public class MulticlassCovering {
             // TODO: problem, numerical precision, difference of e.g. up to 0.04
 
             //double rawRuleValue = heuristic.evaluateRule(newClosure.rule);
-            this.evaluations += 1;
+            // TODO: we should not really count the first head?
+            if (n != 1)
+                this.evaluations += 1;
 
             // apply lift
             liftingStrategy.evaluate(newClosure.rule);
@@ -499,19 +498,19 @@ public class MulticlassCovering {
             newClosure.rule.setRuleValue(heuristic, ruleValue);
             // update best closure
             // TODO: should be >=?1
-            if (newClosure.rule.getLiftedRuleValue() >= bestClosure.rule.getLiftedRuleValue())
+            if (bestClosure == null || newClosure.rule.getLiftedRuleValue() >= bestClosure.rule.getLiftedRuleValue())
                 bestClosure = newClosure;
             // prune if the best lifted heuristic value cannot be reached anymore
             double maximumLiftValue = liftingStrategy.getMaximumLift(newClosure.rule.getHead().size());
             double maximumLiftedHeuristicValue = newClosure.rule.getRawRuleValue() * maximumLiftValue;
             // if best value cannot be achieved anymore
             if (maximumLiftedHeuristicValue < bestClosure.rule.getLiftedRuleValue())
-                return bestClosure.rule.getStats().getNumberOfTruePositives() >= bestClosure.rule.getStats().getNumberOfFalsePositives() ? bestClosure : null;
+                return bestClosure == null || bestClosure.rule.getStats().getNumberOfTruePositives() >= bestClosure.rule.getStats().getNumberOfFalsePositives() ? bestClosure : null;
             // update current closure
             currentClosure = newClosure;
         }
 
-        return bestClosure.rule.getStats().getNumberOfTruePositives() >= bestClosure.rule.getStats().getNumberOfFalsePositives() ? bestClosure : null;
+        return bestClosure == null || bestClosure.rule.getStats().getNumberOfTruePositives() >= bestClosure.rule.getStats().getNumberOfFalsePositives() ? bestClosure : null;
     }
 
 
