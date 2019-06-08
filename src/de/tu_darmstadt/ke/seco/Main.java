@@ -235,7 +235,7 @@ public class Main {
         long estimatedTime = System.currentTimeMillis() - startTime;
         System.out.println("building the model took secs: "+estimatedTime/1000.0);
         csvWriter.writeNext(new String[]{"building time", Double.toString(estimatedTime/1000.0)});
-
+        csvWriter.writeNext(new String[]{"model", multilabelLearner.toString().split("RuleSet")[1]});
         // Evaluate model on test instances, if available
         startTime = System.currentTimeMillis();
         evaluate(trainingData, testData, multilabelLearner);
