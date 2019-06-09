@@ -87,6 +87,8 @@ public class Main {
      *                 Whether multi-label head rule should be learned or not
      *             -useBottomUp [optional]:
      *                 Whether the rules should be learned with bottom-up or not
+     *             -acceptEqual [optional]:
+     *                 Whether a generalized rule should be accepted when it's equally good or only if it's better (default: true)
      * @throws Exception The exception, which is thrown, if any error occurs
      */
     public static void main(final String[] args) throws Exception {
@@ -106,6 +108,7 @@ public class Main {
         final String averagingStrategy = getOptionalArgument("averagingStrategy", args,
                 AveragingStrategy.MICRO_AVERAGING);
         final boolean useBottomUp = Boolean.valueOf(getOptionalArgument("useBottomUp", args, "false"));
+        final boolean acceptEqual = Boolean.valueOf(getOptionalArgument("acceptEqual", args, "true"));
 
         System.out.println("Arguments:\n");
         System.out.println("-baselearner " + baseLearnerConfigPath);
@@ -120,6 +123,7 @@ public class Main {
         System.out.println("-evaluationStrategy " + evaluationStrategy);
         System.out.println("-averagingStrategy " + averagingStrategy);
         System.out.println("-useBottomUp " + useBottomUp);
+        System.out.println("-acceptEqual " + acceptEqual);
         System.out.println("\n");
 
         // Create training instances from dataset
@@ -131,7 +135,7 @@ public class Main {
         SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(baseLearnerConfigPath);
         Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
                 remainingInstancesPercentage, reAddAllCovered, skipThresholdPercentage, predictZeroRules,
-                useMultilabelHeads, evaluationStrategy, averagingStrategy, useBottomUp);
+                useMultilabelHeads, evaluationStrategy, averagingStrategy, useBottomUp, acceptEqual);
 
         // Create test instances from dataset, if available
         final MultiLabelInstances testData =

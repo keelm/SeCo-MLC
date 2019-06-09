@@ -56,11 +56,11 @@ public class MultilabelSecoClassifier extends SeCoClassifier implements MultiLab
         //ensures that no label is set before. could also be not a so great idea...
         for (int i = 0; i < m_labelindices.length; i++)
             inst.setValue(m_labelindices[i], Utils.missingValue());
-        if (SeCoAlgorithm.DEBUG_STEP_BY_STEP)
+        //if (SeCoAlgorithm.DEBUG_STEP_BY_STEP)
             System.out.println("######instance to classify:\n" + inst);
         for (int i = 0; i < m_theory.numRules(); i++) {
             Rule rule = m_theory.getRule(i);
-
+            
             if (rule instanceof SingleHeadRule) {
                 SingleHeadRule singleHeadRule = (SingleHeadRule) rule;
 
@@ -101,7 +101,7 @@ public class MultilabelSecoClassifier extends SeCoClassifier implements MultiLab
                 }
                 boolean predicted = false;
                 if (multiHeadRule.covers(inst)) {
-                    if (SeCoAlgorithm.DEBUG_STEP_BY_STEP)
+                    //if (SeCoAlgorithm.DEBUG_STEP_BY_STEP)
                         System.out.println("rule fires: " + rule);
                     Head head = multiHeadRule.getHead();
 
@@ -109,7 +109,7 @@ public class MultilabelSecoClassifier extends SeCoClassifier implements MultiLab
                         if (Utils.isMissingValue(inst.value(condition.getAttr().index()))) {
                             inst.setValue(condition.getAttr().index(), condition.getValue());
                             predicted = true;
-                            if (SeCoAlgorithm.DEBUG_STEP_BY_STEP)
+                            //if (SeCoAlgorithm.DEBUG_STEP_BY_STEP)
                                 System.out.println("label is set since not set before, new instance:\n " + inst);
                         }
                     }

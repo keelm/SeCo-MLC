@@ -1,5 +1,6 @@
 package de.tu_darmstadt.ke.seco.multilabelrulelearning;
 
+import de.tu_darmstadt.ke.seco.algorithm.SeCoAlgorithm;
 import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Heuristic.Characteristic;
 import de.tu_darmstadt.ke.seco.models.*;
 import de.tu_darmstadt.ke.seco.models.Random;
@@ -12,6 +13,9 @@ import weka.core.DenseInstance;
 import weka.core.Instance;
 
 import javax.annotation.Nonnull;
+
+import com.sun.corba.se.pept.transport.Acceptor;
+
 import java.util.*;
 
 import static de.tu_darmstadt.ke.seco.models.Attribute.toSeCoAttribute;
@@ -115,8 +119,8 @@ public class MulticlassCovering {
 
     }
 
-    private static final boolean DEBUG_STEP_BY_STEP = true;
-    private static final boolean DEBUG_STEP_BY_STEP_V = true;
+    private static final boolean DEBUG_STEP_BY_STEP = false;
+    private static final boolean DEBUG_STEP_BY_STEP_V = false;
 
 
     private static HashSet<Integer> labelIndicesHash;
@@ -200,7 +204,8 @@ public class MulticlassCovering {
 	public final MultiHeadRule findBestRuleBottomUp(final Instances instances,
             								final LinkedHashSet<Integer> labelIndices,
             								final Set<Integer> predictedLabels,
-            								final float beamWidthPercentage) throws Exception {
+            								final float beamWidthPercentage,
+            								final boolean acceptEqual) throws Exception {
 		if (beamWidthPercentage < 0)
 			throw new IllegalArgumentException("Beam width must be at least 0.0");
 		else if (beamWidthPercentage > 1)
@@ -208,20 +213,21 @@ public class MulticlassCovering {
 		int numAttributes = instances.numAttributes();
 		int beamWidth = Math
 				.max(1, Math.min(numAttributes, Math.round(numAttributes * beamWidthPercentage)));
-		return findBestRuleBottomUp(instances, labelIndices, predictedLabels, beamWidth);
+		return findBestRuleBottomUp(instances, labelIndices, predictedLabels, beamWidth, acceptEqual);
 	}
 	
 	public final MultiHeadRule findBestRuleBottomUp(final Instances instances,
 											final LinkedHashSet<Integer> labelIndices,
 											final Set<Integer> predictedLabels,
-											final int beamWidth) throws Exception {
+											final int beamWidth,
+											final boolean acceptEqual) throws Exception {
 		Queue<Closure> bestClosures = new FixedPriorityQueue<>(beamWidth);
 		boolean improved = true;
 		
 		sorted = sortNumericAttributes(instances, labelIndices);
 		
 		while (improved) {
-            improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures);
+            improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual);
 
             if (improved && DEBUG_STEP_BY_STEP_V) {
                 System.out.println(
@@ -241,7 +247,8 @@ public class MulticlassCovering {
 	public boolean refineRuleBottomUp(final Instances instances,
 									  final LinkedHashSet<Integer> labelIndices,
             						  final Set<Integer> predictedLabels,
-            						  final Queue<Closure> closures) throws
+            						  final Queue<Closure> closures,
+            						  final boolean acceptEqual) throws
 			Exception {
 		boolean improved = false;
 		boolean better = false;
@@ -277,28 +284,19 @@ public class MulticlassCovering {
 					Iterator<Condition> c = closure.rule.getBody().iterator();
 					while (c.hasNext()) {
 						Condition cond = c.next();
-						// double old_val = 0;
-						// boolean set = false;
 						// don't iterate if it's a label, redundant, can be removed
 						if (!labelIndices.contains(cond.getAttr().index())) {
 							int index = closure.rule.getBody().indexOf(cond);
 							if (!labelIndices.contains(index)) {
 								
-								/*
-								 * TODO: Deep Copy notwendig, da hier die Condition nicht entfernt wird, sondern der Wert verändert wird
-								 * und sich damit immer auch in closure mit verändert, da die Adresse die gleiche ist
-								 */
+								// can't change a value in the copy without changing the original value -> remove and then readd condition with new value
 								MultiHeadRule refinedRule = (MultiHeadRule) closure.rule.copy();
 								
 								// remove condition
-								// TODO: adapt for numerical attributes
 								if (cond.getAttr().isNumeric()) {
 									// set minimum lower
 									if (cond.cmp()==false) {
 										try {
-											// old_val = cond.getValue();
-											// refinedRule.getCondition(refinedRule.getBody().indexOf(cond)).setValue(sorted.get(cond.getAttr()).get(sorted.get(cond.getAttr()).indexOf(cond.getValue()) - 1));
-											// set = true;
 											double value = sorted.get(cond.getAttr()).get(sorted.get(cond.getAttr()).indexOf(cond.getValue()) - 1);
 											while (value==sorted.get(cond.getAttr()).indexOf(cond.getValue())) {
 												value = sorted.get(cond.getAttr()).get(sorted.get(cond.getAttr()).indexOf(value) - 1);
@@ -311,9 +309,6 @@ public class MulticlassCovering {
 									// set maximum higher
 									if (cond.cmp()==true) {
 										try {	
-											// old_val = cond.getValue();
-											// refinedRule.getCondition(refinedRule.getBody().indexOf(cond)).setValue(sorted.get(cond.getAttr()).get(sorted.get(cond.getAttr()).indexOf(cond.getValue()) + 1));
-											// set = true;
 											double value = sorted.get(cond.getAttr()).get(sorted.get(cond.getAttr()).indexOf(cond.getValue()) + 1);
 											while (value==sorted.get(cond.getAttr()).indexOf(cond.getValue())) {
 												value = sorted.get(cond.getAttr()).get(sorted.get(cond.getAttr()).indexOf(value) + 1);
@@ -331,26 +326,27 @@ public class MulticlassCovering {
 								// evaluate the rule
 								multiLabelEvaluation.evaluate(instances, labelIndices, refinedClosure.rule, null /*closure.metaData ?*/);
 								
-								/*
-								double closureValue = refinedClosure.rule.getRuleValue();
-								System.out.println("Value of the current closure: " + closureValue);
-								*/
-								
-								// TODO: double check "better" for cases with beamWidth > 1
-								// checkt, dass wenn die Queue voll ist nur > rules reinkommen, nicht =
-								// checkt, dass wenn die Queue nicht voll ist, auch <= reinkommen
-								// führt zu spezielleren Regeln?
-								// double min = Double.POSITIVE_INFINITY;
-								// for (Closure findMin : beamWidthIterable(closures)) {
-								//     min = findMin.rule.getRuleValue() < min ? findMin.rule.getRuleValue() : min;
-								// }
-								
 								// ruleComparison: > or >=
-								better |= refinedClosure.rule.getRuleValue() > closure.rule.getRuleValue(); // better |= refinedClosure.rule.getRuleValue() > min;
-								if (refinedClosure != null && better) {// && (better || closures.size()<5)) {
-	                				improved |= closures.offer(refinedClosure);
-	                			}
-								// if (set) closure.rule.getCondition(index).setValue(old_val);
+								better |= acceptEqual ? refinedClosure.rule.getRuleValue() >= closure.rule.getRuleValue() : refinedClosure.rule.getRuleValue() > closure.rule.getRuleValue();
+								if (refinedClosure != null && better) {
+		                			improved |= closures.offer(refinedClosure);
+								}
+								
+								// only for beam width
+								if (false) {
+									// TODO: double check "better" for cases with beamWidth > 1
+									// checkt, dass wenn die Queue voll ist nur > rules reinkommen, nicht =
+									// checkt, dass wenn die Queue nicht voll ist, auch <= reinkommen
+									// führt zu spezielleren Regeln?
+									double min = Double.POSITIVE_INFINITY;
+									for (Closure findMin : beamWidthIterable(closures)) {
+									min = findMin.rule.getRuleValue() < min ? findMin.rule.getRuleValue() : min;
+									}
+									better |= refinedClosure.rule.getRuleValue() > min;
+									if (refinedClosure != null && (better || closures.size()<5)) {
+		                				improved |= closures.offer(refinedClosure);
+		                			}
+								}
 							}
 						}
 					}
@@ -395,8 +391,6 @@ public class MulticlassCovering {
 					if (attribute.isNominal())
 						head.addCondition(new NominalCondition(toSeCoAttribute(attribute), value));
 					else if (attribute.isNumeric())
-						
-						// TODO: adapt for numerical attributes, should not happen for multilabels?
 						head.addCondition(new NumericCondition(toSeCoAttribute(attribute), value));
 					else
 						throw new Exception("only numeric and nominal attributes supported !");
@@ -405,8 +399,6 @@ public class MulticlassCovering {
 				if (attribute.isNominal())
 					head.addCondition(new NominalCondition(toSeCoAttribute(attribute), value));
 				else if (attribute.isNumeric())
-					
-					// TODO: adapt for numerical attributes, should not happen for multilabels?
 					head.addCondition(new NumericCondition(toSeCoAttribute(attribute), value));
 				else
 					throw new Exception("only numeric and nominal attributes supported !");
@@ -484,7 +476,7 @@ public class MulticlassCovering {
 					});
 					ArrayList<Double> intervalsAttribute = new ArrayList<Double>(instances.size()+1);
 					for (int index = 0; index < instances.size()-1; index++) {
-						// -1 ersetzen durch (durchschnittliche?) Differenz, aufpassen wenn zwei gleich Werte am Anfang oder Ende sind
+						//TODO: -1 ersetzen durch (durchschnittliche?) Differenz, aufpassen wenn zwei gleich Werte am Anfang oder Ende sind
 						if (index == 0) {
 							intervalsAttribute.add(index, sortedAttribute.get(index) - 1);
 						}
@@ -498,8 +490,6 @@ public class MulticlassCovering {
 						intervalsAttribute.add(1, sortedAttribute.get(0) + 1);
 					}
 					sortedListForAttribute.put(att, intervalsAttribute);
-					// sortedAttribute.indexOf(closure.rule.conditions(attribute));
-					// int currentNumericIndex;  // immer als erstes Element in ArrayList speichern? um nicht aus dem Value den Index zurückerrechnen zu müssen?
 				}
 			}
 		}

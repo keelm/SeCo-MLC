@@ -1,0 +1,10 @@
+@relation numerical
+
+@attribute number real
+@attribute worked {0,1}
+@attribute notworked {0,1}
+
+
+@data
+50, 1, 0
+40, 1, 0

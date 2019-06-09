@@ -1138,6 +1138,16 @@ public class SeCoAlgorithm implements Serializable {
     	return useBottomUp;
     }
     
+    private boolean acceptEqual = true;
+    
+    public void setAcceptEqual(boolean acceptEqual) {
+    	this.acceptEqual = acceptEqual;
+    }
+    
+    public boolean isEqualAccepted() {
+    	return acceptEqual;
+    }
+    
     boolean predictZero = true;
 
     boolean useSkippingRules = true;
@@ -1147,7 +1157,7 @@ public class SeCoAlgorithm implements Serializable {
     private JRipOneRuler ripper;
 
 
-    public static boolean DEBUG_STEP_BY_STEP = true;
+    public static boolean DEBUG_STEP_BY_STEP = false;
     public static boolean DEBUG_STEP_BY_STEP_V = false;
 
     public RuleSet<?> separateAndConquerMultilabel(Instances examples, int labelIndices[]) throws Exception {
@@ -1217,11 +1227,11 @@ public class SeCoAlgorithm implements Serializable {
             	try {
                     int beamWidth = Integer.valueOf(getBeamWidth());
                     bestRuleOfMulti = multiclassCovering
-                            .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth);
+                            .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth, isEqualAccepted());
                 } catch (NumberFormatException e) {
                     float beamWidthPercentage = Float.valueOf(getBeamWidth());
                     bestRuleOfMulti = multiclassCovering
-                            .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage);
+                            .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage, isEqualAccepted());
                 }
             } else {
             	try {
@@ -1330,17 +1340,29 @@ public class SeCoAlgorithm implements Serializable {
                     */
                 }
 				
-                PrintStream out = new PrintStream(new File("scripts/theory.txt"));
-                System.setOut(out);
-                
+                //PrintStream out = new PrintStream(new File("scripts/theory.txt"));
+                //System.setOut(out);
+                //System.out.println("piep");
                 if (DEBUG_STEP_BY_STEP)
                 	System.out.println(theory);
-                System.setOut(System.out);
+                //System.setOut(System.out);
             } else {
                 break;
             }
         }
-
+        /*
+        EvaluationStrategy evaluationStrategy = EvaluationStrategy.create(getEvaluationStrategy());
+        AveragingStrategy averagingStrategy = AveragingStrategy.create(getAveragingStrategy());
+        MultiLabelEvaluation multiLabelEvaluation = new MultiLabelEvaluation(getHeuristic(), evaluationStrategy,
+                averagingStrategy);
+        String classifyMethod = "DecisionList";
+        if (classifyMethod == "DecisionList") {
+        	for (int i = 0; i < theory.numRules(); i++) {
+                MultiHeadRule rule = theory.getRule(i);
+                multiLabelEvaluation.evaluate(originalExamples, labelIndicesAsSet, rule, null);
+        	}
+        }
+        */
         return theory;
     }
 
