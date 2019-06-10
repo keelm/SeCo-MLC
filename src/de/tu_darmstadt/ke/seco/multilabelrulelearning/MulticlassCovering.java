@@ -106,10 +106,10 @@ public class MulticlassCovering {
 
     }
 
-    private static final boolean DEBUG_STEP_BY_STEP = true;
-    private static final boolean DEBUG_STEP_BY_STEP_V = true;
+    private static final boolean DEBUG_STEP_BY_STEP = false;
+    private static final boolean DEBUG_STEP_BY_STEP_V = false;
     /** Determines whether or not to display rule candidates during the training process. **/
-    private static final boolean DEBUG_STEP_BY_STEP_C = true;
+    private static final boolean DEBUG_STEP_BY_STEP_C = false;
 
     private static HashSet<Integer> labelIndicesHash;
     private static Hashtable<Integer,Boolean> coveringCache;

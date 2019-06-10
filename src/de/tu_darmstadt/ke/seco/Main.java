@@ -112,6 +112,7 @@ public class Main {
      */
     public static void main(final String[] args) throws Exception {
         final boolean eval = Boolean.valueOf(getOptionalArgument("evaluate", args, "false"));
+        // start evaluation script
         if (eval) {
             MainEvaluation.createTasks(args);
             return;
