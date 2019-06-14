@@ -30,6 +30,7 @@ public class MacroAveraging extends AveragingStrategy {
     protected final MetaData evaluate(final Instances instances, final MultiHeadRule rule, final Heuristic heuristic,
                                       final Collection<Integer> relevantLabels, final MetaData metaData,
                                       final TwoClassConfusionMatrix stats) {
+
         Collection<Integer> coveredInstances = new LinkedList<>();
         double h = 0;
         double uncoveredH = 0;

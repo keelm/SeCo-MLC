@@ -3,6 +3,7 @@ package de.tu_darmstadt.ke.seco.multilabelrulelearning;
 
 import com.google.common.collect.SortedSetMultimap;
 import com.google.common.collect.TreeMultimap;
+import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.HammingAccuracy;
 import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Heuristic;
 import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Heuristic.Characteristic;
 import de.tu_darmstadt.ke.seco.models.*;
@@ -118,6 +119,10 @@ public class MulticlassCovering {
 
     private final boolean predictZero;
 
+    /** True if the heuristic values of combined single-label heads can be
+     *  calculated by averaging the single-label heads heuristic values. */
+    private boolean useAveragedHeuristicValues;
+
     /** Parameters of the relaxed pruning approach.
      * @param liftingStrategy The lift function.
      * @param useRelaxedPruning Whether or not to use relaxed pruning.
@@ -139,6 +144,10 @@ public class MulticlassCovering {
         this.useLiftedHeuristic = useLiftedHeuristic;
         this.pruningDepth = pruningDepth;
         this.fixableHead = fixableHead;
+
+        boolean useLabelBasedAveraging = multiLabelEvaluation.getAveragingStrategy().toString().equals("mM");
+        boolean useHammingAccuracy = multiLabelEvaluation.getHeuristic() instanceof HammingAccuracy;
+        useAveragedHeuristicValues = useLabelBasedAveraging || useHammingAccuracy;
     }
 
     public MulticlassCovering(final MultiLabelEvaluation multiLabelEvaluation, final boolean predictZero, int[] labelIndices) {
@@ -304,6 +313,7 @@ public class MulticlassCovering {
                                     closure != null ? closure.metaData : null);
                             refinedClosure.addCondition(i, condition);
                             refinedClosure = findBestHead(instances, labelIndices, refinedClosure);
+                            //System.out.println(refinedClosure);
                             if (DEBUG_STEP_BY_STEP_C)
                                 System.out.println("Refined Rule: " + refinedClosure);
 
@@ -362,7 +372,7 @@ public class MulticlassCovering {
 
     private Closure findBestHead(final Instances instances, final LinkedHashSet<Integer> labelIndices,
                                  final Closure closure) throws Exception {
-        // if the head is fixed, evaluate (on training data) straight away
+        // if the head is fixed, evaluate (on training data) straight away (can be done for non-relaxed pruning as well)
         if (fixHead) {
             multiLabelEvaluation.evaluate(instances, labelIndices, closure.rule, null);
             this.evaluations++;
@@ -425,7 +435,6 @@ public class MulticlassCovering {
     /** True if the head is fixed during the rule refinement process. **/
     public boolean fixableHead = true;
 
-    // TODO: track pruning?
 
     /** Finds the best performing relaxed head if using a decomposable evaluation metric. */
     private Closure findBestRelaxedHeadDecomposable(final Instances instances, final LinkedHashSet<Integer> labelIndices, final Closure closure) {
@@ -477,27 +486,26 @@ public class MulticlassCovering {
             newClosure.rule.getStats().addFalsePositives(bestRemainingSingleHeadClosure.rule.getStats().getNumberOfFalsePositives());
             newClosure.rule.getStats().addTrueNegatives(bestRemainingSingleHeadClosure.rule.getStats().getNumberOfTrueNegatives());
             newClosure.rule.getStats().addFalseNegatives(bestRemainingSingleHeadClosure.rule.getStats().getNumberOfFalseNegatives());
-            // set rule values and head
-            heuristic_value_sum += bestRemainingSingleHeadClosure.rule.getRawRuleValue();
-            double rawRuleValue = heuristic_value_sum / n;
-            newClosure.rule.setRawRuleValue(rawRuleValue);
-            // TODO: just average!
-
-            //multiLabelEvaluation.evaluate(instances, labelIndices, newClosure.rule, null);
-            // TODO: problem, numerical precision, difference of e.g. up to 0.04
-
-            //double rawRuleValue = heuristic.evaluateRule(newClosure.rule);
+            // calculate rule values
+            if (useAveragedHeuristicValues) {
+                // for label-based averaging or hamming accuracy, we can just take the average of the single-label head values
+                heuristic_value_sum += bestRemainingSingleHeadClosure.rule.getRawRuleValue();
+                double rawRuleValue = heuristic_value_sum / (double) n;
+                newClosure.rule.setRawRuleValue(rawRuleValue);
+            } else {
+                // for micro-averaging we can calculate the heuristic from the aggregated confusion matrix
+                double rawRuleValue = heuristic.evaluateRule(newClosure.rule);
+                newClosure.rule.setRawRuleValue(rawRuleValue);
+            }
             // TODO: we should not really count the first head?
             if (n != 1)
                 this.evaluations += 1;
-
             // apply lift
             liftingStrategy.evaluate(newClosure.rule);
             // set rule value depending on whether or not to use the lifted heuristic value
             double ruleValue = useLiftedHeuristic ?  newClosure.rule.getLiftedRuleValue() : newClosure.rule.getRawRuleValue();
             newClosure.rule.setRuleValue(heuristic, ruleValue);
-            // update best closure
-            // TODO: should be >=?1
+            // update best closure (>= because longer heads are preferred)
             if (bestClosure == null || newClosure.rule.getLiftedRuleValue() >= bestClosure.rule.getLiftedRuleValue())
                 bestClosure = newClosure;
             // prune if the best lifted heuristic value cannot be reached anymore
