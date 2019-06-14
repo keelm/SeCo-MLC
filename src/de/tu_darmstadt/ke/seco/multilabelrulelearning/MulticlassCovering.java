@@ -232,9 +232,9 @@ public class MulticlassCovering {
 
     public static boolean finished = false;
     /** Whether the head is fixed for the current iteration. **/
-    boolean fixHead = false;
+    private boolean fixHead = false;
     /** The head that is used for the subsequent body refinement process. **/
-    Head fixedHead = null;
+    private Head fixedHead = null;
 
 
     public final MultiHeadRule findBestGlobalRule(final Instances instances,
@@ -251,7 +251,7 @@ public class MulticlassCovering {
         Queue<Closure> bestClosures = new FixedPriorityQueue<>(beamWidth);
         boolean improved = true;
 
-        // no fixed head initially (only after first iteration)
+        // no fixed head initially (only after first body iteration)
         fixHead = false;
 
         while (improved) { // until no improvement possible
@@ -305,15 +305,14 @@ public class MulticlassCovering {
 
                         // If condition is not part of the rule
                         if (closure == null || !closure.containsCondition(condition)) {
-                            MultiHeadRule refinedRule =
-                                    closure != null ? (MultiHeadRule) closure.rule.copy() :
+                            MultiHeadRule refinedRule = closure != null ? (MultiHeadRule) closure.rule.copy() :
                                             new MultiHeadRule(multiLabelEvaluation.getHeuristic());
                             refinedRule.addCondition(condition);
-                            Closure refinedClosure = new Closure(refinedRule,
-                                    closure != null ? closure.metaData : null);
+                            Closure refinedClosure = new Closure(refinedRule, closure != null ? closure.metaData : null);
                             refinedClosure.addCondition(i, condition);
+
                             refinedClosure = findBestHead(instances, labelIndices, refinedClosure);
-                            //System.out.println(refinedClosure);
+
                             if (DEBUG_STEP_BY_STEP_C)
                                 System.out.println("Refined Rule: " + refinedClosure);
 
@@ -372,7 +371,7 @@ public class MulticlassCovering {
 
     private Closure findBestHead(final Instances instances, final LinkedHashSet<Integer> labelIndices,
                                  final Closure closure) throws Exception {
-        // if the head is fixed, evaluate (on training data) straight away (can be done for non-relaxed pruning as well)
+        // if the head is fixed, evaluate (on training data) straight away
         if (fixHead) {
             multiLabelEvaluation.evaluate(instances, labelIndices, closure.rule, null);
             this.evaluations++;
@@ -931,25 +930,34 @@ public class MulticlassCovering {
 
         return () -> new Iterator<Condition>() {
 
-            private final de.tu_darmstadt.ke.seco.models.Attribute secoAttribute =
-                    toSeCoAttribute(attribute);
+            private final de.tu_darmstadt.ke.seco.models.Attribute secoAttribute = toSeCoAttribute(attribute);
 
             private int i = 2; // Start at second instance, because it makes no sense to use the smallest value as a split point
 
             private Instance lastInstance = instances.size() > 0 ? instances.get(0) : null;
 
-            private double[] lastLabelVector =
-                    instances.size() > 0 ? getLabelVector(instances.get(0), labelIndices) : null;
+            private double[] lastLabelVector = instances.size() > 0 ? getLabelVector(instances.get(0), labelIndices) : null;
 
             private NumericCondition next = null;
+
+            // need two data structures as we have <= and >= and need to test split point for both
+            private Set<Double> testedSplitPoints = new HashSet<>();
+            private Set<Double> testedSplitPointsGreater = new HashSet<>();
 
             @Override
             public boolean hasNext() {
                 while (i < (instances.size()) * 2) {
                     if (i % 2 > 0) {
                         double splitPoint = next.getValue();
-                        next = new NumericCondition(secoAttribute, splitPoint, true);
-                        i++;
+                        // if split point has not been tested yet
+                        if (!testedSplitPoints.contains(splitPoint)) {
+                            next = new NumericCondition(secoAttribute, splitPoint, true);
+                            testedSplitPoints.add(splitPoint);
+                            i++;
+                        } else {
+                            i++;
+                            continue;
+                        }
                         return true;
                     } else {
                         Instance instance = instances.get(i / 2);
@@ -959,10 +967,17 @@ public class MulticlassCovering {
                             double value = instance.value(attribute.index());
                             double lastValue = lastInstance.value(attribute.index());
                             double splitPoint = lastValue + (value - lastValue) / 2.0;
-                            next = new NumericCondition(secoAttribute, splitPoint, false);
-                            lastInstance = instance;
-                            lastLabelVector = labelVector;
-                            i++;
+                            // if split point has not been tested yet
+                            if (!testedSplitPointsGreater.contains(splitPoint)) {
+                                next = new NumericCondition(secoAttribute, splitPoint, false);
+                                lastInstance = instance;
+                                lastLabelVector = labelVector;
+                                testedSplitPointsGreater.add(splitPoint);
+                                i++;
+                            } else {
+                                i++;
+                                continue;
+                            }
                             return true;
                         } else {
                             lastInstance = instance;
@@ -1003,8 +1018,7 @@ public class MulticlassCovering {
     private Iterable<Condition> nominalConditionsIterable(final Attribute attribute) {
         return () -> new Iterator<Condition>() {
 
-            private final de.tu_darmstadt.ke.seco.models.Attribute secoAttribute =
-                    toSeCoAttribute(attribute);
+            private final de.tu_darmstadt.ke.seco.models.Attribute secoAttribute = toSeCoAttribute(attribute);
 
             private int i = 0;
 

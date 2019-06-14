@@ -40,7 +40,7 @@ public class MainEvaluation {
     /** Relaxation lift function parameters. */
     private static String[] liftFunctions = new String[]{"peak", "kln"};
     private static int[] labelValues = {2, 3, 5}; // values MUST be ordered increasingly
-    private static double[] liftValues = {1.00, 1.02, 1.04, 1.08, 1.12, 1.16, 1.20, 1.24};
+    private static double[] liftValues = {1.02, 1.04, 1.08, 1.12, 1.16, 1.20, 1.24};
     private static double[] curvatures = {2.0};
 
 
@@ -384,7 +384,7 @@ public class MainEvaluation {
                             // same subset accuracy
                             if (setting.subset == bestSetting.subset) {
                                 // only set to be better if lift setting is smaller! i.e. we prefer smaller lift settings
-                                if (setting.useRelaxedPruning && setting.lift < bestSetting.lift)
+                                if (setting.useRelaxedPruning && setting.lift > bestSetting.lift)
                                     bestSetting = setting;
                             } else {
                                 bestSetting = setting;
@@ -422,7 +422,7 @@ public class MainEvaluation {
     public static String getAveragingPrefix(String averagingStrategy) {
         if (averagingStrategy.equalsIgnoreCase("micro-averaging"))
             return "Micro-averaged";
-        if (averagingStrategy.equalsIgnoreCase("macro-averaging"))
+        if (averagingStrategy.equalsIgnoreCase("label-based-averaging"))
             return "Macro-averaged";
         return null;
     }

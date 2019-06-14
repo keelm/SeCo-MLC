@@ -2,7 +2,7 @@ package de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy;
 
 import de.tu_darmstadt.ke.seco.models.MultiHeadRule;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.lifting.KLNLifting;
-import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.lifting.MaxLifting;
+import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.lifting.PeakLifting;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.lifting.RootLifting;
 
 import java.util.HashMap;
@@ -25,7 +25,7 @@ public abstract class LiftingStrategy {
     /** Creates the desired boosting strategy given parameters. */
     public static LiftingStrategy create(int maximumNumberOfLabels, String boostFunction, double label, double boostAtLabel, double curvature) {
         if (boostFunction.equalsIgnoreCase("peak")) {
-            return new MaxLifting(maximumNumberOfLabels, label, boostAtLabel, curvature);
+            return new PeakLifting(maximumNumberOfLabels, label, boostAtLabel, curvature);
         } else if (boostFunction.equalsIgnoreCase("root")){
             return new RootLifting(maximumNumberOfLabels, label, boostAtLabel);
         } else {
