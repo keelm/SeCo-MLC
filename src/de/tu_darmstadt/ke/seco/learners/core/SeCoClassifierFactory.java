@@ -263,7 +263,7 @@ public class SeCoClassifierFactory {
     }
 
     // multilabel:
-    public static MultilabelSecoClassifier buildSeCoClassifierMultilabel(final SeCoAlgorithm seCoAlgorithm, Instances instances, int[] labelIndices) throws Exception {
+    public static MultilabelSecoClassifier buildSeCoClassifierMultilabel(final SeCoAlgorithm seCoAlgorithm, Instances instances, int[] labelIndices, String classifyMethod) throws Exception {
         Logger.info("Building classifier with algorithm:\n" + seCoAlgorithm);
 
         final StopWatch stopWatch = new StopWatch();
@@ -277,6 +277,8 @@ public class SeCoClassifierFactory {
 
         seCoClassifier.m_theory = seCoClassifier.getSeCoAlgorithm().separateAndConquerMultilabel(instances, labelIndices);
 
+        seCoClassifier.setClassifyMethod(classifyMethod);
+        
         seCoAlgorithm.getRuleStoppingCriterion().setProperty("reset", "true");
         Logger.info("Complete theory:\n" + seCoClassifier.getTheory().toString());
 

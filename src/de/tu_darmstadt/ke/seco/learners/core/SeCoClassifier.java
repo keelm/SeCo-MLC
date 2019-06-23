@@ -85,6 +85,15 @@ public class SeCoClassifier implements Serializable {
     public Heuristic getHeuristic() {
         return seCoAlgorithm.getHeuristic();
     }
+    
+    /*
+     * Classification method for Multilabel evaluation
+     */
+    public String classifyMethod;
+    
+    public void setClassifyMethod (String classifyMethod) {
+    	this.classifyMethod = classifyMethod;
+    }
 
     /**
      * Classifies the passed instance, i.e. return the class value if the instance is covered by the rule, or the missing value if it is not covered by the rule. Currently we assume classification as a decision list, i.e., the prediction of the first rule that doesn't predict the missing value is returned. Eventually, this should probably be a parameter or maybe even a separate subclass.

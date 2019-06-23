@@ -13,6 +13,8 @@ import weka.core.Utils;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Random;
 
 /**
@@ -23,10 +25,10 @@ import java.util.Random;
  */
 public class Main {
 
+	public static String name;
+	
     private static void evaluate(final MultiLabelInstances trainingData, final MultiLabelInstances testData,
                                  final MultiLabelLearner multilabelLearner) throws Exception {
-    	PrintStream out = new PrintStream(new File("scripts/result.txt"));
-        System.setOut(out);
     	System.out.println("Learned Model:\n");
         System.out.println(multilabelLearner);
 
@@ -89,6 +91,8 @@ public class Main {
      *                 Whether the rules should be learned with bottom-up or not
      *             -acceptEqual [optional]:
      *                 Whether a generalized rule should be accepted when it's equally good or only if it's better (default: true)
+     *             -useSeCo [optional]:
+     *             	   Whether the Separate And Conquer approach should be used or not (default: true)
      * @throws Exception The exception, which is thrown, if any error occurs
      */
     public static void main(final String[] args) throws Exception {
@@ -109,7 +113,17 @@ public class Main {
                 AveragingStrategy.MICRO_AVERAGING);
         final boolean useBottomUp = Boolean.valueOf(getOptionalArgument("useBottomUp", args, "false"));
         final boolean acceptEqual = Boolean.valueOf(getOptionalArgument("acceptEqual", args, "true"));
+        final boolean useSeCo = Boolean.valueOf(getOptionalArgument("useSeCo", args, "true"));
+        final int n_step = Integer.valueOf(getOptionalArgument("n_step", args, "1"));
 
+        
+        // create file name from parameters for result
+        Date date = new Date();
+        String dateString = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss'.txt'").format(new Date());
+        name = "BU_" + useBottomUp + "Eq_" + acceptEqual + "SeCo_" + useSeCo + "_" + dateString;
+        PrintStream out = new PrintStream(new File("C:\\Users\\Pascal\\Documents\\Studium\\BachelorOfScienceInformatik\\Bachelorarbeit\\Experimente\\weather_precision\\" + name));
+        System.setOut(out);
+        
         System.out.println("Arguments:\n");
         System.out.println("-baselearner " + baseLearnerConfigPath);
         System.out.println("-arff " + arffFilePath);
@@ -124,8 +138,10 @@ public class Main {
         System.out.println("-averagingStrategy " + averagingStrategy);
         System.out.println("-useBottomUp " + useBottomUp);
         System.out.println("-acceptEqual " + acceptEqual);
+        System.out.println("-useSeCo " + useSeCo);
+        System.out.println("-n_step " + n_step);
         System.out.println("\n");
-
+        
         // Create training instances from dataset
         final MultiLabelInstances trainingData = new MultiLabelInstances(arffFilePath, xmlLabelsDefFilePath);
 
@@ -135,7 +151,7 @@ public class Main {
         SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(baseLearnerConfigPath);
         Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
                 remainingInstancesPercentage, reAddAllCovered, skipThresholdPercentage, predictZeroRules,
-                useMultilabelHeads, evaluationStrategy, averagingStrategy, useBottomUp, acceptEqual);
+                useMultilabelHeads, evaluationStrategy, averagingStrategy, useBottomUp, acceptEqual, useSeCo, n_step, "DecisionList");
 
         // Create test instances from dataset, if available
         final MultiLabelInstances testData =

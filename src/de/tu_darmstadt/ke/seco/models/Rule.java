@@ -397,7 +397,7 @@ public abstract class Rule implements Comparable<Rule>, Cloneable, Iterable<Cond
     	s.deleteCondition(index);
     	// oldCond.setValue(value);
     	s.addCondition(oldCond);
-    	// s.getCondition(index).setValue(value);
+    	//s.getCondition(index).setValue(value);
     	s.setPredecessor(this);
     	return s;
     }

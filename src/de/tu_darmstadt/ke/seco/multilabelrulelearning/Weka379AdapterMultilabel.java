@@ -28,6 +28,8 @@ public class Weka379AdapterMultilabel extends MultiLabelLearnerBase implements S
     private MultilabelSecoClassifier seCoClassifier;
 
     private final SeCoAlgorithm seCoAlgorithm;
+    
+    public String classifyMethod;
 
     /**
      * Creates an instance of {@link Weka379AdapterMultilabel}.
@@ -49,7 +51,9 @@ public class Weka379AdapterMultilabel extends MultiLabelLearnerBase implements S
                                     final boolean readdAllCovered, final double skipThresholdPercentage,
                                     final boolean predictZeroRules, final boolean useMultilabelHeads,
                                     final String evaluationStrategy,
-                                    final String averagingStrategy, final boolean useBottomUp, final boolean acceptEqual) {
+                                    final String averagingStrategy, final boolean useBottomUp,
+                                    final boolean acceptEqual, final boolean useSeCo, final int n_step,
+                                    final String classifyMethod) {
         if (seCoAlgorithm == null)
             throw new IllegalArgumentException("seCoAlgorithm must not be null.");
 
@@ -63,6 +67,9 @@ public class Weka379AdapterMultilabel extends MultiLabelLearnerBase implements S
         seCoAlgorithm.setAveragingStrategy(averagingStrategy);
         seCoAlgorithm.setUseBottomUp(useBottomUp);
         seCoAlgorithm.setAcceptEqual(acceptEqual);
+        seCoAlgorithm.setUseSeCo(useSeCo);
+        seCoAlgorithm.setNStep(n_step);
+        this.classifyMethod = classifyMethod;
     }
 
     public Capabilities getCapabilities() {
@@ -84,12 +91,13 @@ public class Weka379AdapterMultilabel extends MultiLabelLearnerBase implements S
     protected void buildInternal(MultiLabelInstances trainingSet) throws Exception {
         seCoClassifier = SeCoClassifierFactory
                 .buildSeCoClassifierMultilabel(seCoAlgorithm, Instances.toSeCoInstances(trainingSet.getDataSet()),
-                        trainingSet.getLabelIndices());
+                        trainingSet.getLabelIndices(), classifyMethod);
     }
 
     @Override
     protected MultiLabelOutput makePredictionInternal(Instance instance) throws Exception {
-        return seCoClassifier.makePrediction(instance);
+    	seCoClassifier.setClassifyMethod(classifyMethod);
+    	return seCoClassifier.makePrediction(instance);
     }
 
     @Override
