@@ -349,7 +349,6 @@ public class MulticlassCovering {
 								// remove condition
 								if (cond.getAttr().isNumeric()) {
 									// set minimum lower
-									// TODO: correct -1 / +1 for cases where the test data exceeds the train data numerical range
 									if (cond.cmp()==false) {
 										try {
 											double value = sorted.get(cond.getAttr()).get(sorted.get(cond.getAttr()).indexOf(cond.getValue()) - 1);
@@ -358,7 +357,11 @@ public class MulticlassCovering {
 												currentIndex--;
 												value = sorted.get(cond.getAttr()).get(currentIndex);
 											}
-											refinedRule = (MultiHeadRule) refinedRule.generalizeNumeric(index, value);
+											if (index != 0) {
+												refinedRule = (MultiHeadRule) refinedRule.generalizeNumeric(index, value);
+											} else {
+												refinedRule = (MultiHeadRule) refinedRule.generalize(index);
+											}											
 										} catch(Exception e) {
 											refinedRule = (MultiHeadRule) refinedRule.generalize(index);
 										}
@@ -372,7 +375,11 @@ public class MulticlassCovering {
 												currentIndex++;
 												value = sorted.get(cond.getAttr()).get(currentIndex);
 											}
-											refinedRule = (MultiHeadRule) refinedRule.generalizeNumeric(index, value);
+											if (index != sorted.get(cond.getAttr()).size() - 1) {
+												refinedRule = (MultiHeadRule) refinedRule.generalizeNumeric(index, value);
+											} else {
+												refinedRule = (MultiHeadRule) refinedRule.generalize(index);
+											}											
 										} catch(Exception e) {
 											refinedRule = (MultiHeadRule) refinedRule.generalize(index);
 										}
@@ -509,16 +516,23 @@ public class MulticlassCovering {
 						if (sorted.get(att).get(j)>=val && !minFound) {
 							min = sorted.get(att).get(j-1);
 							minFound = true;
+							if (j != 0) {
+								rule.addCondition(new NumericCondition((de.tu_darmstadt.ke.seco.models.Attribute) att, min, false));
+							}
 						}
 						if (sorted.get(att).get(j)>val) {
 							max = sorted.get(att).get(j);
+							if (j != sorted.get(att).size() - 1) {
+								rule.addCondition(new NumericCondition((de.tu_darmstadt.ke.seco.models.Attribute) att, max, true));
+							}
 							break;
 						}
 					}
 					
 					// use true for <=, false for >=
-					rule.addCondition(new NumericCondition((de.tu_darmstadt.ke.seco.models.Attribute) att, min, false));
-					rule.addCondition(new NumericCondition((de.tu_darmstadt.ke.seco.models.Attribute) att, max, true));
+					// conditions are only added if they are not the lowest/highest value, in this case they would be deleted anyway
+					
+					
 				} else
 					throw new Exception("only numeric and nominal attributes supported !");
 			}
