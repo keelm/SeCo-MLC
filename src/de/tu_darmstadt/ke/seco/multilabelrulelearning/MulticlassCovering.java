@@ -235,10 +235,12 @@ public class MulticlassCovering {
 		seco = useSeCo;
 		boolean steps;
 		
+		Queue<Closure> bestClosureBeforeNStep = new FixedPriorityQueue<Closure>(1);
+		
 		if (n_step == 0) {
 			while (improved) {
 				steps = false;
-				improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual, useSeCo, steps);
+				improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual, useSeCo, steps, bestClosureBeforeNStep);
 				
 				if (improved && DEBUG_STEP_BY_STEP_V) {
 					System.out.println(
@@ -253,7 +255,7 @@ public class MulticlassCovering {
 		//for (int step = 0; step < n_step; step++) {
 			while (improved) {
 				steps = step < n_step;
-				improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual, useSeCo, steps);
+				improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual, useSeCo, steps, bestClosureBeforeNStep);
 				step++;
 				if (improved && DEBUG_STEP_BY_STEP_V) {
 					System.out.println(
@@ -279,7 +281,8 @@ public class MulticlassCovering {
             						  final Queue<Closure> closures,
             						  final boolean acceptEqual,
             						  final boolean useSeCo,
-            						  final boolean steps) throws
+            						  final boolean steps,
+            						  final Queue<Closure> bestClosureBeforeNStep) throws
 			Exception {
 		boolean improved = false;
 		boolean better = false;
@@ -319,7 +322,15 @@ public class MulticlassCovering {
 				// iterate over conditions of the rule
 				if (closure != null) {
 					
-					Queue<Closure> bestClosure = new FixedPriorityQueue<Closure>(1);
+					// TODO: dont break if in the last n_step there was still a REAL enhancement (not the default improved==true from closures.poll())
+					if (!steps && bestClosureBeforeNStep != null) {
+						for (Closure cl : beamWidthIterable(bestClosureBeforeNStep)) {
+							if (cl != null) {
+								closures.offer(cl);
+							}
+						}
+						return false;
+					}
 					
 					// only iterate over the body since the head remains the same
 					Iterator<Condition> c = closure.rule.getBody().iterator();
@@ -395,12 +406,11 @@ public class MulticlassCovering {
 								
 								// if it's a new iteration and there are still n_steps left, the old rule will always be replaced by the best rule of the new iteration
 								if (!improved && steps) {
-	                				// TODO: only works if beamWidth = 1 is used, not for higher beamWidth
-									bestClosure.offer(closures.poll());
+	                				// TODO: only works if beamWidth = 1 is used, not for higher beamWidth (takes the worst of closures, should take the best, but with beamWidth 1: best==worst
+									bestClosureBeforeNStep.offer(closures.poll());
 	                			}
 								
 								// ruleComparison: > or >=
-								// TODO: this must compare to the best rule of closures, not to the old closure!!!
 								if (steps) {
 									improved |= closures.offer(refinedClosure);
 								} else {
@@ -409,6 +419,8 @@ public class MulticlassCovering {
 										improved |= closures.offer(refinedClosure);
 									}
 								}
+								
+								
 								// only for beam width
 								if (false) {
 									// TODO: double check "better" for cases with beamWidth > 1
