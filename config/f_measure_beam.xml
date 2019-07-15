@@ -1,0 +1,10 @@
+<seco growingSetSize="1" minNo="1" weighted="false" seed="0">
+	<heuristic classname="FMeasure" beta="0.5"/>
+	<rulerefiner classname="TopDownRefiner" nominal.cmpmode="equal"/>
+	<stoppingcriterion classname="NoNegativesCoveredStop"/>
+	<rulestoppingcriterion classname="CoverageRuleStop"/>
+	<candidateselector classname="SelectAllCandidatesSelector"/>	
+	<ruleinitializer classname="TopDownRuleInitializer"/>
+	<rulefilter classname="BeamWidthFilter" beamwidth="5"/>
+	<postprocessor classname="NoOpPostProcessor"/>
+</seco>

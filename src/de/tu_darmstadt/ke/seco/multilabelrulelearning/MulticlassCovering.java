@@ -576,10 +576,19 @@ public class MulticlassCovering {
 	
     public MultiHeadRuleSet sortTheory (MultiHeadRuleSet theory, final Instances examples, final LinkedHashSet<Integer> labelIndices) {
     	MultiHeadRuleSet sortedTheory = new MultiHeadRuleSet();
+    	ArrayList<MultiHeadRule> rules = new ArrayList<MultiHeadRule>(theory.size());
     	for (MultiHeadRule rule : theory) {
     		multiLabelEvaluation.evaluate(examples, labelIndices, rule, null);
+    		rules.add(rule);
     	}
-    	// TODO: sort
+    	// sort by heuristic value over all examples
+    	rules.sort(new Comparator<MultiHeadRule>() {
+			@Override
+			public int compare(MultiHeadRule a, MultiHeadRule b) {
+				return b.compareTo(a);
+			}
+		});
+    	sortedTheory.addAllRules(rules);
     	return sortedTheory;
     }
 	
