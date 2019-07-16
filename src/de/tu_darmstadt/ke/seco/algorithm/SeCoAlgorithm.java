@@ -1168,7 +1168,27 @@ public class SeCoAlgorithm implements Serializable {
     	return n_step;
     }
     
-    boolean predictZero = true;
+    boolean useRandom = false;
+    
+    public boolean isRandomUsed() {
+		return useRandom;
+	}
+
+	public void setUseRandom(boolean useRandom) {
+		this.useRandom = useRandom;
+	}
+
+	String evaluationMethod = "DNF";
+	
+	public String getEvaluationMethod() {
+		return evaluationMethod;
+	}
+	
+	public void setEvaluationMethod(String evaluationMethod) {
+		this.evaluationMethod = evaluationMethod;
+	}
+
+	boolean predictZero = true;
 
     boolean useSkippingRules = true;
 
@@ -1240,11 +1260,11 @@ public class SeCoAlgorithm implements Serializable {
                 	try {
                         int beamWidth = Integer.valueOf(getBeamWidth());
                         bestRuleOfMulti = multiclassCovering
-                                .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth, isEqualAccepted(), isSeCoUsed(), trainingDataSize-count, n_step);
+                                .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth, isEqualAccepted(), isSeCoUsed(), trainingDataSize-count, n_step, useRandom);
                     } catch (NumberFormatException e) {
                         float beamWidthPercentage = Float.valueOf(getBeamWidth());
                         bestRuleOfMulti = multiclassCovering
-                                .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage, isEqualAccepted(), isSeCoUsed(), trainingDataSize-count, n_step);
+                                .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage, isEqualAccepted(), isSeCoUsed(), trainingDataSize-count, n_step, useRandom);
                     }
                 } else {
                 	try {
@@ -1285,11 +1305,11 @@ public class SeCoAlgorithm implements Serializable {
             	try {
                     int beamWidth = Integer.valueOf(getBeamWidth());
                     bestRuleOfMulti = multiclassCovering
-                            .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth, isEqualAccepted(), isSeCoUsed(), 0, getNStep());
+                            .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth, isEqualAccepted(), isSeCoUsed(), 0, getNStep(), useRandom);
                 } catch (NumberFormatException e) {
                     float beamWidthPercentage = Float.valueOf(getBeamWidth());
                     bestRuleOfMulti = multiclassCovering
-                            .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage, isEqualAccepted(), isSeCoUsed(), 0, getNStep());
+                            .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage, isEqualAccepted(), isSeCoUsed(), 0, getNStep(), useRandom);
                 }
             } else {
             	try {
@@ -1410,8 +1430,7 @@ public class SeCoAlgorithm implements Serializable {
         
         // use a Decision List as aggregation function
         
-        String classifyMethod = "DecisionList";
-        if (classifyMethod == "DecisionList") {
+        if (getEvaluationMethod() == "DecisionList") {
         	Instances evalExamples = new Instances(originalExamples,
                     originalExamples.numInstances()); //so that I can do what I want on this
             examplesReferences = null; // only used for debugging

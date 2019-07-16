@@ -17,6 +17,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
 
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane.SystemMenuBar;
+
 /**
  * Runner class for building multilabel learners using XML config files, running it on a given dataset and outputting
  * the learned theory.
@@ -115,6 +117,8 @@ public class Main {
         final boolean acceptEqual = Boolean.valueOf(getOptionalArgument("acceptEqual", args, "true"));
         final boolean useSeCo = Boolean.valueOf(getOptionalArgument("useSeCo", args, "true"));
         final int n_step = Integer.valueOf(getOptionalArgument("n_step", args, "1"));
+        final boolean useRandom = Boolean.valueOf(getOptionalArgument("useRandom", args, "false"));
+        final String evaluationMethod = getOptionalArgument("evaluationMethod", args, "DNF");
 
         
         // create file name from parameters for result
@@ -140,6 +144,8 @@ public class Main {
         System.out.println("-acceptEqual " + acceptEqual);
         System.out.println("-useSeCo " + useSeCo);
         System.out.println("-n_step " + n_step);
+        System.out.println("-useRandom " + useRandom);
+        System.out.println("-evaluationMethod " + evaluationMethod);
         System.out.println("\n");
         
         // Create training instances from dataset
@@ -151,7 +157,7 @@ public class Main {
         SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(baseLearnerConfigPath);
         Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
                 remainingInstancesPercentage, reAddAllCovered, skipThresholdPercentage, predictZeroRules,
-                useMultilabelHeads, evaluationStrategy, averagingStrategy, useBottomUp, acceptEqual, useSeCo, n_step, "DecisionList");
+                useMultilabelHeads, evaluationStrategy, averagingStrategy, useBottomUp, acceptEqual, useSeCo, n_step, useRandom, evaluationMethod);
 
         // Create test instances from dataset, if available
         final MultiLabelInstances testData =

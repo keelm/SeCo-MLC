@@ -52,7 +52,7 @@ public class Weka379AdapterMultilabel extends MultiLabelLearnerBase implements S
                                     final boolean predictZeroRules, final boolean useMultilabelHeads,
                                     final String evaluationStrategy,
                                     final String averagingStrategy, final boolean useBottomUp,
-                                    final boolean acceptEqual, final boolean useSeCo, final int n_step,
+                                    final boolean acceptEqual, final boolean useSeCo, final int n_step, final boolean useRandom,
                                     final String classifyMethod) {
         if (seCoAlgorithm == null)
             throw new IllegalArgumentException("seCoAlgorithm must not be null.");
@@ -69,6 +69,8 @@ public class Weka379AdapterMultilabel extends MultiLabelLearnerBase implements S
         seCoAlgorithm.setAcceptEqual(acceptEqual);
         seCoAlgorithm.setUseSeCo(useSeCo);
         seCoAlgorithm.setNStep(n_step);
+        seCoAlgorithm.setUseRandom(useRandom);
+        seCoAlgorithm.setEvaluationMethod(classifyMethod);
         this.classifyMethod = classifyMethod;
     }
 

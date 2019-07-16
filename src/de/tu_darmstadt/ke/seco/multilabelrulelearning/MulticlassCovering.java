@@ -208,7 +208,8 @@ public class MulticlassCovering {
             								final boolean acceptEqual,
             								final boolean useSeCo,
             								final int inst,
-            								final int n_step) throws Exception {
+            								final int n_step,
+            								final boolean useRandom) throws Exception {
 		if (beamWidthPercentage < 0)
 			throw new IllegalArgumentException("Beam width must be at least 0.0");
 		else if (beamWidthPercentage > 1)
@@ -216,7 +217,7 @@ public class MulticlassCovering {
 		int numAttributes = instances.numAttributes();
 		int beamWidth = Math
 				.max(1, Math.min(numAttributes, Math.round(numAttributes * beamWidthPercentage)));
-		return findBestRuleBottomUp(instances, labelIndices, predictedLabels, beamWidth, acceptEqual, useSeCo, inst, n_step);
+		return findBestRuleBottomUp(instances, labelIndices, predictedLabels, beamWidth, acceptEqual, useSeCo, inst, n_step, useRandom);
 	}
 	
 	public final MultiHeadRule findBestRuleBottomUp(final Instances instances,
@@ -226,7 +227,8 @@ public class MulticlassCovering {
 											final boolean acceptEqual,
 											final boolean useSeCo,
 											final int inst,
-											final int n_step) throws Exception {
+											final int n_step,
+											final boolean useRandom) throws Exception {
 		Queue<Closure> bestClosures = new FixedPriorityQueue<>(beamWidth);
 		boolean improved = true;
 		
@@ -240,7 +242,7 @@ public class MulticlassCovering {
 		if (n_step == 0) {
 			while (improved) {
 				steps = false;
-				improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual, useSeCo, steps, bestClosureBeforeNStep);
+				improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual, useSeCo, steps, bestClosureBeforeNStep, useRandom);
 				
 				if (improved && DEBUG_STEP_BY_STEP_V) {
 					System.out.println(
@@ -255,7 +257,7 @@ public class MulticlassCovering {
 		//for (int step = 0; step < n_step; step++) {
 			while (improved) {
 				steps = step < n_step;
-				improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual, useSeCo, steps, bestClosureBeforeNStep);
+				improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual, useSeCo, steps, bestClosureBeforeNStep, useRandom);
 				step++;
 				if (improved && DEBUG_STEP_BY_STEP_V) {
 					System.out.println(
@@ -282,7 +284,8 @@ public class MulticlassCovering {
             						  final boolean acceptEqual,
             						  final boolean useSeCo,
             						  final boolean steps,
-            						  final Queue<Closure> bestClosureBeforeNStep) throws
+            						  final Queue<Closure> bestClosureOverAll,
+            						  final boolean useRandom) throws
 			Exception {
 		boolean improved = false;
 		boolean better = false;
@@ -323,19 +326,27 @@ public class MulticlassCovering {
 				if (closure != null) {
 					
 					// TODO: dont break if in the last n_step there was still a REAL enhancement (not the default improved==true from closures.poll())
-					if (!steps && bestClosureBeforeNStep != null) {
-						for (Closure cl : beamWidthIterable(bestClosureBeforeNStep)) {
+					if (!steps && bestClosureOverAll != null) {
+						for (Closure cl : beamWidthIterable(bestClosureOverAll)) {
 							if (cl != null) {
 								closures.offer(cl);
 							}
 						}
 						return false;
 					}
+						
 					
 					// only iterate over the body since the head remains the same
 					Iterator<Condition> c = closure.rule.getBody().iterator();
 					while (c.hasNext()) {
 						Condition cond = c.next();
+						
+						// choose a random condition to be removed
+						if (useRandom) {
+							int randIndex = random.nextInt(labelIndices.size()-1);
+							cond = closure.rule.getBody().get(randIndex);
+						}
+							
 						// don't iterate if it's a label, redundant, can be removed
 						if (!labelIndices.contains(cond.getAttr().index())) {
 							int index = closure.rule.getBody().indexOf(cond);
@@ -407,7 +418,7 @@ public class MulticlassCovering {
 								// if it's a new iteration and there are still n_steps left, the old rule will always be replaced by the best rule of the new iteration
 								if (!improved && steps) {
 	                				// TODO: only works if beamWidth = 1 is used, not for higher beamWidth (takes the worst of closures, should take the best, but with beamWidth 1: best==worst
-									bestClosureBeforeNStep.offer(closures.poll());
+									bestClosureOverAll.offer(closures.poll());
 	                			}
 								
 								// ruleComparison: > or >=
@@ -420,6 +431,10 @@ public class MulticlassCovering {
 									}
 								}
 								
+								// return after first randomly removed condition
+								if (useRandom) {
+									return improved;
+								}
 								
 								// only for beam width
 								if (false) {
