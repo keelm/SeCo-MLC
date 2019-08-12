@@ -1260,11 +1260,11 @@ public class SeCoAlgorithm implements Serializable {
                 	try {
                         int beamWidth = Integer.valueOf(getBeamWidth());
                         bestRuleOfMulti = multiclassCovering
-                                .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth, isEqualAccepted(), isSeCoUsed(), trainingDataSize-count, n_step, useRandom);
+                                .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth, isEqualAccepted(), isSeCoUsed(), trainingDataSize - count, n_step, useRandom);
                     } catch (NumberFormatException e) {
                         float beamWidthPercentage = Float.valueOf(getBeamWidth());
                         bestRuleOfMulti = multiclassCovering
-                                .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage, isEqualAccepted(), isSeCoUsed(), trainingDataSize-count, n_step, useRandom);
+                                .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage, isEqualAccepted(), isSeCoUsed(), trainingDataSize - count, n_step, useRandom);
                     }
                 } else {
                 	try {
@@ -1409,20 +1409,14 @@ public class SeCoAlgorithm implements Serializable {
                         theory.addRule(skipRule);
                     }
                 } else {
-                    // Re-add instances to training set for next iteration
+                    // currently only exactly covered heads are used
+                	// Re-add instances to training set for next iteration
                 	/*
                     for (int i = 0; i < coveredButLabelsNotFullyCoveredInstances.size(); i++) {
                         examples.addDirectly(coveredButLabelsNotFullyCoveredInstances.get(i));
                     }
                     */
                 }
-				
-                //PrintStream out = new PrintStream(new File("scripts/theory.txt"));
-                //System.setOut(out);
-                //System.out.println("piep");
-                if (DEBUG_STEP_BY_STEP)
-                	System.out.println(theory);
-                //System.setOut(System.out);
             } else {
                 break;
             }
@@ -1430,7 +1424,7 @@ public class SeCoAlgorithm implements Serializable {
         
         // use a Decision List as aggregation function
         
-        if (getEvaluationMethod() == "DecisionList") {
+        if (getEvaluationMethod().equals("DecisionList")) {
         	Instances evalExamples = new Instances(originalExamples,
                     originalExamples.numInstances()); //so that I can do what I want on this
             examplesReferences = null; // only used for debugging
@@ -1459,6 +1453,7 @@ public class SeCoAlgorithm implements Serializable {
                     averagingStrategy);
             MulticlassCovering multiclassCovering = new MulticlassCovering(multiLabelEvaluation, isPredictZero());
             theory = multiclassCovering.sortTheory(theory, evalExamples, labelIndicesAsSet);
+            System.out.println(theory);
         }
         
         return theory;

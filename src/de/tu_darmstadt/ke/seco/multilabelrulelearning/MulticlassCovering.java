@@ -119,8 +119,8 @@ public class MulticlassCovering {
 
     }
 
-    private static final boolean DEBUG_STEP_BY_STEP = false;
-    private static final boolean DEBUG_STEP_BY_STEP_V = false;
+    private static final boolean DEBUG_STEP_BY_STEP = true;
+    private static final boolean DEBUG_STEP_BY_STEP_V = true;
 
 
     private static HashSet<Integer> labelIndicesHash;
@@ -236,8 +236,11 @@ public class MulticlassCovering {
 		current_instance = inst;
 		seco = useSeCo;
 		boolean steps;
+		Queue<Closure> bestClosureBeforeNStep = null;
 		
-		Queue<Closure> bestClosureBeforeNStep = new FixedPriorityQueue<Closure>(1);
+		if (n_step != 0) {
+			bestClosureBeforeNStep = new FixedPriorityQueue<Closure>(1);
+		}
 		
 		if (n_step == 0) {
 			while (improved) {
@@ -343,7 +346,7 @@ public class MulticlassCovering {
 						
 						// choose a random condition to be removed
 						if (useRandom) {
-							int randIndex = random.nextInt(labelIndices.size()-1);
+							int randIndex = random.nextInt(closure.rule.getBody().size());
 							cond = closure.rule.getBody().get(randIndex);
 						}
 							
@@ -354,7 +357,10 @@ public class MulticlassCovering {
 								
 								// can't change a value in the copy without changing the original value -> remove and then readd condition with new value
 								MultiHeadRule refinedRule = (MultiHeadRule) closure.rule.copy();
-								/*MultiHeadRule refinedRule = new MultiHeadRule(multiLabelEvaluation.getHeuristic());
+								
+								/*
+								// not needed anymore
+								MultiHeadRule refinedRule = new MultiHeadRule(multiLabelEvaluation.getHeuristic());
 								for (int i = 0; i < closure.rule.getBody().size(); i++) {
 									refinedRule.addCondition(closure.rule.getCondition(i));
 								}
@@ -477,6 +483,11 @@ public class MulticlassCovering {
 		// choose a random instance
 		random = new Random();
 		int i = random.nextInt(instances.numInstances());
+		
+		//// TESTING: ALWAYS CHOSE IN THE SAME ORDER FOR THE SAME DATASET
+		i = 0;
+		//// DELETE FOR REAL RESULTS
+		
 		Instance inst = instances.instance(i);
 		
 		if (!seco) {
@@ -493,6 +504,19 @@ public class MulticlassCovering {
 		
 		// set head
 		Head head = new Head();
+		
+		///// TESTING ONLY ONE LABEL SET
+		
+		int index = labelIndices.iterator().next();
+		Attribute attribute = inst.attribute(index);
+		double value = wrappedInstance.value(index);
+		if (value != 0) {
+			head.addCondition(new NominalCondition(toSeCoAttribute(attribute), value));
+		}
+		
+		///// END OF TESTING
+		
+		/*
 		for (int labelIndex : labelIndices) {
 			
 			Attribute attribute = inst.attribute(labelIndex);
@@ -516,6 +540,7 @@ public class MulticlassCovering {
 					throw new Exception("only numeric and nominal attributes supported !");
 			}
 		}
+		*/
 		
 		rule.setHead(head);
 		
@@ -531,15 +556,13 @@ public class MulticlassCovering {
 			if (!labelIndices.contains(att.index())) {			
 				if (att.isNominal())
 					rule.addCondition(new NominalCondition((de.tu_darmstadt.ke.seco.models.Attribute) att, inst.value(att)));
+				// add two conditions (smaller and bigger) if attribute is numeric
 				else if (att.isNumeric()) {
 					double min = 0;
 					double max = 0;
 					double val = inst.value(att);
 					boolean minFound = false;
 					for (int j = 0; j < sorted.get(att).size(); j++) {
-						// IndexOutOfBounds, wenn der erste und zweite Attribute-Wert gleich sind und der erste
-						// intervall-Wert durch Abzug der Differenz des ersten und zweiten Wertes vom ersten Wert
-						// berechnet wird (dann gilt (sorted.get ==  val) und j-1 existiert nicht
 						if (sorted.get(att).get(j)>=val && !minFound) {
 							min = sorted.get(att).get(j-1);
 							minFound = true;
@@ -595,7 +618,6 @@ public class MulticlassCovering {
 					});
 					ArrayList<Double> intervalsAttribute = new ArrayList<Double>(instances.size()+1);
 					for (int index = 0; index < instances.size()-1; index++) {
-						//TODO: -1 ersetzen durch (durchschnittliche?) Differenz, aufpassen wenn zwei gleiche Werte am Anfang oder Ende sind
 						if (index == 0) {
 							intervalsAttribute.add(index, sortedAttribute.get(index) - 1);
 						}

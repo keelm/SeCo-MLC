@@ -95,6 +95,12 @@ public class Main {
      *                 Whether a generalized rule should be accepted when it's equally good or only if it's better (default: true)
      *             -useSeCo [optional]:
      *             	   Whether the Separate And Conquer approach should be used or not (default: true)
+     *             -n_step [optional]:
+     *             		Whether the generalization should be done n times, no matter if the generated rules are better or not.
+     *             -useRandom [optional]:
+     *             		Whether the generalization should chose a random condition to generalize.
+     *             -evaluationMethod [optional]:
+     *             		How the rules of the learned model should be combined to classify the test data
      * @throws Exception The exception, which is thrown, if any error occurs
      */
     public static void main(final String[] args) throws Exception {
@@ -122,11 +128,14 @@ public class Main {
 
         
         // create file name from parameters for result
+        
         Date date = new Date();
         String dateString = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss'.txt'").format(new Date());
         name = "BU_" + useBottomUp + "Eq_" + acceptEqual + "SeCo_" + useSeCo + "_" + dateString;
         PrintStream out = new PrintStream(new File("C:\\Users\\Pascal\\Documents\\Studium\\BachelorOfScienceInformatik\\Bachelorarbeit\\Experimente\\weather_precision\\" + name));
-        System.setOut(out);
+        //System.setOut(out);
+        System.setOut(System.out);
+        
         
         System.out.println("Arguments:\n");
         System.out.println("-baselearner " + baseLearnerConfigPath);

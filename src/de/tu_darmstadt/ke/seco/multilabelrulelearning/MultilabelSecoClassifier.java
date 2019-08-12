@@ -61,7 +61,9 @@ public class MultilabelSecoClassifier extends SeCoClassifier implements MultiLab
             System.out.println("######instance to classify:\n" + inst);
         for (int i = 0; i < m_theory.numRules(); i++) {
             Rule rule = m_theory.getRule(i);
-            System.out.println(m_theory);
+            //// CHECK ORDER OF THEORY
+            // System.out.println(m_theory);
+            ////
             if (rule instanceof SingleHeadRule) {
                 SingleHeadRule singleHeadRule = (SingleHeadRule) rule;
 
@@ -115,11 +117,11 @@ public class MultilabelSecoClassifier extends SeCoClassifier implements MultiLab
                         }
                     }
                     
-                    if (classifyMethod == "DecisionList") {
+                    if (classifyMethod.equals("DecisionList")) {
                     	break;
                     }
                 }
-                /*
+                /* no stopping criterion is used in this implementation
                 if (i < m_theory.numRules() - 1) {
                     MultiHeadRule nextRule = (MultiHeadRule) m_theory.getRule(i + 1);
                     if (multiHeadRule.getHead().size() > 0 &&
