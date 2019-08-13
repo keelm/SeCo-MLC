@@ -133,8 +133,9 @@ public class Main {
         String dateString = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss'.txt'").format(new Date());
         name = "BU_" + useBottomUp + "Eq_" + acceptEqual + "SeCo_" + useSeCo + "_" + dateString;
         PrintStream out = new PrintStream(new File("C:\\Users\\Pascal\\Documents\\Studium\\BachelorOfScienceInformatik\\Bachelorarbeit\\Experimente\\weather_precision\\" + name));
-        //System.setOut(out);
-        System.setOut(System.out);
+        System.setOut(out);
+        
+        //System.setOut(System.out);
         
         
         System.out.println("Arguments:\n");

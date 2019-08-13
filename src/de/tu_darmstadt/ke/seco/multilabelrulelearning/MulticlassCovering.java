@@ -119,8 +119,8 @@ public class MulticlassCovering {
 
     }
 
-    private static final boolean DEBUG_STEP_BY_STEP = true;
-    private static final boolean DEBUG_STEP_BY_STEP_V = true;
+    private static final boolean DEBUG_STEP_BY_STEP = false;
+    private static final boolean DEBUG_STEP_BY_STEP_V = false;
 
 
     private static HashSet<Integer> labelIndicesHash;
@@ -236,16 +236,16 @@ public class MulticlassCovering {
 		current_instance = inst;
 		seco = useSeCo;
 		boolean steps;
-		Queue<Closure> bestClosureBeforeNStep = null;
+		Queue<Closure> bestClosureOverall = null;
 		
 		if (n_step != 0) {
-			bestClosureBeforeNStep = new FixedPriorityQueue<Closure>(1);
+			bestClosureOverall = new FixedPriorityQueue<Closure>(beamWidth);
 		}
 		
 		if (n_step == 0) {
 			while (improved) {
 				steps = false;
-				improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual, useSeCo, steps, bestClosureBeforeNStep, useRandom);
+				improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual, useSeCo, steps, bestClosureOverall, useRandom);
 				
 				if (improved && DEBUG_STEP_BY_STEP_V) {
 					System.out.println(
@@ -260,7 +260,7 @@ public class MulticlassCovering {
 		//for (int step = 0; step < n_step; step++) {
 			while (improved) {
 				steps = step < n_step;
-				improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual, useSeCo, steps, bestClosureBeforeNStep, useRandom);
+				improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual, useSeCo, steps, bestClosureOverall, useRandom);
 				step++;
 				if (improved && DEBUG_STEP_BY_STEP_V) {
 					System.out.println(
@@ -424,15 +424,17 @@ public class MulticlassCovering {
 								// if it's a new iteration and there are still n_steps left, the old rule will always be replaced by the best rule of the new iteration
 								if (!improved && steps) {
 	                				// TODO: only works if beamWidth = 1 is used, not for higher beamWidth (takes the worst of closures, should take the best, but with beamWidth 1: best==worst
-									bestClosureOverAll.offer(closures.poll());
+									// bestClosureOverAll.offer(closures.poll());
+									closures.remove(closure);
 	                			}
 								
 								// ruleComparison: > or >=
+								// DO NOT USE !ACCEPT_EUQAL WITH BEAM WIDTH >1
 								if (steps) {
 									improved |= closures.offer(refinedClosure);
 								} else {
 									better |= acceptEqual ? refinedClosure.rule.getRuleValue() >= closure.rule.getRuleValue() : refinedClosure.rule.getRuleValue() > closure.rule.getRuleValue();
-									if (refinedClosure != null && better) {
+									if (refinedClosure != null && (acceptEqual || better)) {
 										improved |= closures.offer(refinedClosure);
 									}
 								}
@@ -506,17 +508,17 @@ public class MulticlassCovering {
 		Head head = new Head();
 		
 		///// TESTING ONLY ONE LABEL SET
-		
+		/*
 		int index = labelIndices.iterator().next();
 		Attribute attribute = inst.attribute(index);
 		double value = wrappedInstance.value(index);
 		if (value != 0) {
 			head.addCondition(new NominalCondition(toSeCoAttribute(attribute), value));
 		}
-		
+		*/
 		///// END OF TESTING
 		
-		/*
+		
 		for (int labelIndex : labelIndices) {
 			
 			Attribute attribute = inst.attribute(labelIndex);
@@ -540,7 +542,7 @@ public class MulticlassCovering {
 					throw new Exception("only numeric and nominal attributes supported !");
 			}
 		}
-		*/
+		
 		
 		rule.setHead(head);
 		

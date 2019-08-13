@@ -1236,6 +1236,9 @@ public class SeCoAlgorithm implements Serializable {
             if (DEBUG_STEP_BY_STEP)
                 examplesReferences.add(wrappedInstance);
         }
+        
+        
+        setBeamWidth("1");
 
         MultiHeadRule r;
         MultiHeadRule bestRuleOfMulti;
