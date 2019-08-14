@@ -279,6 +279,7 @@ public class MulticlassCovering {
 	
 	private int current_instance = 0;
 	private boolean seco = true;
+	boolean newRule = true;
 	
 	public boolean refineRuleBottomUp(final Instances instances,
 									  final LinkedHashSet<Integer> labelIndices,
@@ -324,6 +325,7 @@ public class MulticlassCovering {
 					if (refinedClosure != null) {
 						improved |= closures.offer(refinedClosure);
 					}
+					newRule = true;
 				}	
 				// iterate over conditions of the rule
 				if (closure != null) {
@@ -385,7 +387,7 @@ public class MulticlassCovering {
 												currentIndex--;
 												value = sorted.get(cond.getAttr()).get(currentIndex);
 											}
-											if (index != 0) {
+											if (currentIndex != 0) {
 												refinedRule = (MultiHeadRule) refinedRule.generalizeNumeric(index, value);
 											} else {
 												refinedRule = (MultiHeadRule) refinedRule.generalize(index);
@@ -403,7 +405,7 @@ public class MulticlassCovering {
 												currentIndex++;
 												value = sorted.get(cond.getAttr()).get(currentIndex);
 											}
-											if (index != sorted.get(cond.getAttr()).size() - 1) {
+											if (currentIndex != sorted.get(cond.getAttr()).size() - 1) {
 												refinedRule = (MultiHeadRule) refinedRule.generalizeNumeric(index, value);
 											} else {
 												refinedRule = (MultiHeadRule) refinedRule.generalize(index);
@@ -426,6 +428,10 @@ public class MulticlassCovering {
 	                				// TODO: only works if beamWidth = 1 is used, not for higher beamWidth (takes the worst of closures, should take the best, but with beamWidth 1: best==worst
 									// bestClosureOverAll.offer(closures.poll());
 									closures.remove(closure);
+									if (!newRule) {
+										bestClosureOverAll.offer(closure);
+									}
+									newRule = false;
 	                			}
 								
 								// ruleComparison: > or >=
@@ -487,7 +493,7 @@ public class MulticlassCovering {
 		int i = random.nextInt(instances.numInstances());
 		
 		//// TESTING: ALWAYS CHOSE IN THE SAME ORDER FOR THE SAME DATASET
-		i = 0;
+		//i = 0;
 		//// DELETE FOR REAL RESULTS
 		
 		Instance inst = instances.instance(i);
@@ -568,7 +574,7 @@ public class MulticlassCovering {
 						if (sorted.get(att).get(j)>=val && !minFound) {
 							min = sorted.get(att).get(j-1);
 							minFound = true;
-							if (j != 0) {
+							if (j-1 != 0) {
 								rule.addCondition(new NumericCondition((de.tu_darmstadt.ke.seco.models.Attribute) att, min, false));
 							}
 						}
@@ -621,7 +627,7 @@ public class MulticlassCovering {
 					ArrayList<Double> intervalsAttribute = new ArrayList<Double>(instances.size()+1);
 					for (int index = 0; index < instances.size()-1; index++) {
 						if (index == 0) {
-							intervalsAttribute.add(index, sortedAttribute.get(index) - 1);
+							intervalsAttribute.add(index, sortedAttribute.get(index) - 5);
 						}
 						intervalsAttribute.add(index+1, (sortedAttribute.get(index) + sortedAttribute.get(index+1)) / 2);
 						if (index == sortedAttribute.size()-2) {

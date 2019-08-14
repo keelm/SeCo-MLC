@@ -1238,7 +1238,7 @@ public class SeCoAlgorithm implements Serializable {
         }
         
         
-        setBeamWidth("1");
+        setBeamWidth("5");
 
         MultiHeadRule r;
         MultiHeadRule bestRuleOfMulti;
