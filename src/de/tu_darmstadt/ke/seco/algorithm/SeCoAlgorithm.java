@@ -2,6 +2,7 @@ package de.tu_darmstadt.ke.seco.algorithm;
 
 import de.tu_darmstadt.ke.seco.algorithm.components.candidateselectors.CandidateSelector;
 import de.tu_darmstadt.ke.seco.algorithm.components.candidateselectors.SelectAllCandidatesSelector;
+import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.FMeasure;
 import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Heuristic;
 import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.MEstimate;
 import de.tu_darmstadt.ke.seco.algorithm.components.postprocessors.NoOpPostProcessor;
@@ -1158,7 +1159,7 @@ public class SeCoAlgorithm implements Serializable {
     	return useSeCo;
     }    
     
-    public int n_step = 1;
+    private int n_step = 1;
     
     public void setNStep(int n_step) {
     	this.n_step = n_step;
@@ -1168,7 +1169,7 @@ public class SeCoAlgorithm implements Serializable {
     	return n_step;
     }
     
-    boolean useRandom = false;
+    private boolean useRandom = false;
     
     public boolean isRandomUsed() {
 		return useRandom;
@@ -1178,6 +1179,36 @@ public class SeCoAlgorithm implements Serializable {
 		this.useRandom = useRandom;
 	}
 
+	private double betaValue = 0.5;
+	
+	public void setBetaValue(double betaValue) {
+		this.betaValue = betaValue;
+	}
+	
+	public double getBetaValue() {
+		return betaValue;
+	}
+	
+	private String numericGeneralization = "random"; 
+	
+	public void setNumericGeneralization(String numGen) {
+		this.numericGeneralization = numGen;
+	}
+	
+	public String getNumericGeneralization() {
+		return numericGeneralization;
+	}
+	
+	private boolean coverAllLabels = false;
+	
+	public void setCoverAllLabels(boolean cover) {
+		this.coverAllLabels = cover;
+	}
+	
+	public boolean getAllLabelsCovered() {
+		return coverAllLabels;
+	}
+	
 	String evaluationMethod = "DNF";
 	
 	public String getEvaluationMethod() {
@@ -1236,10 +1267,12 @@ public class SeCoAlgorithm implements Serializable {
             if (DEBUG_STEP_BY_STEP)
                 examplesReferences.add(wrappedInstance);
         }
-        
-        
-        setBeamWidth("5");
 
+        
+        if (betaValue!=-1) {
+        	setHeuristic(new FMeasure(betaValue));
+        }
+        
         MultiHeadRule r;
         MultiHeadRule bestRuleOfMulti;
         MultiHeadRuleSet theory = new MultiHeadRuleSet();
@@ -1263,11 +1296,11 @@ public class SeCoAlgorithm implements Serializable {
                 	try {
                         int beamWidth = Integer.valueOf(getBeamWidth());
                         bestRuleOfMulti = multiclassCovering
-                                .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth, isEqualAccepted(), isSeCoUsed(), trainingDataSize - count, n_step, useRandom);
+                                .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth, isEqualAccepted(), isSeCoUsed(), trainingDataSize - count, n_step, getNumericGeneralization(), useRandom);
                     } catch (NumberFormatException e) {
                         float beamWidthPercentage = Float.valueOf(getBeamWidth());
                         bestRuleOfMulti = multiclassCovering
-                                .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage, isEqualAccepted(), isSeCoUsed(), trainingDataSize - count, n_step, useRandom);
+                                .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage, isEqualAccepted(), isSeCoUsed(), trainingDataSize - count, n_step, getNumericGeneralization(), useRandom);
                     }
                 } else {
                 	try {
@@ -1308,11 +1341,11 @@ public class SeCoAlgorithm implements Serializable {
             	try {
                     int beamWidth = Integer.valueOf(getBeamWidth());
                     bestRuleOfMulti = multiclassCovering
-                            .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth, isEqualAccepted(), isSeCoUsed(), 0, getNStep(), useRandom);
+                            .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth, isEqualAccepted(), isSeCoUsed(), 0, getNStep(), getNumericGeneralization(), useRandom);
                 } catch (NumberFormatException e) {
                     float beamWidthPercentage = Float.valueOf(getBeamWidth());
                     bestRuleOfMulti = multiclassCovering
-                            .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage, isEqualAccepted(), isSeCoUsed(), 0, getNStep(), useRandom);
+                            .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage, isEqualAccepted(), isSeCoUsed(), 0, getNStep(), getNumericGeneralization(), useRandom);
                 }
             } else {
             	try {
@@ -1414,11 +1447,13 @@ public class SeCoAlgorithm implements Serializable {
                 } else {
                     // currently only exactly covered heads are used
                 	// Re-add instances to training set for next iteration
-                	/*
-                    for (int i = 0; i < coveredButLabelsNotFullyCoveredInstances.size(); i++) {
-                        examples.addDirectly(coveredButLabelsNotFullyCoveredInstances.get(i));
-                    }
-                    */
+                	
+                	if (getAllLabelsCovered()) {
+                	
+                		for (int i = 0; i < coveredButLabelsNotFullyCoveredInstances.size(); i++) {
+                			examples.addDirectly(coveredButLabelsNotFullyCoveredInstances.get(i));
+                		}
+                	}
                 }
             } else {
                 break;

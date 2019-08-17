@@ -163,6 +163,7 @@ public abstract class Rule implements Comparable<Rule>, Cloneable, Iterable<Cond
         m_body = new ArrayList<Condition>();
         m_stats = new TwoClassConfusionMatrix();
         m_val = Double.NEGATIVE_INFINITY;
+        generalizationCount = 0;
         resetTieBreaker();
     }
 
@@ -188,7 +189,22 @@ public abstract class Rule implements Comparable<Rule>, Cloneable, Iterable<Cond
             return r2;
     }
 
-    /**
+    
+    protected int generalizationCount;
+    
+    public int getGeneralizationCount() {
+		return generalizationCount;
+	}
+
+	public void setGeneralizationCount(int generalizationCount) {
+		this.generalizationCount = generalizationCount;
+	}
+	
+	public void increaseGeneralizationCount() {
+		this.generalizationCount += 1;
+	}
+
+	/**
      * compare two rules. It is assumed that computeRuleValue has been previously called! A rule is better if its evaluation is higher or if the evalution is the same, but it has shorter length, or the same length and a higher random tie break value.
      *
      * @param r the rule to compare to
@@ -212,11 +228,18 @@ public abstract class Rule implements Comparable<Rule>, Cloneable, Iterable<Cond
             return 1;
         else if (this.getStats().getNumberOfTruePositives() < r.getStats().getNumberOfTruePositives())
             return -1;
-            // now tie break on length
+        // which rule has been generalized more often (!= length for numerical attributes)
+        else if (this.getGeneralizationCount() > r.getGeneralizationCount())
+        	return 1;
+        else if (this.getGeneralizationCount() < r.getGeneralizationCount())
+        	return -1;
+        // now tie break on length
+        /*
         else if (this.length() < r.length())
             return 1;
         else if (r.length() < this.length())
             return -1;
+            */
         // else
         // return this.toString().compareTo(r.toString()); // TODO by m.zopf: this version of compareTo is slower than the previous one, but also better. so find a fast and good solution.
 

@@ -73,6 +73,8 @@ public class Main {
      *
      * @param args -baselearner:
      *                 Path to base learner XML config file (e.g. /config/precision.xml)
+     *             -betaValue [optional]:
+     *             		Beta value for F-Measure, where 0 <= Beta < 1 means more Precision and 1 < Beta means more Recall (default: -1 for no usage of F-Measure)
      *             -arff:
      *                 Path to training dataset in the weka .arff format (e.g. /data/genbase.arff)
      *             -xml [optional]:
@@ -90,21 +92,28 @@ public class Main {
      *             -useMultilabelHeads [optional]:
      *                 Whether multi-label head rule should be learned or not
      *             -useBottomUp [optional]:
-     *                 Whether the rules should be learned with bottom-up or not
+     *                 Whether the rules should be learned with bottom-up or not (default: false)
      *             -acceptEqual [optional]:
      *                 Whether a generalized rule should be accepted when it's equally good or only if it's better (default: true)
      *             -useSeCo [optional]:
      *             	   Whether the Separate And Conquer approach should be used or not (default: true)
      *             -n_step [optional]:
-     *             		Whether the generalization should be done n times, no matter if the generated rules are better or not.
+     *             		Whether the generalization should be done n times, no matter if the generated rules are better or not. (default: 0)
      *             -useRandom [optional]:
      *             		Whether the generalization should chose a random condition to generalize.
+     *             -beamWidth [optional]:
+     *             		The beamWidth that should be used (default: 1)
+     *             -numericGeneralization [optional]:
+     *             		How a numeric condition should be generalized (default: random; such that a random value between the current and the upper/lower bound is chosen)
+     *             -coverAllLabels [optional]:
+     *             		Whether a covered instance should be readded if not all of its labels are covered. (default: false)
      *             -evaluationMethod [optional]:
      *             		How the rules of the learned model should be combined to classify the test data
      * @throws Exception The exception, which is thrown, if any error occurs
      */
     public static void main(final String[] args) throws Exception {
         final String baseLearnerConfigPath = getMandatoryArgument("baselearner", args);
+        final double betaValue = Double.valueOf(getOptionalArgument("beta", args, "-1"));
         final String arffFilePath = getMandatoryArgument("arff", args);
         final String xmlLabelsDefFilePath = getOptionalArgument("xml", args, arffFilePath.replace(".arff", ".xml"));
         final String testArffFilePath = getOptionalArgument("test-arff", args, null);
@@ -124,6 +133,9 @@ public class Main {
         final boolean useSeCo = Boolean.valueOf(getOptionalArgument("useSeCo", args, "true"));
         final int n_step = Integer.valueOf(getOptionalArgument("n_step", args, "1"));
         final boolean useRandom = Boolean.valueOf(getOptionalArgument("useRandom", args, "false"));
+        final String beamWidth = getOptionalArgument("beamWidth", args, "1");
+        final String numericGeneralization = getOptionalArgument("numeric", args, "random");
+        final boolean coverAllLabels = Boolean.valueOf(getOptionalArgument("coverAllLabels", args, "false"));
         final String evaluationMethod = getOptionalArgument("evaluationMethod", args, "DNF");
 
         
@@ -140,6 +152,7 @@ public class Main {
         
         System.out.println("Arguments:\n");
         System.out.println("-baselearner " + baseLearnerConfigPath);
+        System.out.println("-beta " + betaValue);
         System.out.println("-arff " + arffFilePath);
         System.out.println("-xml " + xmlLabelsDefFilePath);
         System.out.println("-test-arff " + testArffFilePath);
@@ -155,6 +168,9 @@ public class Main {
         System.out.println("-useSeCo " + useSeCo);
         System.out.println("-n_step " + n_step);
         System.out.println("-useRandom " + useRandom);
+        System.out.println("-beamWidth " + beamWidth);
+        System.out.println("-numericGeneralization " + numericGeneralization);
+        System.out.println("-coverAllLabels " + coverAllLabels);
         System.out.println("-evaluationMethod " + evaluationMethod);
         System.out.println("\n");
         
@@ -165,9 +181,10 @@ public class Main {
 
         
         SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(baseLearnerConfigPath);
-        Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm,
+        Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm, betaValue, 
                 remainingInstancesPercentage, reAddAllCovered, skipThresholdPercentage, predictZeroRules,
-                useMultilabelHeads, evaluationStrategy, averagingStrategy, useBottomUp, acceptEqual, useSeCo, n_step, useRandom, evaluationMethod);
+                useMultilabelHeads, evaluationStrategy, averagingStrategy, useBottomUp, acceptEqual, useSeCo, 
+                n_step, useRandom, beamWidth, numericGeneralization, coverAllLabels, evaluationMethod);
 
         // Create test instances from dataset, if available
         final MultiLabelInstances testData =

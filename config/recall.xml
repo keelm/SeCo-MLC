@@ -1,0 +1,10 @@
+<seco growingSetSize="1" minNo="1" weighted="false" seed="0">
+	<heuristic classname="Recall"/>
+	<rulerefiner classname="TopDownRefiner" nominal.cmpmode="equal"/>
+	<stoppingcriterion classname="NoNegativesCoveredStop"/>
+	<rulestoppingcriterion classname="CoverageRuleStop"/>
+	<candidateselector classname="SelectAllCandidatesSelector"/>	
+	<ruleinitializer classname="TopDownRuleInitializer"/>
+	<rulefilter classname="BeamWidthFilter" beamwidth="1"/>
+	<postprocessor classname="NoOpPostProcessor"/>
+</seco>

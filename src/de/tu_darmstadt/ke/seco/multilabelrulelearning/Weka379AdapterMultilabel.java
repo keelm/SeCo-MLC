@@ -47,17 +47,21 @@ public class Weka379AdapterMultilabel extends MultiLabelLearnerBase implements S
      *
      * @param seCoAlgorithm the {@link SeCoAlgorithm} that should be adapted
      */
-    public Weka379AdapterMultilabel(final SeCoAlgorithm seCoAlgorithm, final double remainingInstancesPercentage,
+    public Weka379AdapterMultilabel(final SeCoAlgorithm seCoAlgorithm, final double betaValue,
+    								final double remainingInstancesPercentage,
                                     final boolean readdAllCovered, final double skipThresholdPercentage,
                                     final boolean predictZeroRules, final boolean useMultilabelHeads,
                                     final String evaluationStrategy,
-                                    final String averagingStrategy, final boolean useBottomUp,
-                                    final boolean acceptEqual, final boolean useSeCo, final int n_step, final boolean useRandom,
+                                    final String averagingStrategy, final boolean useBottomUp, 
+                                    final boolean acceptEqual, final boolean useSeCo, 
+                                    final int n_step, final boolean useRandom, 
+                                    final String beamWidth, final String numericGeneralization, final boolean coverAllLabels, 
                                     final String classifyMethod) {
         if (seCoAlgorithm == null)
             throw new IllegalArgumentException("seCoAlgorithm must not be null.");
 
         this.seCoAlgorithm = seCoAlgorithm;
+        seCoAlgorithm.setBetaValue(betaValue);
         seCoAlgorithm.setUncoveredInstancesPercentage(remainingInstancesPercentage);
         seCoAlgorithm.setPredictZero(predictZeroRules);
         seCoAlgorithm.setSkipThresholdPercentage(skipThresholdPercentage);
@@ -70,6 +74,9 @@ public class Weka379AdapterMultilabel extends MultiLabelLearnerBase implements S
         seCoAlgorithm.setUseSeCo(useSeCo);
         seCoAlgorithm.setNStep(n_step);
         seCoAlgorithm.setUseRandom(useRandom);
+        seCoAlgorithm.setBeamWidth(beamWidth);
+        seCoAlgorithm.setNumericGeneralization(numericGeneralization);
+        seCoAlgorithm.setCoverAllLabels(coverAllLabels);
         seCoAlgorithm.setEvaluationMethod(classifyMethod);
         this.classifyMethod = classifyMethod;
     }
