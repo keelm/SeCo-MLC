@@ -28,6 +28,7 @@ import javax.swing.plaf.basic.BasicInternalFrameTitlePane.SystemMenuBar;
 public class Main {
 
 	public static String name;
+	public static String path;
 	
     private static void evaluate(final MultiLabelInstances trainingData, final MultiLabelInstances testData,
                                  final MultiLabelLearner multilabelLearner) throws Exception {
@@ -143,8 +144,11 @@ public class Main {
         
         Date date = new Date();
         String dateString = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss'.txt'").format(new Date());
-        name = "BU_" + useBottomUp + "Eq_" + acceptEqual + "SeCo_" + useSeCo + "_" + dateString;
-        PrintStream out = new PrintStream(new File("C:\\Users\\Pascal\\Documents\\Studium\\BachelorOfScienceInformatik\\Bachelorarbeit\\Experimente\\weather_precision\\" + name));
+        
+        path = (useBottomUp ? "BottomUp\\" : "TopDown\\") + evaluationMethod + "\\";
+        name = "beta " + betaValue + "_num " + numericGeneralization + "_cover " + coverAllLabels + "_" + dateString;
+        
+        PrintStream out = new PrintStream(new File("C:\\Users\\Pascal\\Documents\\Studium\\BachelorOfScienceInformatik\\Bachelorarbeit\\Experimente\\" + path + name));
         System.setOut(out);
         
         //System.setOut(System.out);

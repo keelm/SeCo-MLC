@@ -120,7 +120,7 @@ public class MulticlassCovering {
     }
 
     private static final boolean DEBUG_STEP_BY_STEP = true;
-    private static final boolean DEBUG_STEP_BY_STEP_V = false;
+    private static final boolean DEBUG_STEP_BY_STEP_V = true;
 
 
     private static HashSet<Integer> labelIndicesHash;
@@ -347,7 +347,7 @@ public class MulticlassCovering {
 					Iterator<Condition> c = closure.rule.getBody().iterator();
 					while (c.hasNext()) {
 						Condition cond = c.next();
-						
+						System.out.println(cond);
 						// choose a random condition to be removed
 						if (useRandom) {
 							int randIndex = random.nextInt(closure.rule.getBody().size());
@@ -357,7 +357,7 @@ public class MulticlassCovering {
 						// don't iterate if it's a label, redundant, can be removed
 						if (!labelIndices.contains(cond.getAttr().index())) {
 							int index = closure.rule.getBody().indexOf(cond);
-							if (!labelIndices.contains(index)) {
+							
 								
 								// can't change a value in the copy without changing the original value
 								// instead remove and then readd condition with new value
@@ -442,6 +442,10 @@ public class MulticlassCovering {
 								if (steps) {
 									improved |= closures.offer(refinedClosure);
 								} else {
+									if (DEBUG_STEP_BY_STEP_V) {
+										System.out.println("changed condition: " + cond);
+										System.out.println("-> refinement candidate: " + refinedClosure);
+									}
 									better |= acceptEqual ? refinedClosure.rule.getRuleValue() >= closure.rule.getRuleValue() : refinedClosure.rule.getRuleValue() > closure.rule.getRuleValue();
 									if (refinedClosure != null && (acceptEqual || better)) {
 										improved |= closures.offer(refinedClosure);
@@ -452,7 +456,7 @@ public class MulticlassCovering {
 								if (useRandom) {
 									return improved;
 								}
-							}
+							
 						}
 					}
 				}			
