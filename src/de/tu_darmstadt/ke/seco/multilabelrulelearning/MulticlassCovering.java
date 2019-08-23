@@ -119,8 +119,8 @@ public class MulticlassCovering {
 
     }
 
-    private static final boolean DEBUG_STEP_BY_STEP = true;
-    private static final boolean DEBUG_STEP_BY_STEP_V = true;
+    private static final boolean DEBUG_STEP_BY_STEP = false;
+    private static final boolean DEBUG_STEP_BY_STEP_V = false;
 
 
     private static HashSet<Integer> labelIndicesHash;
@@ -283,6 +283,7 @@ public class MulticlassCovering {
 	private boolean seco = true;
 	boolean newRule = true;
 	int n = 0;
+	private boolean previous_improved = false;
 	
 	public boolean refineRuleBottomUp(final Instances instances,
 									  final LinkedHashSet<Integer> labelIndices,
@@ -328,8 +329,6 @@ public class MulticlassCovering {
 				// iterate over conditions of the rule
 				if (closure != null) {
 					
-					// TODO: dont break if in the last n_step there was still a REAL enhancement (not the default improved==true from closures.poll())
-					
 					if (!steps && bestClosureOverAll != null) {
 						for (Closure cl : beamWidthIterable(bestClosureOverAll)) {
 							if (cl != null) {
@@ -337,8 +336,11 @@ public class MulticlassCovering {
 							}
 						}
 						
-						//return false;
-						// wenn hier returned wird, werden [] Labels nicht weiter generalisiert
+						// return if after exactly n steps the rule shouldn't be further generalized, because the last generalization was not an improvement
+						/* (!previous_improved) {
+							return false;
+						}
+							*/
 						bestClosureOverAll.clear();
 					}
 					
@@ -347,7 +349,7 @@ public class MulticlassCovering {
 					Iterator<Condition> c = closure.rule.getBody().iterator();
 					while (c.hasNext()) {
 						Condition cond = c.next();
-						System.out.println(cond);
+						
 						// choose a random condition to be removed
 						if (useRandom) {
 							int randIndex = random.nextInt(closure.rule.getBody().size());
@@ -421,15 +423,12 @@ public class MulticlassCovering {
 								refinedRule.increaseGeneralizationCount();
 								
 								Closure refinedClosure = new Closure(refinedRule, null);
-								
 								// evaluate the rule
 								multiLabelEvaluation.evaluate(instances, labelIndices, refinedClosure.rule, null);
 
 								
 								// if it's a new iteration and there are still n_steps left, the old rule will always be replaced by the best rule of the new iteration
 								if (!improved && steps) {
-	                				// TODO: only works if beamWidth = 1 is used, not for higher beamWidth (takes the worst of closures, should take the best, but with beamWidth 1: best==worst
-									// bestClosureOverAll.offer(closures.poll());
 									closures.remove(closure);
 									if (!newRule) {
 										bestClosureOverAll.offer(closure);
@@ -540,14 +539,18 @@ public class MulticlassCovering {
 			}
 		}
 		
-		///////////////////
+		//////////////////
+		/*
 		if (head.size() == 0) {
 			//System.out.println(instances.size());
 			return createMultiHeadRuleFromRandomInstance(instances, labelIndices);
 		}
 		//if (instances.size() < 50) System.exit(0);
+		*/
+		 
 		rule.setHead(head);
-		////////////////////
+		
+		///////////////////
 		
 		// set body
 		final Instances dataset = (Instances) inst.dataset();

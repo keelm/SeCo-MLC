@@ -1228,8 +1228,8 @@ public class SeCoAlgorithm implements Serializable {
     private JRipOneRuler ripper;
 
 
-    public static boolean DEBUG_STEP_BY_STEP = true;
-    public static boolean DEBUG_STEP_BY_STEP_V = true;
+    public static boolean DEBUG_STEP_BY_STEP = false;
+    public static boolean DEBUG_STEP_BY_STEP_V = false;
 
     public RuleSet<?> separateAndConquerMultilabel(Instances examples, int labelIndices[]) throws Exception {
         if (useMultilabelHeads) {
@@ -1462,7 +1462,7 @@ public class SeCoAlgorithm implements Serializable {
         
         // use a Decision List as aggregation function
         
-        if (getEvaluationMethod().equals("DecisionList")) {
+        if (false && getEvaluationMethod().equals("DecisionList")) {
         	Instances evalExamples = new Instances(originalExamples,
                     originalExamples.numInstances()); //so that I can do what I want on this
             examplesReferences = null; // only used for debugging

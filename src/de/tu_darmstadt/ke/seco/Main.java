@@ -126,18 +126,18 @@ public class Main {
         final boolean predictZeroRules = Boolean.valueOf(getOptionalArgument("predictZeroRules", args, "false"));
         final boolean useMultilabelHeads = Boolean.valueOf(getOptionalArgument("useMultilabelHeads", args, "false"));
         final String evaluationStrategy = getOptionalArgument("evaluationStrategy", args,
-                EvaluationStrategy.RULE_DEPENDENT);
+                EvaluationStrategy.RULE_INDEPENDENT);
         final String averagingStrategy = getOptionalArgument("averagingStrategy", args,
                 AveragingStrategy.MICRO_AVERAGING);
         final boolean useBottomUp = Boolean.valueOf(getOptionalArgument("useBottomUp", args, "false"));
         final boolean acceptEqual = Boolean.valueOf(getOptionalArgument("acceptEqual", args, "true"));
         final boolean useSeCo = Boolean.valueOf(getOptionalArgument("useSeCo", args, "true"));
-        final int n_step = Integer.valueOf(getOptionalArgument("n_step", args, "1"));
+        final int n_step = Integer.valueOf(getOptionalArgument("n_step", args, "0"));
         final boolean useRandom = Boolean.valueOf(getOptionalArgument("useRandom", args, "false"));
         final String beamWidth = getOptionalArgument("beamWidth", args, "1");
         final String numericGeneralization = getOptionalArgument("numeric", args, "random");
         final boolean coverAllLabels = Boolean.valueOf(getOptionalArgument("coverAllLabels", args, "false"));
-        final String evaluationMethod = getOptionalArgument("evaluationMethod", args, "DNF");
+        final String evaluationMethod = getOptionalArgument("evaluationMethod", args, "DecisionList");
 
         
         // create file name from parameters for result
@@ -145,10 +145,10 @@ public class Main {
         Date date = new Date();
         String dateString = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss'.txt'").format(new Date());
         
-        path = (useBottomUp ? "BottomUp\\" : "TopDown\\") + evaluationMethod + "\\";
-        name = "beta " + betaValue + "_num " + numericGeneralization + "_cover " + coverAllLabels + "_" + dateString;
+        path = ""; //(useBottomUp ? "BottomUp\\" : "TopDown\\") + evaluationMethod + "\\";
+        name = xmlLabelsDefFilePath.substring(5, xmlLabelsDefFilePath.length() - 4) + "_" + betaValue + "_" + dateString;
         
-        PrintStream out = new PrintStream(new File("C:\\Users\\Pascal\\Documents\\Studium\\BachelorOfScienceInformatik\\Bachelorarbeit\\Experimente\\" + path + name));
+        PrintStream out = new PrintStream(new File("C:\\Users\\Pascal\\Documents\\Studium\\BachelorOfScienceInformatik\\Bachelorarbeit\\Experimente\\BottomUp\\Multiclass SeCo Multiclass DecisionList RuleIndependent\\Baseline Standard No NStep Not Random\\" + path + name));
         System.setOut(out);
         
         //System.setOut(System.out);
