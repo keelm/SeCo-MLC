@@ -30,7 +30,7 @@ public class Weka379AdapterMultilabel extends MultiLabelLearnerBase implements S
     private final SeCoAlgorithm seCoAlgorithm;
     
     public String classifyMethod;
-
+    
     /**
      * Creates an instance of {@link Weka379AdapterMultilabel}.
      *

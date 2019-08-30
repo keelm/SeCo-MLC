@@ -119,8 +119,8 @@ public class MulticlassCovering {
 
     }
 
-    private static final boolean DEBUG_STEP_BY_STEP = false;
-    private static final boolean DEBUG_STEP_BY_STEP_V = false;
+    private static final boolean DEBUG_STEP_BY_STEP = true;
+    private static final boolean DEBUG_STEP_BY_STEP_V = true;
 
 
     private static HashSet<Integer> labelIndicesHash;
@@ -258,7 +258,7 @@ public class MulticlassCovering {
 			// start with -1, because the first improve step initializes a new rule
 			int step = -1;
 			
-			// TODO: to continue search after n-step is finished, set improved=true in refineRuleBottomUp, if the last step was an improvement
+			// TODO for n-Step: to continue search after n-step is finished, set improved=true in refineRuleBottomUp, if the last step was an improvement
 			// otherwise, search will always terminate after n steps
 			while (improved) {
 				steps = step < n_step;
@@ -422,9 +422,9 @@ public class MulticlassCovering {
 								
 								refinedRule.increaseGeneralizationCount();
 								
-								Closure refinedClosure = new Closure(refinedRule, null);
+								Closure refinedClosure = new Closure(refinedRule, closure != null ? closure.metaData : null);
 								// evaluate the rule
-								multiLabelEvaluation.evaluate(instances, labelIndices, refinedClosure.rule, null);
+								multiLabelEvaluation.evaluate(instances, labelIndices, refinedClosure.rule, closure != null ? closure.metaData : null);
 
 								
 								// if it's a new iteration and there are still n_steps left, the old rule will always be replaced by the best rule of the new iteration
@@ -627,7 +627,7 @@ public class MulticlassCovering {
 					ArrayList<Double> intervalsAttribute = new ArrayList<Double>(instances.size()+1);
 					for (int index = 0; index < instances.size()-1; index++) {
 						if (index == 0) {
-							intervalsAttribute.add(index, sortedAttribute.get(index) - 5);
+							intervalsAttribute.add(index, sortedAttribute.get(index) - 1);
 						}
 						intervalsAttribute.add(index+1, (sortedAttribute.get(index) + sortedAttribute.get(index+1)) / 2);
 						if (index == sortedAttribute.size()-2) {

@@ -2,6 +2,11 @@ package de.tu_darmstadt.ke.seco;
 
 import de.tu_darmstadt.ke.seco.algorithm.SeCoAlgorithm;
 import de.tu_darmstadt.ke.seco.algorithm.SeCoAlgorithmFactory;
+import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.FMeasure;
+import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Precision;
+import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Recall;
+import de.tu_darmstadt.ke.seco.models.MultiHeadRule;
+import de.tu_darmstadt.ke.seco.models.MultiHeadRuleSet;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.Weka379AdapterMultilabel;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.averaging.AveragingStrategy;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.EvaluationStrategy;
@@ -9,15 +14,21 @@ import mulan.classifier.MultiLabelLearner;
 import mulan.data.MultiLabelInstances;
 import mulan.evaluation.Evaluation;
 import mulan.evaluation.Evaluator;
+import mulan.evaluation.measure.Measure;
 import weka.core.Utils;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 
 import javax.swing.plaf.basic.BasicInternalFrameTitlePane.SystemMenuBar;
+
+import com.sun.xml.internal.bind.v2.runtime.RuntimeUtil.ToStringAdapter;
 
 /**
  * Runner class for building multilabel learners using XML config files, running it on a given dataset and outputting
@@ -29,6 +40,7 @@ public class Main {
 
 	public static String name;
 	public static String path;
+	public static List<Measure> eval_results;
 	
     private static void evaluate(final MultiLabelInstances trainingData, final MultiLabelInstances testData,
                                  final MultiLabelLearner multilabelLearner) throws Exception {
@@ -40,10 +52,15 @@ public class Main {
             Evaluation evaluation = evaluator.evaluate(multilabelLearner, trainingData, trainingData);
             System.out.println("\n\nEvaluation Results on train data:\n");
             System.out.println(evaluation);
+            
+            eval_results = evaluation.getMeasures();
+            
             evaluator = new Evaluator();
             evaluation = evaluator.evaluate(multilabelLearner, testData, trainingData);
             System.out.println("\n\nEvaluation Results on test data:\n");
             System.out.println(evaluation);
+            
+            eval_results.addAll(evaluation.getMeasures());
         }
     }
 
@@ -135,7 +152,7 @@ public class Main {
         final int n_step = Integer.valueOf(getOptionalArgument("n_step", args, "0"));
         final boolean useRandom = Boolean.valueOf(getOptionalArgument("useRandom", args, "false"));
         final String beamWidth = getOptionalArgument("beamWidth", args, "1");
-        final String numericGeneralization = getOptionalArgument("numeric", args, "random");
+        final String numericGeneralization = getOptionalArgument("numeric", args, "not-random");
         final boolean coverAllLabels = Boolean.valueOf(getOptionalArgument("coverAllLabels", args, "false"));
         final String evaluationMethod = getOptionalArgument("evaluationMethod", args, "DecisionList");
 
@@ -148,8 +165,11 @@ public class Main {
         path = ""; //(useBottomUp ? "BottomUp\\" : "TopDown\\") + evaluationMethod + "\\";
         name = xmlLabelsDefFilePath.substring(5, xmlLabelsDefFilePath.length() - 4) + "_" + betaValue + "_" + dateString;
         
-        PrintStream out = new PrintStream(new File("C:\\Users\\Pascal\\Documents\\Studium\\BachelorOfScienceInformatik\\Bachelorarbeit\\Experimente\\BottomUp\\Multiclass SeCo Multiclass DecisionList RuleIndependent\\Baseline Standard No NStep Not Random\\" + path + name));
-        System.setOut(out);
+        //out = new PrintStream(new File("C:\\Users\\Pascal\\Documents\\Studium\\BachelorOfScienceInformatik\\Bachelorarbeit\\Experimente\\BottomUp\\Multiclass SeCo Multiclass DecisionList RuleIndependent\\Baseline Standard No NStep Not Random\\" + path + name));
+        //PrintStream out = new PrintStream(new File("C:\\Users\\Pascal\\Documents\\Studium\\BachelorOfScienceInformatik\\Bachelorarbeit\\Ergebnisse\\" + name));
+        
+        
+        System.setOut(System.out);
         
         //System.setOut(System.out);
         
@@ -181,6 +201,10 @@ public class Main {
         // Create training instances from dataset
         final MultiLabelInstances trainingData = new MultiLabelInstances(arffFilePath, xmlLabelsDefFilePath);
 
+        
+        
+        
+        
         System.out.println("SeCo: start experiment\n");
 
         
@@ -189,7 +213,7 @@ public class Main {
                 remainingInstancesPercentage, reAddAllCovered, skipThresholdPercentage, predictZeroRules,
                 useMultilabelHeads, evaluationStrategy, averagingStrategy, useBottomUp, acceptEqual, useSeCo, 
                 n_step, useRandom, beamWidth, numericGeneralization, coverAllLabels, evaluationMethod);
-
+        
         // Create test instances from dataset, if available
         final MultiLabelInstances testData =
                 testArffFilePath != null ? new MultiLabelInstances(testArffFilePath, xmlLabelsDefFilePath) : null;
@@ -199,13 +223,18 @@ public class Main {
         multilabelLearner.build(trainingData);
         long estimatedTime = System.currentTimeMillis() - startTime;
         System.out.println("building the model took secs: "+estimatedTime/1000.0);
-
+        
+        
+        
         // Evaluate model on test instances, if available
         startTime = System.currentTimeMillis();
         evaluate(trainingData, testData, multilabelLearner);
         estimatedTime = System.currentTimeMillis() - startTime;
         System.out.println("evaluating the model took secs: "+estimatedTime/1000.0);
         System.out.println("SeCo: finish experiment\n");
+        
+        Results result = new Results();
+        result.printResults(remainingInstancesPercentage, multilabelLearner, eval_results);
 
     }
 
