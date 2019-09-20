@@ -1228,8 +1228,8 @@ public class SeCoAlgorithm implements Serializable {
     private JRipOneRuler ripper;
 
 
-    public static boolean DEBUG_STEP_BY_STEP = true;
-    public static boolean DEBUG_STEP_BY_STEP_V = true;
+    public static boolean DEBUG_STEP_BY_STEP = false;
+    public static boolean DEBUG_STEP_BY_STEP_V = false;
 
     public RuleSet<?> separateAndConquerMultilabel(Instances examples, int labelIndices[]) throws Exception {
         if (useMultilabelHeads) {
@@ -1278,7 +1278,8 @@ public class SeCoAlgorithm implements Serializable {
         MultiHeadRuleSet theory = new MultiHeadRuleSet();
         theory.setLabelIndices(labelIndices); //so that tostring prints out mlc statistics
         int trainingDataSize = examples.getInstances().size();
-
+        boolean[] instanceStatus = new boolean[trainingDataSize];
+        Arrays.fill(instanceStatus, true);
         Set<Integer> predictedLabelIndices = new HashSet<>();
         
         int count = examples.getInstances().size();
@@ -1296,11 +1297,11 @@ public class SeCoAlgorithm implements Serializable {
                 	try {
                         int beamWidth = Integer.valueOf(getBeamWidth());
                         bestRuleOfMulti = multiclassCovering
-                                .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth, isEqualAccepted(), isSeCoUsed(), trainingDataSize - count, n_step, getNumericGeneralization(), useRandom);
+                                .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth, isEqualAccepted(), isSeCoUsed(), trainingDataSize - count, n_step, getNumericGeneralization(), useRandom, instanceStatus);
                     } catch (NumberFormatException e) {
                         float beamWidthPercentage = Float.valueOf(getBeamWidth());
                         bestRuleOfMulti = multiclassCovering
-                                .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage, isEqualAccepted(), isSeCoUsed(), trainingDataSize - count, n_step, getNumericGeneralization(), useRandom);
+                                .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage, isEqualAccepted(), isSeCoUsed(), trainingDataSize - count, n_step, getNumericGeneralization(), useRandom, instanceStatus);
                     }
                 } else {
                 	try {
@@ -1341,11 +1342,11 @@ public class SeCoAlgorithm implements Serializable {
             	try {
                     int beamWidth = Integer.valueOf(getBeamWidth());
                     bestRuleOfMulti = multiclassCovering
-                            .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth, isEqualAccepted(), isSeCoUsed(), 0, getNStep(), getNumericGeneralization(), useRandom);
+                            .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth, isEqualAccepted(), isSeCoUsed(), 0, getNStep(), getNumericGeneralization(), useRandom, instanceStatus);
                 } catch (NumberFormatException e) {
                     float beamWidthPercentage = Float.valueOf(getBeamWidth());
                     bestRuleOfMulti = multiclassCovering
-                            .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage, isEqualAccepted(), isSeCoUsed(), 0, getNStep(), getNumericGeneralization(), useRandom);
+                            .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage, isEqualAccepted(), isSeCoUsed(), 0, getNStep(), getNumericGeneralization(), useRandom, instanceStatus);
                 }
             } else {
             	try {
@@ -1398,6 +1399,16 @@ public class SeCoAlgorithm implements Serializable {
                     }
                 }
 
+                // TODO: make this more efficient! + Testing
+                // true means, the instance is not yet covered by a rule
+                for (int i = 0; i < instanceStatus.length; i++) {
+                	if (instanceStatus[i] == true) {
+                		if (bestRuleOfMulti.covers(originalExamples.get(i))) {
+                			instanceStatus[i] = false;
+                		}
+                	}
+                }
+                
                 theory.addRule(bestRuleOfMulti);
                 if (DEBUG_STEP_BY_STEP) {
                     System.out.println(
@@ -1460,7 +1471,7 @@ public class SeCoAlgorithm implements Serializable {
             }
         }
         
-        // use a Decision List as aggregation function
+        // use a _sorted_ Decision List as aggregation function
         
         if (false && getEvaluationMethod().equals("DecisionList")) {
         	Instances evalExamples = new Instances(originalExamples,

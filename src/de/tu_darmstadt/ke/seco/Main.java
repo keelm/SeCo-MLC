@@ -234,7 +234,8 @@ public class Main {
         System.out.println("SeCo: finish experiment\n");
         
         Results result = new Results();
-        result.printResults(remainingInstancesPercentage, multilabelLearner, eval_results);
+        result.printResults(betaValue, multilabelLearner, eval_results);
+        //System.out.println(eval_results);
 
     }
 

@@ -119,8 +119,8 @@ public class MulticlassCovering {
 
     }
 
-    private static final boolean DEBUG_STEP_BY_STEP = true;
-    private static final boolean DEBUG_STEP_BY_STEP_V = true;
+    private static final boolean DEBUG_STEP_BY_STEP = false;
+    private static final boolean DEBUG_STEP_BY_STEP_V = false;
 
 
     private static HashSet<Integer> labelIndicesHash;
@@ -210,7 +210,8 @@ public class MulticlassCovering {
             								final int inst,
             								final int n_step,
             								final String numericGeneralization, 
-            								final boolean useRandom) throws Exception {
+            								final boolean useRandom,
+            								final boolean[] instanceStatus) throws Exception {
 		if (beamWidthPercentage < 0)
 			throw new IllegalArgumentException("Beam width must be at least 0.0");
 		else if (beamWidthPercentage > 1)
@@ -218,7 +219,7 @@ public class MulticlassCovering {
 		int numAttributes = instances.numAttributes();
 		int beamWidth = Math
 				.max(1, Math.min(numAttributes, Math.round(numAttributes * beamWidthPercentage)));
-		return findBestRuleBottomUp(instances, labelIndices, predictedLabels, beamWidth, acceptEqual, useSeCo, inst, n_step, numericGeneralization, useRandom);
+		return findBestRuleBottomUp(instances, labelIndices, predictedLabels, beamWidth, acceptEqual, useSeCo, inst, n_step, numericGeneralization, useRandom, instanceStatus);
 	}
 	
 	public final MultiHeadRule findBestRuleBottomUp(final Instances instances,
@@ -230,7 +231,8 @@ public class MulticlassCovering {
 											final int inst,
 											final int n_step,
 											final String numericGeneralization,
-											final boolean useRandom) throws Exception {
+											final boolean useRandom,
+											final boolean[] instanceStatus) throws Exception {
 		Queue<Closure> bestClosures = new FixedPriorityQueue<>(beamWidth);
 		boolean improved = true;
 		sorted = sortNumericAttributes(instances, labelIndices);
@@ -247,7 +249,7 @@ public class MulticlassCovering {
 		if (n_step == 0) {
 			while (improved) {
 				steps = false;
-				improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual, useSeCo, steps, bestClosureOverall, numericGeneralization, useRandom);
+				improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual, useSeCo, steps, bestClosureOverall, numericGeneralization, useRandom, instanceStatus);
 				if (improved && DEBUG_STEP_BY_STEP_V) {
 					System.out.println(
                         "Generalized rule conditions (beam width = " + beamWidth + "): " +
@@ -262,7 +264,7 @@ public class MulticlassCovering {
 			// otherwise, search will always terminate after n steps
 			while (improved) {
 				steps = step < n_step;
-				improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual, useSeCo, steps, bestClosureOverall, numericGeneralization, useRandom);
+				improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual, useSeCo, steps, bestClosureOverall, numericGeneralization, useRandom, instanceStatus);
 				step++;
 				if (improved && DEBUG_STEP_BY_STEP_V) {
 					System.out.println(
@@ -294,7 +296,8 @@ public class MulticlassCovering {
             						  final boolean steps,
             						  final Queue<Closure> bestClosureOverAll,
             						  final String numericGeneralization,
-            						  final boolean useRandom) throws
+            						  final boolean useRandom,
+            						  final boolean[] instanceStatus) throws
 			Exception {
 		boolean improved = false;
 		boolean better = false;
@@ -311,12 +314,12 @@ public class MulticlassCovering {
 					// evaluate the rule, no need to compare since body and head are initialized from new rule
 					if (!useSeCo) {
 						// refinedRule here is the new rule
-						MultiHeadRule refinedRule = createMultiHeadRuleFromRandomInstance(instances, labelIndices);
+						MultiHeadRule refinedRule = createMultiHeadRuleFromRandomInstance(instances, labelIndices, instanceStatus);
 						refinedClosure = new Closure(refinedRule, null);
 						multiLabelEvaluation.evaluate(instances, labelIndices, refinedClosure.rule, null);
 					} else {
 						// refinedRule here is the new rule						
-						MultiHeadRule refinedRule = createMultiHeadRuleFromRandomInstance(instances, labelIndices);
+						MultiHeadRule refinedRule = createMultiHeadRuleFromRandomInstance(instances, labelIndices, instanceStatus);
 						refinedClosure = new Closure(refinedRule, null);
 						multiLabelEvaluation.evaluate(instances, labelIndices, refinedClosure.rule, null);
 					}
@@ -477,16 +480,30 @@ public class MulticlassCovering {
 	 * @return the MultiHeadRule which represents the randomly chosen instance
 	 */
 	public MultiHeadRule createMultiHeadRuleFromRandomInstance(final Instances instances,
-															   final LinkedHashSet<Integer> labelIndices) throws Exception {
+															   final LinkedHashSet<Integer> labelIndices,
+															   final boolean[] instanceStatus) throws Exception {
 		// choose a random instance
-		random = new Random();
-		int i = random.nextInt(instances.numInstances());
+		int seed = 1;
+		int i = 0;
+		random = new Random(seed);
+		do {
+			i = random.nextInt(instanceStatus.length);
+		}
+		// true means not yet covered and can therefore be chosen
+		while (instanceStatus[i]==false);
+		
+		int actualIndex = 0;
+		for (int allIndex = 0; allIndex < i; allIndex++) {
+			if (instanceStatus[allIndex]==true) {
+				actualIndex++;
+			}
+		}
 		
 		//// TESTING: ALWAYS CHOSE IN THE SAME ORDER FOR THE SAME DATASET
 		//i = 0;
 		//// DELETE FOR REAL RESULTS
 		
-		Instance inst = instances.instance(i);
+		Instance inst = instances.instance(actualIndex);
 		
 		if (!seco) {
 			inst = instances.instance(current_instance);

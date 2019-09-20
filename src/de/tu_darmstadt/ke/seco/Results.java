@@ -19,9 +19,9 @@ public class Results {
 	
 	public void printResults(double parameter, Weka379AdapterMultilabel multilabelLearner, List<Measure> eval_results) throws IOException {
 		// get theory and produce statistics
-        String filename = "remain_weather_measures.csv";
+        String filename = "beta_weather_measures.csv";
         //FileWriter csvWriter = new FileWriter("C:\\Users\\Pascal\\Documents\\Studium\\BachelorOfScienceInformatik\\Bachelorarbeit\\Ergebnisse\\Weather\\" + filename, true);
-        FileWriter csvWriter = new FileWriter("remain/weather/" + filename, true);
+        FileWriter csvWriter = new FileWriter("beta/weather/" + filename, true);
         
         Recall r = new Recall();
         Precision p = new Precision();
@@ -67,7 +67,7 @@ public class Results {
         //csvWriter.append(",");
         //csvWriter.append("" + examCov);
         for (Measure measure : eval_results) {
-        	csvWriter.append("," + measure.toString());
+        	csvWriter.append("," + measure.getValue());
         }
         csvWriter.append("\n");
         
