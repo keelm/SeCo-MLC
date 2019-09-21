@@ -1228,7 +1228,7 @@ public class SeCoAlgorithm implements Serializable {
     private JRipOneRuler ripper;
 
 
-    public static boolean DEBUG_STEP_BY_STEP = false;
+    public static boolean DEBUG_STEP_BY_STEP = true;
     public static boolean DEBUG_STEP_BY_STEP_V = false;
 
     public RuleSet<?> separateAndConquerMultilabel(Instances examples, int labelIndices[]) throws Exception {
@@ -1407,6 +1407,7 @@ public class SeCoAlgorithm implements Serializable {
                 			instanceStatus[i] = false;
                 		}
                 	}
+                	System.out.println(instanceStatus[i]);
                 }
                 
                 theory.addRule(bestRuleOfMulti);

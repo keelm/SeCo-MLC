@@ -377,7 +377,7 @@ public class MulticlassCovering {
 											
 											double value = sorted.get(cond.getAttr()).get(sorted.get(cond.getAttr()).indexOf(cond.getValue()) - 1);
 											int currentIndex = sorted.get(cond.getAttr()).indexOf(value);
-											while (value==sorted.get(cond.getAttr()).indexOf(cond.getValue())) {
+											while (value==sorted.get(cond.getAttr()).get(sorted.get(cond.getAttr()).indexOf(cond.getValue()))) {
 												currentIndex--;
 												value = sorted.get(cond.getAttr()).get(currentIndex); 
 											}
@@ -400,7 +400,7 @@ public class MulticlassCovering {
 										try {											
 											double value = sorted.get(cond.getAttr()).get(sorted.get(cond.getAttr()).indexOf(cond.getValue()) + 1);
 											int currentIndex = sorted.get(cond.getAttr()).indexOf(value);
-											while (value==sorted.get(cond.getAttr()).indexOf(cond.getValue())) {
+											while (value==sorted.get(cond.getAttr()).get(sorted.get(cond.getAttr()).indexOf(cond.getValue()))) {
 												currentIndex++;												
 												value = sorted.get(cond.getAttr()).get(currentIndex);
 											}
