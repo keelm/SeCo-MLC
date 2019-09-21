@@ -1228,7 +1228,7 @@ public class SeCoAlgorithm implements Serializable {
     private JRipOneRuler ripper;
 
 
-    public static boolean DEBUG_STEP_BY_STEP = true;
+    public static boolean DEBUG_STEP_BY_STEP = false;
     public static boolean DEBUG_STEP_BY_STEP_V = false;
 
     public RuleSet<?> separateAndConquerMultilabel(Instances examples, int labelIndices[]) throws Exception {
@@ -1399,7 +1399,7 @@ public class SeCoAlgorithm implements Serializable {
                     }
                 }
 
-                // TODO: make this more efficient! + Testing
+                // TODO: make this more efficient!
                 // true means, the instance is not yet covered by a rule
                 for (int i = 0; i < instanceStatus.length; i++) {
                 	if (instanceStatus[i] == true) {
@@ -1407,7 +1407,7 @@ public class SeCoAlgorithm implements Serializable {
                 			instanceStatus[i] = false;
                 		}
                 	}
-                	System.out.println(instanceStatus[i]);
+                	//System.out.println(instanceStatus[i]);
                 }
                 
                 theory.addRule(bestRuleOfMulti);

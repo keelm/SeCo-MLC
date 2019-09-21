@@ -485,9 +485,11 @@ public class MulticlassCovering {
 		// choose a random instance
 		int seed = 1;
 		int i = 0;
+		//TODO: initialize new Random(seed) only once, not in every function call, since all the same first numbers get checked every time
 		random = new Random(seed);
 		do {
 			i = random.nextInt(instanceStatus.length);
+			//System.out.println(i);
 		}
 		// true means not yet covered and can therefore be chosen
 		while (instanceStatus[i]==false);
