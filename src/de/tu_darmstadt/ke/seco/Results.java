@@ -17,7 +17,7 @@ public class Results {
 
 	
 	
-	public void printResults(double parameter, Weka379AdapterMultilabel multilabelLearner, List<Measure> eval_results) throws IOException {
+	public void printResults(double parameter, Weka379AdapterMultilabel multilabelLearner, List<Measure> eval_results, double coverage) throws IOException {
 		// get theory and produce statistics
         String filename = "beta_weather_measures.csv";
         //FileWriter csvWriter = new FileWriter("C:\\Users\\Pascal\\Documents\\Studium\\BachelorOfScienceInformatik\\Bachelorarbeit\\Ergebnisse\\Weather\\" + filename, true);
@@ -25,7 +25,7 @@ public class Results {
         
         Recall r = new Recall();
         Precision p = new Precision();
-        //SubsetAccuracy sa = new SubsetAccuracy();
+        SubsetAccuracy sa = new SubsetAccuracy();
         //Covered Labels
         //Covered Examples
         
@@ -35,7 +35,8 @@ public class Results {
         double currP = 0;
         double averageSA = 0;
         double currSA = 0;
-        double examCov = 0;
+        double examCov = coverage;
+        
         MultiHeadRuleSet theory = (MultiHeadRuleSet) multilabelLearner.getSeCoClassifier().getTheory();
         Iterator<MultiHeadRule> i = theory.iterator();
         
@@ -46,11 +47,11 @@ public class Results {
         	averageR += currR;
         	averageP += currP;
         	
-        	//currSA = sa.evaluateConfusionMatrix(rule.getStats());
+        	currSA = sa.evaluateConfusionMatrix(rule.getStats());
         	averageSA += currSA;
         	
         	// example coverage =  for current example-set
-        	examCov += rule.getStats().getNumberOfPredictedPositive();
+        	//examCov += rule.getStats().getNumberOfPredictedPositive();
         }
         averageR = averageR / theory.size();
         averageP = averageP / theory.size();
@@ -62,10 +63,10 @@ public class Results {
         csvWriter.append("" + averageR);
         csvWriter.append(",");
         csvWriter.append("" + averageP);
-        //csvWriter.append(",");
-        //csvWriter.append("" + averageSA);
-        //csvWriter.append(",");
-        //csvWriter.append("" + examCov);
+        csvWriter.append(",");
+        csvWriter.append("" + averageSA);
+        csvWriter.append(",");
+        csvWriter.append("" + examCov);
         for (Measure measure : eval_results) {
         	csvWriter.append("," + measure.getValue());
         }

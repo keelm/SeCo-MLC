@@ -232,9 +232,9 @@ public class Main {
         estimatedTime = System.currentTimeMillis() - startTime;
         System.out.println("evaluating the model took secs: "+estimatedTime/1000.0);
         System.out.println("SeCo: finish experiment\n");
-        
+        double coverage = baseLearnerAlgorithm.getCoverage();
         Results result = new Results();
-        //result.printResults(betaValue, multilabelLearner, eval_results);
+        result.printResults(betaValue, multilabelLearner, eval_results, coverage);
         //System.out.println(eval_results);
 
     }

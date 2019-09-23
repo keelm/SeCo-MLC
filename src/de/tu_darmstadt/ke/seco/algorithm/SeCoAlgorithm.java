@@ -1219,6 +1219,12 @@ public class SeCoAlgorithm implements Serializable {
 		this.evaluationMethod = evaluationMethod;
 	}
 
+	public int coverage = 0;
+	
+	public int getCoverage() {
+		return coverage;
+	}
+	
 	boolean predictZero = true;
 
     boolean useSkippingRules = true;
@@ -1401,14 +1407,18 @@ public class SeCoAlgorithm implements Serializable {
 
                 // TODO: make this more efficient!
                 // true means, the instance is not yet covered by a rule
+                // calculate # covered examples by rule
+                int rule_coverage = 0;
                 for (int i = 0; i < instanceStatus.length; i++) {
                 	if (instanceStatus[i] == true) {
                 		if (bestRuleOfMulti.covers(originalExamples.get(i))) {
                 			instanceStatus[i] = false;
+                			rule_coverage++;
                 		}
                 	}
                 	//System.out.println(instanceStatus[i]);
                 }
+                
                 
                 theory.addRule(bestRuleOfMulti);
                 if (DEBUG_STEP_BY_STEP) {
