@@ -1,6 +1,9 @@
 package de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.averaging;
 
+import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.FMeasure;
 import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Heuristic;
+import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Precision;
+import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.TruePositiveRate;
 import de.tu_darmstadt.ke.seco.models.Instances;
 import de.tu_darmstadt.ke.seco.models.MultiHeadRule;
 import de.tu_darmstadt.ke.seco.models.MultiHeadRule.Head;
@@ -25,7 +28,7 @@ public class MicroAveraging extends AveragingStrategy {
     @Override
     protected final MetaData evaluate(final Instances instances, final MultiHeadRule rule, final Heuristic heuristic,
                                       final Collection<Integer> relevantLabels, final MetaData metaData,
-                                      final TwoClassConfusionMatrix stats) {
+                                      final TwoClassConfusionMatrix stats, final TwoClassConfusionMatrix recall) {
         Collection<Integer> coveredInstances = new LinkedList<>();
         Head head = rule.getHead();
         boolean refinement = metaData instanceof MicroAveragingMetaData;
@@ -36,7 +39,7 @@ public class MicroAveraging extends AveragingStrategy {
 
             if (!covers || !areAllLabelsAlreadyPredicted(instance, head)) {
                 for (int labelIndex : relevantLabels) {
-                    aggregate(covers, head, instance, labelIndex, stats, null);
+                    aggregate(covers, head, instance, labelIndex, stats, null, recall);
                 }
             }
 
@@ -44,8 +47,18 @@ public class MicroAveraging extends AveragingStrategy {
                 coveredInstances.add(i);
             }
         }
-
-        double h = heuristic.evaluateConfusionMatrix(stats);
+        
+        //////// ONLY for FMeasure tests ////////////
+        double h = 0;
+        try {
+        	FMeasure fm = (FMeasure) heuristic;
+        	h = fm.evaluateMixedConfusionMatrix(stats, recall);  
+        	// System.out.println("FMeasure correctly calculated");
+        	
+        } catch(Exception e) {
+        	h = heuristic.evaluateConfusionMatrix(stats);
+        }        
+        rule.setRecallStats(recall);
         rule.setRuleValue(heuristic, h);
         return new MicroAveragingMetaData(coveredInstances, stats);
     }

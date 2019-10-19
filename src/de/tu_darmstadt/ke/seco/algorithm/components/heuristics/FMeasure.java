@@ -83,6 +83,21 @@ public class FMeasure extends ValueHeuristic {
                 truePositiveRate.evaluateConfusionMatrix(confusionMatrix));
     }
 
+    /*
+     * calculate FMeasure from two matrizes, because precision and recall are calculated separately with different counting schemes
+     */
+    
+    public double evaluateMixedConfusionMatrix(final TwoClassConfusionMatrix precisionMatrix, final TwoClassConfusionMatrix recallMatrix) {
+    	if ((precision.evaluateConfusionMatrix(precisionMatrix) +
+                truePositiveRate.evaluateConfusionMatrix(recallMatrix)) == 0) {
+            return 0;
+        }
+        final double a = (Math.pow(beta, 2) + 1) * truePositiveRate.evaluateConfusionMatrix(recallMatrix) *
+                precision.evaluateConfusionMatrix(precisionMatrix);
+        return a / (Math.pow(beta, 2) * precision.evaluateConfusionMatrix(precisionMatrix) +
+                truePositiveRate.evaluateConfusionMatrix(recallMatrix));
+    }
+    
     @Override
     public Characteristic getCharacteristic(final EvaluationStrategy evaluationStrategy,
                                             final AveragingStrategy averagingStrategy) {

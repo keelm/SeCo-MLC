@@ -240,5 +240,23 @@ public class MultiHeadRule extends Rule {
 
         return false;
     }
+    
+    /**
+     * count the positive predicted labels of the rule
+     * 
+     * @param 
+     * @return n number of one's in the head of the rule
+     */
+    
+    public int getCardinality() {
+    	int cardinality = 0;
+    	for (Condition label : head) {
+    		if (label.m_val == 1) {
+    			cardinality++;
+    		}
+    	}
+    	return cardinality;
+    }
+    
 
 }

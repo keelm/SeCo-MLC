@@ -74,6 +74,11 @@ public class Recall extends ValueHeuristic {
     @Override
     public double evaluateConfusionMatrix(final TwoClassConfusionMatrix confusionMatrix) {
         
+    	double TP = confusionMatrix.getNumberOfTruePositives();
+        double TN = confusionMatrix.getNumberOfTrueNegatives();
+        double FN = confusionMatrix.getNumberOfFalseNegatives();
+    	//return (TP + TN) / (TP + TN + FN);
+    	
     	return truePositiveRate.evaluateConfusionMatrix(confusionMatrix);
     	
     	

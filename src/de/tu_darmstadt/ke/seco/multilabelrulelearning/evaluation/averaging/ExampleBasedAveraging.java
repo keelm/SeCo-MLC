@@ -28,7 +28,7 @@ public class ExampleBasedAveraging extends AveragingStrategy {
     @Override
     protected final MetaData evaluate(final Instances instances, final MultiHeadRule rule, final Heuristic heuristic,
                                       final Collection<Integer> relevantLabels, final MetaData metaData,
-                                      final TwoClassConfusionMatrix stats) {
+                                      final TwoClassConfusionMatrix stats, final TwoClassConfusionMatrix recall) {
         Collection<Integer> coveredInstances = new LinkedList<>();
         Head head = rule.getHead();
         double uncoveredH = 0;
@@ -49,7 +49,7 @@ public class ExampleBasedAveraging extends AveragingStrategy {
                 TwoClassConfusionMatrix confusionMatrix = new TwoClassConfusionMatrix();
 
                 for (int labelIndex : relevantLabels) {
-                    aggregate(covers, head, instance, labelIndex, confusionMatrix, stats);
+                    aggregate(covers, head, instance, labelIndex, confusionMatrix, stats, recall);
                 }
 
                 double exampleWiseH = heuristic.evaluateConfusionMatrix(confusionMatrix);

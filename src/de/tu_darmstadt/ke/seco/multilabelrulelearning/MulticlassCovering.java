@@ -211,7 +211,8 @@ public class MulticlassCovering {
             								final int n_step,
             								final String numericGeneralization, 
             								final boolean useRandom,
-            								final boolean[] instanceStatus) throws Exception {
+            								final boolean[] instanceStatus,
+            								final String optimizationHeuristic) throws Exception {
 		if (beamWidthPercentage < 0)
 			throw new IllegalArgumentException("Beam width must be at least 0.0");
 		else if (beamWidthPercentage > 1)
@@ -219,7 +220,7 @@ public class MulticlassCovering {
 		int numAttributes = instances.numAttributes();
 		int beamWidth = Math
 				.max(1, Math.min(numAttributes, Math.round(numAttributes * beamWidthPercentage)));
-		return findBestRuleBottomUp(instances, labelIndices, predictedLabels, beamWidth, acceptEqual, useSeCo, inst, n_step, numericGeneralization, useRandom, instanceStatus);
+		return findBestRuleBottomUp(instances, labelIndices, predictedLabels, beamWidth, acceptEqual, useSeCo, inst, n_step, numericGeneralization, useRandom, instanceStatus, optimizationHeuristic);
 	}
 	
 	public final MultiHeadRule findBestRuleBottomUp(final Instances instances,
@@ -232,7 +233,8 @@ public class MulticlassCovering {
 											final int n_step,
 											final String numericGeneralization,
 											final boolean useRandom,
-											final boolean[] instanceStatus) throws Exception {
+											final boolean[] instanceStatus,
+											final String optimizationHeuristic) throws Exception {
 		Queue<Closure> bestClosures = new FixedPriorityQueue<>(beamWidth);
 		boolean improved = true;
 		sorted = sortNumericAttributes(instances, labelIndices);
@@ -249,7 +251,7 @@ public class MulticlassCovering {
 		if (n_step == 0) {
 			while (improved) {
 				steps = false;
-				improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual, useSeCo, steps, bestClosureOverall, numericGeneralization, useRandom, instanceStatus);
+				improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual, useSeCo, steps, bestClosureOverall, numericGeneralization, useRandom, instanceStatus, optimizationHeuristic);
 				if (improved && DEBUG_STEP_BY_STEP_V) {
 					System.out.println(
                         "Generalized rule conditions (beam width = " + beamWidth + "): " +
@@ -264,7 +266,7 @@ public class MulticlassCovering {
 			// otherwise, search will always terminate after n steps
 			while (improved) {
 				steps = step < n_step;
-				improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual, useSeCo, steps, bestClosureOverall, numericGeneralization, useRandom, instanceStatus);
+				improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual, useSeCo, steps, bestClosureOverall, numericGeneralization, useRandom, instanceStatus, optimizationHeuristic);
 				step++;
 				if (improved && DEBUG_STEP_BY_STEP_V) {
 					System.out.println(
@@ -297,7 +299,8 @@ public class MulticlassCovering {
             						  final Queue<Closure> bestClosureOverAll,
             						  final String numericGeneralization,
             						  final boolean useRandom,
-            						  final boolean[] instanceStatus) throws
+            						  final boolean[] instanceStatus,
+            						  final String optimizationHeuristic) throws
 			Exception {
 		boolean improved = false;
 		boolean better = false;
@@ -316,12 +319,12 @@ public class MulticlassCovering {
 						// refinedRule here is the new rule
 						MultiHeadRule refinedRule = createMultiHeadRuleFromRandomInstance(instances, labelIndices, instanceStatus);
 						refinedClosure = new Closure(refinedRule, null);
-						multiLabelEvaluation.evaluate(instances, labelIndices, refinedClosure.rule, null);
+						multiLabelEvaluation.evaluate(instances, labelIndices, refinedClosure.rule, null, optimizationHeuristic);
 					} else {
 						// refinedRule here is the new rule						
 						MultiHeadRule refinedRule = createMultiHeadRuleFromRandomInstance(instances, labelIndices, instanceStatus);
 						refinedClosure = new Closure(refinedRule, null);
-						multiLabelEvaluation.evaluate(instances, labelIndices, refinedClosure.rule, null);
+						multiLabelEvaluation.evaluate(instances, labelIndices, refinedClosure.rule, null, optimizationHeuristic);
 					}
 					
 					if (refinedClosure != null) {
@@ -427,7 +430,7 @@ public class MulticlassCovering {
 								
 								Closure refinedClosure = new Closure(refinedRule, closure != null ? closure.metaData : null);
 								// evaluate the rule
-								multiLabelEvaluation.evaluate(instances, labelIndices, refinedClosure.rule, closure != null ? closure.metaData : null);
+								multiLabelEvaluation.evaluate(instances, labelIndices, refinedClosure.rule, closure != null ? closure.metaData : null, optimizationHeuristic);
 
 								
 								// if it's a new iteration and there are still n_steps left, the old rule will always be replaced by the best rule of the new iteration
@@ -664,11 +667,11 @@ public class MulticlassCovering {
 		return sortedListForAttribute;
 	}
 	
-    public MultiHeadRuleSet sortTheory (MultiHeadRuleSet theory, final Instances examples, final LinkedHashSet<Integer> labelIndices) {
+    public MultiHeadRuleSet sortTheory (MultiHeadRuleSet theory, final Instances examples, final LinkedHashSet<Integer> labelIndices, final String optimizationHeuristic) {
     	MultiHeadRuleSet sortedTheory = new MultiHeadRuleSet();
     	ArrayList<MultiHeadRule> rules = new ArrayList<MultiHeadRule>(theory.size());
     	for (MultiHeadRule rule : theory) {
-    		multiLabelEvaluation.evaluate(examples, labelIndices, rule, null);
+    		multiLabelEvaluation.evaluate(examples, labelIndices, rule, null,optimizationHeuristic);
     		rules.add(rule);
     	}
     	// sort by heuristic value over all examples
@@ -861,7 +864,7 @@ public class MulticlassCovering {
                     singleHeadRule.setHead(head);
                     Closure singleHeadClosure = new Closure(singleHeadRule, null);
                     multiLabelEvaluation
-                            .evaluate(instances, labelIndices, singleHeadClosure.rule, null);
+                            .evaluate(instances, labelIndices, singleHeadClosure.rule, null, "adapted");
 
                     if (currentClosure == null ||
                             singleHeadClosure.rule.getRuleValue() >=
@@ -939,7 +942,7 @@ public class MulticlassCovering {
                                     isRuleIndependent ? closure.metaData : null);
                             MetaData metaData = multiLabelEvaluation
                                     .evaluate(instances, labelIndices, currentClosure.rule,
-                                            isRuleIndependent ? currentClosure.metaData : null);
+                                            isRuleIndependent ? currentClosure.metaData : null, "adapted");
 
                             if (isRuleIndependent) {
                                 currentClosure.metaData = metaData;

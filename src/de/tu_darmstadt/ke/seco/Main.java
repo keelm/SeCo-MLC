@@ -155,7 +155,7 @@ public class Main {
         final String numericGeneralization = getOptionalArgument("numeric", args, "not-random");
         final boolean coverAllLabels = Boolean.valueOf(getOptionalArgument("coverAllLabels", args, "false"));
         final String evaluationMethod = getOptionalArgument("evaluationMethod", args, "DecisionList");
-
+        final String optimizationHeuristic = getOptionalArgument("optMethod", args, "adapted");
         
         // create file name from parameters for result
         
@@ -196,6 +196,7 @@ public class Main {
         System.out.println("-numericGeneralization " + numericGeneralization);
         System.out.println("-coverAllLabels " + coverAllLabels);
         System.out.println("-evaluationMethod " + evaluationMethod);
+        System.out.println("-optimizationHeuristic " + optimizationHeuristic);
         System.out.println("\n");
         
         // Create training instances from dataset
@@ -212,7 +213,7 @@ public class Main {
         Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm, betaValue, 
                 remainingInstancesPercentage, reAddAllCovered, skipThresholdPercentage, predictZeroRules,
                 useMultilabelHeads, evaluationStrategy, averagingStrategy, useBottomUp, acceptEqual, useSeCo, 
-                n_step, useRandom, beamWidth, numericGeneralization, coverAllLabels, evaluationMethod);
+                n_step, useRandom, beamWidth, numericGeneralization, coverAllLabels, evaluationMethod, optimizationHeuristic);
         
         // Create test instances from dataset, if available
         final MultiLabelInstances testData =
@@ -233,8 +234,9 @@ public class Main {
         System.out.println("evaluating the model took secs: "+estimatedTime/1000.0);
         System.out.println("SeCo: finish experiment\n");
         double coverage = baseLearnerAlgorithm.getCoverage();
+        //System.out.println(coverage);
         Results result = new Results();
-        result.printResults(betaValue, multilabelLearner, eval_results, coverage);
+        result.printResults(betaValue, multilabelLearner, eval_results, coverage, optimizationHeuristic);
         //System.out.println(eval_results);
 
     }

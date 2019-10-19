@@ -1,5 +1,6 @@
 package de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.averaging;
 
+import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.FMeasure;
 import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Heuristic;
 import de.tu_darmstadt.ke.seco.models.Instances;
 import de.tu_darmstadt.ke.seco.models.MultiHeadRule;
@@ -29,7 +30,7 @@ public class MacroAveraging extends AveragingStrategy {
     @Override
     protected final MetaData evaluate(final Instances instances, final MultiHeadRule rule, final Heuristic heuristic,
                                       final Collection<Integer> relevantLabels, final MetaData metaData,
-                                      final TwoClassConfusionMatrix stats) {
+                                      final TwoClassConfusionMatrix stats, final TwoClassConfusionMatrix recall) {
         Collection<Integer> coveredInstances = new LinkedList<>();
         double h = 0;
         double uncoveredH = 0;
@@ -48,19 +49,38 @@ public class MacroAveraging extends AveragingStrategy {
 
             if (!covers || !areAllLabelsAlreadyPredicted(instance, head)) {
                 double exampleWiseH = 0;
+                double exampleWiseFM = 0;
                 for (int labelIndex : relevantLabels) {
                     TwoClassConfusionMatrix confusionMatrix = new TwoClassConfusionMatrix();
-                    aggregate(covers, head, instance, labelIndex, confusionMatrix, stats);
-                    exampleWiseH += heuristic.evaluateConfusionMatrix(confusionMatrix);
+                    aggregate(covers, head, instance, labelIndex, confusionMatrix, stats, recall);
+                    try {
+                    	FMeasure fm = (FMeasure) heuristic;
+                    	exampleWiseFM = fm.evaluateMixedConfusionMatrix(confusionMatrix, recall);  
+                    } catch (Exception e) {
+                    	exampleWiseH += heuristic.evaluateConfusionMatrix(confusionMatrix);
+                    }
                 }
 
-                exampleWiseH = exampleWiseH / (double) relevantLabels.size();
+                try {
+                	exampleWiseFM = exampleWiseFM / (double) relevantLabels.size();
+                } catch (Exception e) {
+                    exampleWiseH = exampleWiseH / (double) relevantLabels.size();
+                }
 
                 if (!covers) {
-                    uncoveredH += exampleWiseH;
+                	try {
+                    	uncoveredH += exampleWiseFM;
+                    } catch (Exception e) {
+                    	uncoveredH += exampleWiseH;
+                    }
                 }
 
-                h += exampleWiseH;
+                try {
+                	h += exampleWiseFM;
+                } catch (Exception e) {
+                	h += exampleWiseH;
+                }
+                
             }
 
             if (covers) {
@@ -69,6 +89,7 @@ public class MacroAveraging extends AveragingStrategy {
         }
 
         h = h / (double) instances.size();
+        rule.setRecallStats(recall);
         rule.setRuleValue(heuristic, h);
         return new MacroAveragingMetaData(coveredInstances, stats, uncoveredH);
     }

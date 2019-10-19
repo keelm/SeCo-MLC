@@ -24,6 +24,12 @@ public abstract class AveragingStrategy {
     public static final String EXAMPLE_BASED_AVERAGING = "example-based-averaging";
 
     public static final String MACRO_AVERAGING = "macro-averaging";
+    
+    private String optimizationHeuristic = "adapted";
+    
+    public void setOptimizationHeuristic(String optimizationHeuristic) {
+    	this.optimizationHeuristic = optimizationHeuristic;
+    }
 
     private double getLabelValue(final Instance instance, final int labelIndex) {
         Instance wrappedInstance =
@@ -61,21 +67,27 @@ public abstract class AveragingStrategy {
     }
 
     final void aggregate(final boolean covers, final Head head, final Instance instance, final int labelIndex,
-                         final TwoClassConfusionMatrix confusionMatrix, final TwoClassConfusionMatrix stats) {
-        double labelValue = getLabelValue(instance, labelIndex);
-
+                         final TwoClassConfusionMatrix confusionMatrix, final TwoClassConfusionMatrix stats, final TwoClassConfusionMatrix recall) {
+        
+    	/*
+    	 * zwei Berechnungen: einmal Precision adapted für den F-Measure Teil
+    	 * zum anderen die Zählweise für den Recall-Anteil bei F-Measure, die lediglich beim micro-averaging benötigt wird, und danach wegfällt
+    	 */
+    	
+    	
+    	double labelValue = getLabelValue(instance, labelIndex);
+        Condition labelAttribute = head.getCondition(labelIndex);
+        
         if (covers) {
-            Condition labelAttribute = head.getCondition(labelIndex);
-
-            if (labelAttribute != null) {
+			if (labelAttribute != null) {
                 if (labelAttribute.getValue() != labelValue) {
-                    confusionMatrix.addFalsePositives(instance.weight());
+                	confusionMatrix.addFalsePositives(instance.weight());
 
                     if (stats != null) {
                         stats.addFalsePositives(instance.weight());
                     }
                 } else {
-                    confusionMatrix.addTruePositives(instance.weight());
+                	confusionMatrix.addTruePositives(instance.weight());
 
                     if (stats != null) {
                         stats.addTruePositives(instance.weight());
@@ -83,13 +95,13 @@ public abstract class AveragingStrategy {
                 }
             } else {
                 if (labelValue == 1) {
-                    confusionMatrix.addFalsePositives(instance.weight());
+                	confusionMatrix.addFalsePositives(instance.weight());
 
                     if (stats != null) {
                         stats.addFalsePositives(instance.weight());
                     }
                 } else {
-                    confusionMatrix.addTruePositives(instance.weight());
+                	confusionMatrix.addTruePositives(instance.weight());
 
                     if (stats != null) {
                         stats.addTruePositives(instance.weight());
@@ -97,40 +109,262 @@ public abstract class AveragingStrategy {
                 }
             }
         } else {
-            if (labelValue == 1) {
-                confusionMatrix.addFalseNegatives(instance.weight());
+        	if (labelValue == 1) {
+        		confusionMatrix.addFalseNegatives(instance.weight());
 
                 if (stats != null) {
                     stats.addFalseNegatives(instance.weight());
                 }
             } else {
-                confusionMatrix.addTrueNegatives(instance.weight());
+            	confusionMatrix.addTrueNegatives(instance.weight());
 
                 if (stats != null) {
                     stats.addTrueNegatives(instance.weight());
                 }
             }
         }
+        
+        
+        switch (optimizationHeuristic) {
+        	case "classic":
+        		if (covers) {
+        			if (labelAttribute != null) {
+            			if (labelValue == 1) {
+            				if (labelAttribute.getValue() == 1) {
+            					recall.addTruePositives(instance.weight());
+            					
+            					if (false && stats != null) {
+                					stats.addTruePositives(instance.weight());
+                				}
+            				} else {
+            					recall.addFalseNegatives(instance.weight());
+            					
+            					if (false && stats != null) {
+                					stats.addFalseNegatives(instance.weight());
+                				}
+            				}
+            			} else {
+            				if (labelAttribute.getValue() == 1) {
+            					recall.addFalsePositives(instance.weight());
+            					
+            					if (false && stats != null) {
+                					stats.addFalsePositives(instance.weight());
+                				}
+            				} else {
+            					recall.addTrueNegatives(instance.weight());
+            					
+            					if (false && stats != null) {
+                					stats.addTrueNegatives(instance.weight());
+                				}
+            				}
+            			}
+            		} else {
+            			if (labelValue == 1) {
+            				recall.addFalseNegatives(instance.weight());
+        					
+        					if (false && stats != null) {
+            					stats.addFalseNegatives(instance.weight());
+            				}
+            			} else {
+            				recall.addTrueNegatives(instance.weight());
+        					
+        					if (false && stats != null) {
+            					stats.addTrueNegatives(instance.weight());
+            				}
+            			}
+            		}
+        		} else {
+        			if (labelValue == 1) {
+        				recall.addFalseNegatives(instance.weight());
+        				
+        				if (false && stats != null) {
+        					stats.addFalseNegatives(instance.weight());
+        				}
+        			} else {
+        				recall.addTrueNegatives(instance.weight());
+        				
+        				if (false && stats != null) {
+        					stats.addTrueNegatives(instance.weight());
+        				}
+        			}
+        		}
+        		break;
+        		
+        		
+        	case "adapted":
+        		if (covers) {
+        			if (labelAttribute != null) {
+                        if (labelAttribute.getValue() != labelValue) {
+                        	recall.addFalsePositives(instance.weight());
+
+                            if (false && stats != null) {
+                                stats.addFalsePositives(instance.weight());
+                            }
+                        } else {
+                        	recall.addTruePositives(instance.weight());
+
+                            if (false && stats != null) {
+                                stats.addTruePositives(instance.weight());
+                            }
+                        }
+                    } else {
+                        if (labelValue == 1) {
+                        	recall.addFalsePositives(instance.weight());
+
+                            if (false && stats != null) {
+                                stats.addFalsePositives(instance.weight());
+                            }
+                        } else {
+                        	recall.addTruePositives(instance.weight());
+
+                            if (false && stats != null) {
+                                stats.addTruePositives(instance.weight());
+                            }
+                        }
+                    }
+                } else {
+                	if (labelValue == 1) {
+                		recall.addFalseNegatives(instance.weight());
+
+                        if (false && stats != null) {
+                            stats.addFalseNegatives(instance.weight());
+                        }
+                    } else {
+                    	recall.addTrueNegatives(instance.weight());
+
+                        if (false && stats != null) {
+                            stats.addTrueNegatives(instance.weight());
+                        }
+                    }
+                }
+        		break;
+        		
+        		
+        	case "clever":
+        		if (covers) {
+        			if (labelAttribute != null) {
+                        if (labelAttribute.getValue() != labelValue) {
+                        	recall.addFalsePositives(instance.weight());
+
+                            if (false && stats != null) {
+                                stats.addFalsePositives(instance.weight());
+                            }
+                        } else {
+                        	recall.addTruePositives(instance.weight());
+
+                            if (false && stats != null) {
+                                stats.addTruePositives(instance.weight());
+                            }
+                        }
+                    } else {
+                        if (labelValue == 1) {
+                        	recall.addFalsePositives(instance.weight());
+
+                            if (false && stats != null) {
+                                stats.addFalsePositives(instance.weight());
+                            }
+                        } else {
+                        	recall.addTruePositives(instance.weight());
+
+                            if (false && stats != null) {
+                                stats.addTruePositives(instance.weight());
+                            }
+                        }
+                    }
+        		} else {
+        			if (labelAttribute != null) {
+            			if (labelAttribute.getValue() != labelValue) {
+            				recall.addTrueNegatives(instance.weight());
+            				
+            				if (false && stats != null) {
+            					stats.addTrueNegatives(instance.weight());
+            				}
+            			} else {
+            				recall.addFalseNegatives(instance.weight());
+
+                            if (false && stats != null) {
+                                stats.addFalseNegatives(instance.weight());
+                            }
+                        }
+            		} else {
+                        if (labelValue == 1) {
+                        	recall.addTrueNegatives(instance.weight());
+
+                            if (false && stats != null) {
+                                stats.addTrueNegatives(instance.weight());
+                            }
+                        } else {
+                        	recall.addFalseNegatives(instance.weight());
+
+                            if (false && stats != null) {
+                                stats.addFalseNegatives(instance.weight());
+                            }
+                        }
+                    }
+        		}
+        		break;
+        		
+        		
+        	case "covered":
+        		if (covers) {
+        			if (labelAttribute != null) {
+                        if (labelAttribute.getValue() != labelValue) {
+                        	recall.addFalsePositives(instance.weight());
+
+                            if (false && stats != null) {
+                                stats.addFalsePositives(instance.weight());
+                            }
+                        } else {
+                        	recall.addTruePositives(instance.weight());
+
+                            if (false && stats != null) {
+                                stats.addTruePositives(instance.weight());
+                            }
+                        }
+                    } else {
+                        if (labelValue == 1) {
+                        	recall.addFalsePositives(instance.weight());
+
+                            if (false && stats != null) {
+                                stats.addFalsePositives(instance.weight());
+                            }
+                        } else {
+                        	recall.addTruePositives(instance.weight());
+
+                            if (false && stats != null) {
+                                stats.addTruePositives(instance.weight());
+                            }
+                        }
+                    }
+        		}
+        		break;
+        		
+        		
+        	default: throw new IllegalArgumentException("Given optimization heuristic is not specified");
+        
+        }        
     }
 
     public final MetaData evaluate(final Instances instances, final MultiHeadRule rule,
                                    final Heuristic heuristic,
-                                   final Collection<Integer> relevantLabels, final MetaData metaData) {
+                                   final Collection<Integer> relevantLabels, final MetaData metaData,
+                                   final String optimizationHeuristic) {
         TwoClassConfusionMatrix stats = new TwoClassConfusionMatrix();
-
+        TwoClassConfusionMatrix recall = new TwoClassConfusionMatrix();
+        setOptimizationHeuristic(optimizationHeuristic);
         if (metaData != null) {
             stats.addTrueNegatives(metaData.stats.getNumberOfTrueNegatives());
             stats.addFalseNegatives(metaData.stats.getNumberOfFalseNegatives());
         }
 
-        MetaData result = evaluate(instances, rule, heuristic, relevantLabels, metaData, stats);
+        MetaData result = evaluate(instances, rule, heuristic, relevantLabels, metaData, stats, recall);
         rule.setStats(stats);
         return result;
     }
 
     protected abstract MetaData evaluate(final Instances instances, final MultiHeadRule rule, final Heuristic heuristic,
                                          final Collection<Integer> relevantLabels, final MetaData metaData,
-                                         final TwoClassConfusionMatrix stats);
+                                         final TwoClassConfusionMatrix stats, final TwoClassConfusionMatrix recall);
 
     public static AveragingStrategy create(final String strategy) {
         if (strategy.equalsIgnoreCase(MICRO_AVERAGING)) {

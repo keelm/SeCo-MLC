@@ -71,6 +71,11 @@ public abstract class Rule implements Comparable<Rule>, Cloneable, Iterable<Cond
      */
     protected TwoClassConfusionMatrix m_stats;
 
+    /**
+     * a 2x2 confusion matrix for maintaining recall stats    
+     */
+    protected TwoClassConfusionMatrix m_recall_stats;
+    
     private Random m_rand = new Random(1);
 
     /* Constructor */
@@ -252,6 +257,20 @@ public abstract class Rule implements Comparable<Rule>, Cloneable, Iterable<Cond
             return 0;
     }
 
+    /*
+     * set the recall TwoClassStats
+     */
+    public final TwoClassConfusionMatrix getRecallStats() {
+    	return m_recall_stats;
+    }    
+    
+    /*
+     * set the recall TwoClassStats
+     */
+    public final void setRecallStats(final TwoClassConfusionMatrix confusionMatrix) {
+    	m_recall_stats = confusionMatrix;
+    }    
+    
     /**
      * return the TwoClassStats object containing the coverage counts
      */

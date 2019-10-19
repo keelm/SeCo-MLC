@@ -1219,6 +1219,16 @@ public class SeCoAlgorithm implements Serializable {
 		this.evaluationMethod = evaluationMethod;
 	}
 
+	String optimizationHeuristic = "adapted";
+	
+	public void setOptimizationHeuristic(String optimizationHeuristic) {
+		this.optimizationHeuristic = optimizationHeuristic;
+	}
+	
+	public String getOptimizationHeuristic() {
+		return this.optimizationHeuristic;
+	}
+	
 	public int coverage = 0;
 	
 	public int getCoverage() {
@@ -1296,18 +1306,18 @@ public class SeCoAlgorithm implements Serializable {
         		EvaluationStrategy evaluationStrategy = EvaluationStrategy.create(getEvaluationStrategy());
                 AveragingStrategy averagingStrategy = AveragingStrategy.create(getAveragingStrategy());
                 MultiLabelEvaluation multiLabelEvaluation = new MultiLabelEvaluation(getHeuristic(), evaluationStrategy,
-                        averagingStrategy);
+                        averagingStrategy, getOptimizationHeuristic());
                 MulticlassCovering multiclassCovering = new MulticlassCovering(multiLabelEvaluation, isPredictZero());
                 
                 if (useBottomUp) {
                 	try {
                         int beamWidth = Integer.valueOf(getBeamWidth());
                         bestRuleOfMulti = multiclassCovering
-                                .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth, isEqualAccepted(), isSeCoUsed(), trainingDataSize - count, n_step, getNumericGeneralization(), useRandom, instanceStatus);
+                                .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth, isEqualAccepted(), isSeCoUsed(), trainingDataSize - count, n_step, getNumericGeneralization(), useRandom, instanceStatus, getOptimizationHeuristic());
                     } catch (NumberFormatException e) {
                         float beamWidthPercentage = Float.valueOf(getBeamWidth());
                         bestRuleOfMulti = multiclassCovering
-                                .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage, isEqualAccepted(), isSeCoUsed(), trainingDataSize - count, n_step, getNumericGeneralization(), useRandom, instanceStatus);
+                                .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage, isEqualAccepted(), isSeCoUsed(), trainingDataSize - count, n_step, getNumericGeneralization(), useRandom, instanceStatus, getOptimizationHeuristic());
                     }
                 } else {
                 	try {
@@ -1341,18 +1351,18 @@ public class SeCoAlgorithm implements Serializable {
             EvaluationStrategy evaluationStrategy = EvaluationStrategy.create(getEvaluationStrategy());
             AveragingStrategy averagingStrategy = AveragingStrategy.create(getAveragingStrategy());
             MultiLabelEvaluation multiLabelEvaluation = new MultiLabelEvaluation(getHeuristic(), evaluationStrategy,
-                    averagingStrategy);
+                    averagingStrategy, getOptimizationHeuristic());
             MulticlassCovering multiclassCovering = new MulticlassCovering(multiLabelEvaluation, isPredictZero());
             
             if (useBottomUp) {
             	try {
                     int beamWidth = Integer.valueOf(getBeamWidth());
                     bestRuleOfMulti = multiclassCovering
-                            .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth, isEqualAccepted(), isSeCoUsed(), 0, getNStep(), getNumericGeneralization(), useRandom, instanceStatus);
+                            .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidth, isEqualAccepted(), isSeCoUsed(), 0, getNStep(), getNumericGeneralization(), useRandom, instanceStatus, getOptimizationHeuristic());
                 } catch (NumberFormatException e) {
                     float beamWidthPercentage = Float.valueOf(getBeamWidth());
                     bestRuleOfMulti = multiclassCovering
-                            .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage, isEqualAccepted(), isSeCoUsed(), 0, getNStep(), getNumericGeneralization(), useRandom, instanceStatus);
+                            .findBestRuleBottomUp(examples, labelIndicesAsSet, predictedLabelIndices, beamWidthPercentage, isEqualAccepted(), isSeCoUsed(), 0, getNStep(), getNumericGeneralization(), useRandom, instanceStatus, getOptimizationHeuristic());
                 }
             } else {
             	try {
@@ -1418,7 +1428,7 @@ public class SeCoAlgorithm implements Serializable {
                 	}
                 	//System.out.println(instanceStatus[i]);
                 }
-                
+                coverage += rule_coverage;
                 
                 theory.addRule(bestRuleOfMulti);
                 if (DEBUG_STEP_BY_STEP) {
@@ -1510,9 +1520,9 @@ public class SeCoAlgorithm implements Serializable {
         	EvaluationStrategy evaluationStrategy = EvaluationStrategy.create(getEvaluationStrategy());
             AveragingStrategy averagingStrategy = AveragingStrategy.create(getAveragingStrategy());
             MultiLabelEvaluation multiLabelEvaluation = new MultiLabelEvaluation(getHeuristic(), evaluationStrategy,
-                    averagingStrategy);
+                    averagingStrategy, getOptimizationHeuristic());
             MulticlassCovering multiclassCovering = new MulticlassCovering(multiLabelEvaluation, isPredictZero());
-            theory = multiclassCovering.sortTheory(theory, evalExamples, labelIndicesAsSet);
+            theory = multiclassCovering.sortTheory(theory, evalExamples, labelIndicesAsSet, getOptimizationHeuristic());
             System.out.println(theory);
         }
         
