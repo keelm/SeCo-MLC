@@ -1244,8 +1244,8 @@ public class SeCoAlgorithm implements Serializable {
     private JRipOneRuler ripper;
 
 
-    public static boolean DEBUG_STEP_BY_STEP = false;
-    public static boolean DEBUG_STEP_BY_STEP_V = false;
+    public static boolean DEBUG_STEP_BY_STEP = true;
+    public static boolean DEBUG_STEP_BY_STEP_V = true;
 
     public RuleSet<?> separateAndConquerMultilabel(Instances examples, int labelIndices[]) throws Exception {
         if (useMultilabelHeads) {
@@ -1487,6 +1487,11 @@ public class SeCoAlgorithm implements Serializable {
                 		}
                 	}
                 }
+                
+                if (optimizationHeuristic.equals("covered")) {
+					//break;
+				}
+                
             } else {
                 break;
             }

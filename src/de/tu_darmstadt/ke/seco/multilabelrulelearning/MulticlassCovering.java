@@ -119,8 +119,8 @@ public class MulticlassCovering {
 
     }
 
-    private static final boolean DEBUG_STEP_BY_STEP = false;
-    private static final boolean DEBUG_STEP_BY_STEP_V = false;
+    private static final boolean DEBUG_STEP_BY_STEP = true;
+    private static final boolean DEBUG_STEP_BY_STEP_V = true;
 
 
     private static HashSet<Integer> labelIndicesHash;

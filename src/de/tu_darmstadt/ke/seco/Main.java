@@ -5,6 +5,7 @@ import de.tu_darmstadt.ke.seco.algorithm.SeCoAlgorithmFactory;
 import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.FMeasure;
 import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Precision;
 import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Recall;
+import de.tu_darmstadt.ke.seco.models.Instances;
 import de.tu_darmstadt.ke.seco.models.MultiHeadRule;
 import de.tu_darmstadt.ke.seco.models.MultiHeadRuleSet;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.Weka379AdapterMultilabel;
@@ -15,6 +16,8 @@ import mulan.data.MultiLabelInstances;
 import mulan.evaluation.Evaluation;
 import mulan.evaluation.Evaluator;
 import mulan.evaluation.measure.Measure;
+//import weka.core.Instance;
+//import weka.core.Instances;
 import weka.core.Utils;
 
 import java.io.File;
@@ -225,7 +228,19 @@ public class Main {
         long estimatedTime = System.currentTimeMillis() - startTime;
         System.out.println("building the model took secs: "+estimatedTime/1000.0);
         
-        
+        // filter test data if only covered instances should be evaluated for Recall
+
+        /*
+        if (optimizationHeuristic.equals("covered")) {
+        	MultiHeadRuleSet theory = (MultiHeadRuleSet) multilabelLearner.getSeCoClassifier().getTheory();
+        	for (MultiHeadRule r : theory) {
+        		for (int i = 0; i < testData.getNumInstances(); i++) {
+        			Instances removeSet = r.uncoveredInstances((Instances) testData.getDataSet());
+        			testData.getDataSet().removeAll(removeSet);
+        		}
+        	}
+        }
+        */
         
         // Evaluate model on test instances, if available
         startTime = System.currentTimeMillis();
@@ -236,9 +251,11 @@ public class Main {
         double coverage = baseLearnerAlgorithm.getCoverage();
         //System.out.println(coverage);
         Results result = new Results();
-        result.printResults(betaValue, multilabelLearner, eval_results, coverage, optimizationHeuristic);
-        //System.out.println(eval_results);
-
+        //result.printResults(betaValue, multilabelLearner, eval_results, coverage, optimizationHeuristic);
+        for (Measure measure : eval_results) {
+        	System.out.println(measure.getValue() + ",");  
+        }      
+        
     }
 
 
