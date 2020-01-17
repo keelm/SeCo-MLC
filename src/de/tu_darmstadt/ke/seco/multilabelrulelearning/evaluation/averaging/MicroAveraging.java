@@ -28,7 +28,7 @@ public class MicroAveraging extends AveragingStrategy {
     @Override
     protected final MetaData evaluate(final Instances instances, final MultiHeadRule rule, final Heuristic heuristic,
                                       final Collection<Integer> relevantLabels, final MetaData metaData,
-                                      final TwoClassConfusionMatrix stats, final TwoClassConfusionMatrix recall) {
+                                      final TwoClassConfusionMatrix stats, final TwoClassConfusionMatrix recall, final TwoClassConfusionMatrix recallEval) {
         Collection<Integer> coveredInstances = new LinkedList<>();
         Head head = rule.getHead();
         boolean refinement = metaData instanceof MicroAveragingMetaData;
@@ -39,7 +39,7 @@ public class MicroAveraging extends AveragingStrategy {
 
             if (!covers || !areAllLabelsAlreadyPredicted(instance, head)) {
                 for (int labelIndex : relevantLabels) {
-                    aggregate(covers, head, instance, labelIndex, stats, null, recall);
+                    aggregate(covers, head, instance, labelIndex, stats, null, recall, recallEval);
                 }
             }
 
@@ -59,6 +59,7 @@ public class MicroAveraging extends AveragingStrategy {
         	h = heuristic.evaluateConfusionMatrix(stats);
         }        
         rule.setRecallStats(recall);
+        rule.setRecallEvalStats(recallEval);
         rule.setRuleValue(heuristic, h);
         return new MicroAveragingMetaData(coveredInstances, stats);
     }

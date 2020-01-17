@@ -30,7 +30,8 @@ public class MacroAveraging extends AveragingStrategy {
     @Override
     protected final MetaData evaluate(final Instances instances, final MultiHeadRule rule, final Heuristic heuristic,
                                       final Collection<Integer> relevantLabels, final MetaData metaData,
-                                      final TwoClassConfusionMatrix stats, final TwoClassConfusionMatrix recall) {
+                                      final TwoClassConfusionMatrix stats, final TwoClassConfusionMatrix recall,
+                                      final TwoClassConfusionMatrix recallEval) {
         Collection<Integer> coveredInstances = new LinkedList<>();
         double h = 0;
         double uncoveredH = 0;
@@ -52,7 +53,7 @@ public class MacroAveraging extends AveragingStrategy {
                 double exampleWiseFM = 0;
                 for (int labelIndex : relevantLabels) {
                     TwoClassConfusionMatrix confusionMatrix = new TwoClassConfusionMatrix();
-                    aggregate(covers, head, instance, labelIndex, confusionMatrix, stats, recall);
+                    aggregate(covers, head, instance, labelIndex, confusionMatrix, stats, recall, recallEval);
                     try {
                     	FMeasure fm = (FMeasure) heuristic;
                     	exampleWiseFM = fm.evaluateMixedConfusionMatrix(confusionMatrix, recall);  
@@ -90,6 +91,7 @@ public class MacroAveraging extends AveragingStrategy {
 
         h = h / (double) instances.size();
         rule.setRecallStats(recall);
+        rule.setRecallEvalStats(recallEval);
         rule.setRuleValue(heuristic, h);
         return new MacroAveragingMetaData(coveredInstances, stats, uncoveredH);
     }

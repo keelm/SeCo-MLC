@@ -159,23 +159,7 @@ public class Main {
         final boolean coverAllLabels = Boolean.valueOf(getOptionalArgument("coverAllLabels", args, "false"));
         final String evaluationMethod = getOptionalArgument("evaluationMethod", args, "DecisionList");
         final String optimizationHeuristic = getOptionalArgument("optMethod", args, "adapted");
-        
-        // create file name from parameters for result
-        
-        Date date = new Date();
-        String dateString = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss'.txt'").format(new Date());
-        
-        path = ""; //(useBottomUp ? "BottomUp\\" : "TopDown\\") + evaluationMethod + "\\";
-        name = xmlLabelsDefFilePath.substring(5, xmlLabelsDefFilePath.length() - 4) + "_" + betaValue + "_" + dateString;
-        
-        //out = new PrintStream(new File("C:\\Users\\Pascal\\Documents\\Studium\\BachelorOfScienceInformatik\\Bachelorarbeit\\Experimente\\BottomUp\\Multiclass SeCo Multiclass DecisionList RuleIndependent\\Baseline Standard No NStep Not Random\\" + path + name));
-        //PrintStream out = new PrintStream(new File("C:\\Users\\Pascal\\Documents\\Studium\\BachelorOfScienceInformatik\\Bachelorarbeit\\Ergebnisse\\" + name));
-        
-        
-        System.setOut(System.out);
-        
-        //System.setOut(System.out);
-        
+        final String evaluationHeuristic = getOptionalArgument("evalMethod", args, "clever");
         
         System.out.println("Arguments:\n");
         System.out.println("-baselearner " + baseLearnerConfigPath);
@@ -200,23 +184,19 @@ public class Main {
         System.out.println("-coverAllLabels " + coverAllLabels);
         System.out.println("-evaluationMethod " + evaluationMethod);
         System.out.println("-optimizationHeuristic " + optimizationHeuristic);
+        System.out.println("-evaluationHeuristic " + evaluationHeuristic);
         System.out.println("\n");
         
         // Create training instances from dataset
         final MultiLabelInstances trainingData = new MultiLabelInstances(arffFilePath, xmlLabelsDefFilePath);
-
-        
-        
-        
         
         System.out.println("SeCo: start experiment\n");
-
         
         SeCoAlgorithm baseLearnerAlgorithm = SeCoAlgorithmFactory.buildAlgorithmFromFile(baseLearnerConfigPath);
         Weka379AdapterMultilabel multilabelLearner = new Weka379AdapterMultilabel(baseLearnerAlgorithm, betaValue, 
                 remainingInstancesPercentage, reAddAllCovered, skipThresholdPercentage, predictZeroRules,
                 useMultilabelHeads, evaluationStrategy, averagingStrategy, useBottomUp, acceptEqual, useSeCo, 
-                n_step, useRandom, beamWidth, numericGeneralization, coverAllLabels, evaluationMethod, optimizationHeuristic);
+                n_step, useRandom, beamWidth, numericGeneralization, coverAllLabels, evaluationMethod, optimizationHeuristic, evaluationHeuristic);
         
         // Create test instances from dataset, if available
         final MultiLabelInstances testData =
@@ -228,30 +208,17 @@ public class Main {
         long estimatedTime = System.currentTimeMillis() - startTime;
         System.out.println("building the model took secs: "+estimatedTime/1000.0);
         
-        // filter test data if only covered instances should be evaluated for Recall
-
-        /*
-        if (optimizationHeuristic.equals("covered")) {
-        	MultiHeadRuleSet theory = (MultiHeadRuleSet) multilabelLearner.getSeCoClassifier().getTheory();
-        	for (MultiHeadRule r : theory) {
-        		for (int i = 0; i < testData.getNumInstances(); i++) {
-        			Instances removeSet = r.uncoveredInstances((Instances) testData.getDataSet());
-        			testData.getDataSet().removeAll(removeSet);
-        		}
-        	}
-        }
-        */
-        
         // Evaluate model on test instances, if available
         startTime = System.currentTimeMillis();
         evaluate(trainingData, testData, multilabelLearner);
         estimatedTime = System.currentTimeMillis() - startTime;
         System.out.println("evaluating the model took secs: "+estimatedTime/1000.0);
         System.out.println("SeCo: finish experiment\n");
+        
+        // Collect results and write to csv file
         double coverage = baseLearnerAlgorithm.getCoverage();
-        //System.out.println(coverage);
         Results result = new Results();
-        //result.printResults(betaValue, multilabelLearner, eval_results, coverage, optimizationHeuristic);
+        result.printResults(betaValue, multilabelLearner, eval_results, coverage, optimizationHeuristic);
         for (Measure measure : eval_results) {
         	System.out.println(measure.getValue() + ",");  
         }      

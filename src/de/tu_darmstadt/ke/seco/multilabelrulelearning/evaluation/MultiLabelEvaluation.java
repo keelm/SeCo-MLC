@@ -33,19 +33,22 @@ public class MultiLabelEvaluation {
     private final AveragingStrategy averagingStrategy;
     
     private final String optimizationHeuristic;
+    
+    private final String evaluationHeuristic;
 
     public MultiLabelEvaluation(final Heuristic heuristic, final EvaluationStrategy evaluationStrategy, final
-    AveragingStrategy averagingStrategy, final String optimizationHeuristic) {
+    AveragingStrategy averagingStrategy, final String optimizationHeuristic, final String evaluationHeuristic) {
         this.heuristic = heuristic;
         this.evaluationStrategy = evaluationStrategy;
         this.averagingStrategy = averagingStrategy;
         this.optimizationHeuristic = optimizationHeuristic;
+        this.evaluationHeuristic = evaluationHeuristic;
     }
 
     public final MetaData evaluate(final Instances instances, final LinkedHashSet<Integer> labelIndices, final MultiHeadRule rule,
                                    final MetaData metaData, final String optimizationHeuristic) {
         Collection<Integer> relevantLabels = evaluationStrategy.getRelevantLabels(labelIndices, rule.getHead());
-        return averagingStrategy.evaluate(instances, rule, heuristic, relevantLabels, metaData, optimizationHeuristic);
+        return averagingStrategy.evaluate(instances, rule, heuristic, relevantLabels, metaData, optimizationHeuristic, evaluationHeuristic);
     }
 
     public final Heuristic getHeuristic() {

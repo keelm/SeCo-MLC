@@ -1229,6 +1229,16 @@ public class SeCoAlgorithm implements Serializable {
 		return this.optimizationHeuristic;
 	}
 	
+	String evaluationHeuristic = "adapted";
+	
+	public void setEvaluationHeuristic(String evaluationHeuristic) {
+		this.evaluationHeuristic = evaluationHeuristic;
+	}
+	
+	public String getEvaluationHeuristic() {
+		return this.evaluationHeuristic;
+	}
+	
 	public int coverage = 0;
 	
 	public int getCoverage() {
@@ -1244,8 +1254,8 @@ public class SeCoAlgorithm implements Serializable {
     private JRipOneRuler ripper;
 
 
-    public static boolean DEBUG_STEP_BY_STEP = true;
-    public static boolean DEBUG_STEP_BY_STEP_V = true;
+    public static boolean DEBUG_STEP_BY_STEP = false;
+    public static boolean DEBUG_STEP_BY_STEP_V = false;
 
     public RuleSet<?> separateAndConquerMultilabel(Instances examples, int labelIndices[]) throws Exception {
         if (useMultilabelHeads) {
@@ -1306,7 +1316,7 @@ public class SeCoAlgorithm implements Serializable {
         		EvaluationStrategy evaluationStrategy = EvaluationStrategy.create(getEvaluationStrategy());
                 AveragingStrategy averagingStrategy = AveragingStrategy.create(getAveragingStrategy());
                 MultiLabelEvaluation multiLabelEvaluation = new MultiLabelEvaluation(getHeuristic(), evaluationStrategy,
-                        averagingStrategy, getOptimizationHeuristic());
+                        averagingStrategy, getOptimizationHeuristic(), getEvaluationHeuristic());
                 MulticlassCovering multiclassCovering = new MulticlassCovering(multiLabelEvaluation, isPredictZero());
                 
                 if (useBottomUp) {
@@ -1351,7 +1361,7 @@ public class SeCoAlgorithm implements Serializable {
             EvaluationStrategy evaluationStrategy = EvaluationStrategy.create(getEvaluationStrategy());
             AveragingStrategy averagingStrategy = AveragingStrategy.create(getAveragingStrategy());
             MultiLabelEvaluation multiLabelEvaluation = new MultiLabelEvaluation(getHeuristic(), evaluationStrategy,
-                    averagingStrategy, getOptimizationHeuristic());
+                    averagingStrategy, getOptimizationHeuristic(), getEvaluationHeuristic());
             MulticlassCovering multiclassCovering = new MulticlassCovering(multiLabelEvaluation, isPredictZero());
             
             if (useBottomUp) {
@@ -1525,7 +1535,7 @@ public class SeCoAlgorithm implements Serializable {
         	EvaluationStrategy evaluationStrategy = EvaluationStrategy.create(getEvaluationStrategy());
             AveragingStrategy averagingStrategy = AveragingStrategy.create(getAveragingStrategy());
             MultiLabelEvaluation multiLabelEvaluation = new MultiLabelEvaluation(getHeuristic(), evaluationStrategy,
-                    averagingStrategy, getOptimizationHeuristic());
+                    averagingStrategy, getOptimizationHeuristic(), getEvaluationHeuristic());
             MulticlassCovering multiclassCovering = new MulticlassCovering(multiLabelEvaluation, isPredictZero());
             theory = multiclassCovering.sortTheory(theory, evalExamples, labelIndicesAsSet, getOptimizationHeuristic());
             System.out.println(theory);

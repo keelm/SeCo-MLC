@@ -13,28 +13,25 @@ import de.tu_darmstadt.ke.seco.models.MultiHeadRuleSet;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.Weka379AdapterMultilabel;
 import mulan.evaluation.measure.Measure;
 
-public class Results {
-
-	
+public class Results {	
 	
 	public void printResults(double parameter, Weka379AdapterMultilabel multilabelLearner, List<Measure> eval_results, double coverage, String optimizationMethod) throws IOException {
-		// get theory and produce statistics
-        String filename = "" + optimizationMethod + "_emotions.csv";
-        //FileWriter csvWriter = new FileWriter("C:\\Users\\Pascal\\Documents\\Studium\\BachelorOfScienceInformatik\\Bachelorarbeit\\Ergebnisse\\Weather\\" + filename, true);
-        FileWriter csvWriter = new FileWriter("counting/" + optimizationMethod + "/emotions/" + filename, true);
         
+		// Specify csv file name and save path
+		String filename = "emotions.csv";
+        FileWriter csvWriter = new FileWriter("defaultsubset/" + filename, true);
+        
+        // Compute results
         Recall r = new Recall();
         Precision p = new Precision();
-        SubsetAccuracy sa = new SubsetAccuracy();
-        //Covered Labels
-        //Covered Examples
         
-        double averageR = 0;
+        double averageOptimizedR = 0;
+        double averageEvaluatedR = 0;
         double averageP = 0;
-        double currR = 0;
+        double currOptimizedR = 0;
+        double currEvaluatedR = 0;
         double currP = 0;
         double averageSA = 0;
-        double currSA = 0;
         double examCov = coverage;
         
         MultiHeadRuleSet theory = (MultiHeadRuleSet) multilabelLearner.getSeCoClassifier().getTheory();
@@ -45,23 +42,17 @@ public class Results {
         
         while (i.hasNext()) {
         	MultiHeadRule rule = i.next();       
-        	// WRONG MATRIX FOR RECALL!!
-        	currR = r.evaluateConfusionMatrix(rule.getRecallStats());
+        	currOptimizedR = r.evaluateConfusionMatrix(rule.getRecallStats());
+        	currEvaluatedR = r.evaluateConfusionMatrix(rule.getRecallEvalStats());
         	currP = p.evaluateConfusionMatrix(rule.getStats());
-        	averageR += currR;
+        	averageOptimizedR += currOptimizedR;
+        	averageEvaluatedR += currEvaluatedR;
         	averageP += currP;
         	cardinality += rule.getCardinality();
-        	
-        	//currSA = sa.evaluateConfusionMatrix(rule.getStats());
-        	//averageSA += currSA;
-        	
-        	// example coverage =  for current example-set
-        	//examCov += rule.getStats().getNumberOfPredictedPositive();
-        }
+        }       
         
-        
-        
-        averageR = averageR / theory.size();
+        averageOptimizedR = averageOptimizedR / theory.size();
+        averageEvaluatedR = averageEvaluatedR / theory.size();
         averageP = averageP / theory.size();
         averageSA = averageSA / theory.size();
         examCov = examCov / theory.size();
@@ -69,11 +60,9 @@ public class Results {
         
         csvWriter.append("" + parameter);
         csvWriter.append(",");
-        csvWriter.append("" + averageR);
+        csvWriter.append("" + averageOptimizedR);
         csvWriter.append(",");
         csvWriter.append("" + averageP);
-        //csvWriter.append(",");
-        //csvWriter.append("" + averageSA);
         csvWriter.append(",");
         csvWriter.append("" + examCov);
         for (Measure measure : eval_results) {
@@ -83,10 +72,11 @@ public class Results {
         csvWriter.append("" + numRules);
         csvWriter.append(",");
         csvWriter.append("" + cardinality);
+        csvWriter.append(",");
+        csvWriter.append("" + averageEvaluatedR);
         csvWriter.append("\n");
         
         csvWriter.flush();
         csvWriter.close();
-        ////
 	}
 }

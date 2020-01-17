@@ -119,8 +119,8 @@ public class MulticlassCovering {
 
     }
 
-    private static final boolean DEBUG_STEP_BY_STEP = true;
-    private static final boolean DEBUG_STEP_BY_STEP_V = true;
+    private static final boolean DEBUG_STEP_BY_STEP = false;
+    private static final boolean DEBUG_STEP_BY_STEP_V = false;
 
 
     private static HashSet<Integer> labelIndicesHash;
@@ -575,6 +575,7 @@ public class MulticlassCovering {
 		///////////////////
 		
 		// set body
+		
 		final Instances dataset = (Instances) inst.dataset();
 		
 		final Enumeration<de.tu_darmstadt.ke.seco.models.Attribute> atts = dataset.enumerateAttributesWithoutClass();
@@ -617,6 +618,7 @@ public class MulticlassCovering {
 					throw new Exception("only numeric and nominal attributes supported !");
 			}
 		}
+		
 		
 		return rule;
 	}

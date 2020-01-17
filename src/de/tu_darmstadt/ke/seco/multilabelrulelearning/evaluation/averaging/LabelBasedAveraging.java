@@ -31,7 +31,8 @@ public class LabelBasedAveraging extends AveragingStrategy {
     @Override
     protected final MetaData evaluate(final Instances instances, final MultiHeadRule rule, final Heuristic heuristic,
                                       final Collection<Integer> relevantLabels, final MetaData metaData,
-                                      final TwoClassConfusionMatrix stats, final TwoClassConfusionMatrix recall) {
+                                      final TwoClassConfusionMatrix stats, final TwoClassConfusionMatrix recall,
+                                      final TwoClassConfusionMatrix recallEval) {
         Collection<Integer> coveredInstances = new LinkedList<>();
         Map<Integer, TwoClassConfusionMatrix> uncoveredLabelWiseStats = new HashMap<>();
         double h = 0;
@@ -58,7 +59,7 @@ public class LabelBasedAveraging extends AveragingStrategy {
                 boolean covers = rule.covers(instance);
 
                 if (!covers || !areAllLabelsAlreadyPredicted(instance, head)) {
-                    aggregate(covers, head, instance, labelIndex, confusionMatrix, stats, recall);
+                    aggregate(covers, head, instance, labelIndex, confusionMatrix, stats, recall, recallEval);
                 }
 
                 if (firstLabel && covers) {
@@ -72,6 +73,8 @@ public class LabelBasedAveraging extends AveragingStrategy {
         }
 
         h = h / (double) relevantLabels.size();
+        rule.setRecallStats(recall);
+        rule.setRecallEvalStats(recallEval);
         rule.setRuleValue(heuristic, h);
         return new LabelBasedAveragingMetaData(coveredInstances, stats, uncoveredLabelWiseStats);
     }
