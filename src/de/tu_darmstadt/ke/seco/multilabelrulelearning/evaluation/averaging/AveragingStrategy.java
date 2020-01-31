@@ -74,10 +74,9 @@ public abstract class AveragingStrategy {
                          final TwoClassConfusionMatrix recallEval) {
         
     	/*
-    	 * zwei Berechnungen: einmal Precision adapted für den F-Measure Teil
-    	 * zum anderen die Zählweise für den Recall-Anteil bei F-Measure, die lediglich beim micro-averaging benötigt wird, und danach wegfällt
-    	 */
-    	
+    	 * first: count entries for Precision in F-Measure
+    	 * second: count entries for Recall in F-Measure (only for micro-averaging)
+    	 */    	
     	
     	double labelValue = getLabelValue(instance, labelIndex);
         Condition labelAttribute = head.getCondition(labelIndex);
@@ -136,60 +135,28 @@ public abstract class AveragingStrategy {
             			if (labelValue == 1) {
             				if (labelAttribute.getValue() == 1) {
             					recall.addTruePositives(instance.weight());
-            					
-            					if (false && stats != null) {
-                					stats.addTruePositives(instance.weight());
-                				}
             				} else {
             					recall.addFalseNegatives(instance.weight());
-            					
-            					if (false && stats != null) {
-                					stats.addFalseNegatives(instance.weight());
-                				}
             				}
             			} else {
             				if (labelAttribute.getValue() == 1) {
             					recall.addFalsePositives(instance.weight());
-            					
-            					if (false && stats != null) {
-                					stats.addFalsePositives(instance.weight());
-                				}
             				} else {
             					recall.addTrueNegatives(instance.weight());
-            					
-            					if (false && stats != null) {
-                					stats.addTrueNegatives(instance.weight());
-                				}
             				}
             			}
             		} else {
             			if (labelValue == 1) {
             				recall.addFalseNegatives(instance.weight());
-        					
-        					if (false && stats != null) {
-            					stats.addFalseNegatives(instance.weight());
-            				}
             			} else {
             				recall.addTrueNegatives(instance.weight());
-        					
-        					if (false && stats != null) {
-            					stats.addTrueNegatives(instance.weight());
-            				}
             			}
             		}
         		} else {
         			if (labelValue == 1) {
         				recall.addFalseNegatives(instance.weight());
-        				
-        				if (false && stats != null) {
-        					stats.addFalseNegatives(instance.weight());
-        				}
         			} else {
         				recall.addTrueNegatives(instance.weight());
-        				
-        				if (false && stats != null) {
-        					stats.addTrueNegatives(instance.weight());
-        				}
         			}
         		}
         		break;
@@ -200,45 +167,21 @@ public abstract class AveragingStrategy {
         			if (labelAttribute != null) {
                         if (labelAttribute.getValue() != labelValue) {
                         	recall.addFalsePositives(instance.weight());
-
-                            if (false && stats != null) {
-                                stats.addFalsePositives(instance.weight());
-                            }
                         } else {
                         	recall.addTruePositives(instance.weight());
-
-                            if (false && stats != null) {
-                                stats.addTruePositives(instance.weight());
-                            }
                         }
                     } else {
                         if (labelValue == 1) {
                         	recall.addFalsePositives(instance.weight());
-
-                            if (false && stats != null) {
-                                stats.addFalsePositives(instance.weight());
-                            }
                         } else {
                         	recall.addTruePositives(instance.weight());
-
-                            if (false && stats != null) {
-                                stats.addTruePositives(instance.weight());
-                            }
                         }
                     }
                 } else {
                 	if (labelValue == 1) {
                 		recall.addFalseNegatives(instance.weight());
-
-                        if (false && stats != null) {
-                            stats.addFalseNegatives(instance.weight());
-                        }
                     } else {
                     	recall.addTrueNegatives(instance.weight());
-
-                        if (false && stats != null) {
-                            stats.addTrueNegatives(instance.weight());
-                        }
                     }
                 }
         		break;
@@ -249,60 +192,28 @@ public abstract class AveragingStrategy {
         			if (labelAttribute != null) {
                         if (labelAttribute.getValue() != labelValue) {
                         	recall.addFalsePositives(instance.weight());
-
-                            if (false && stats != null) {
-                                stats.addFalsePositives(instance.weight());
-                            }
                         } else {
                         	recall.addTruePositives(instance.weight());
-
-                            if (false && stats != null) {
-                                stats.addTruePositives(instance.weight());
-                            }
                         }
                     } else {
                         if (labelValue == 1) {
                         	recall.addFalsePositives(instance.weight());
-
-                            if (false && stats != null) {
-                                stats.addFalsePositives(instance.weight());
-                            }
                         } else {
                         	recall.addTruePositives(instance.weight());
-
-                            if (false && stats != null) {
-                                stats.addTruePositives(instance.weight());
-                            }
                         }
                     }
         		} else {
         			if (labelAttribute != null) {
             			if (labelAttribute.getValue() != labelValue) {
             				recall.addTrueNegatives(instance.weight());
-            				
-            				if (false && stats != null) {
-            					stats.addTrueNegatives(instance.weight());
-            				}
             			} else {
             				recall.addFalseNegatives(instance.weight());
-
-                            if (false && stats != null) {
-                                stats.addFalseNegatives(instance.weight());
-                            }
                         }
             		} else {
                         if (labelValue == 1) {
                         	recall.addTrueNegatives(instance.weight());
-
-                            if (false && stats != null) {
-                                stats.addTrueNegatives(instance.weight());
-                            }
                         } else {
                         	recall.addFalseNegatives(instance.weight());
-
-                            if (false && stats != null) {
-                                stats.addFalseNegatives(instance.weight());
-                            }
                         }
                     }
         		}
@@ -314,30 +225,14 @@ public abstract class AveragingStrategy {
         			if (labelAttribute != null) {
                         if (labelAttribute.getValue() != labelValue) {
                         	recall.addFalsePositives(instance.weight());
-
-                            if (false && stats != null) {
-                                stats.addFalsePositives(instance.weight());
-                            }
                         } else {
                         	recall.addTruePositives(instance.weight());
-
-                            if (false && stats != null) {
-                                stats.addTruePositives(instance.weight());
-                            }
                         }
                     } else {
                         if (labelValue == 1) {
                         	recall.addFalsePositives(instance.weight());
-
-                            if (false && stats != null) {
-                                stats.addFalsePositives(instance.weight());
-                            }
                         } else {
                         	recall.addTruePositives(instance.weight());
-
-                            if (false && stats != null) {
-                                stats.addTruePositives(instance.weight());
-                            }
                         }
                     }
         		}
@@ -350,8 +245,6 @@ public abstract class AveragingStrategy {
         
         
         
-        ///////////////////////////////////// EVAL RECALL ////////////////////////////////////////////////////////////////////////
-        
         switch (evaluationHeuristic) {
     	case "classic":
     		if (covers) {
@@ -359,60 +252,28 @@ public abstract class AveragingStrategy {
         			if (labelValue == 1) {
         				if (labelAttribute.getValue() == 1) {
         					recallEval.addTruePositives(instance.weight());
-        					
-        					if (false && stats != null) {
-            					stats.addTruePositives(instance.weight());
-            				}
         				} else {
         					recallEval.addFalseNegatives(instance.weight());
-        					
-        					if (false && stats != null) {
-            					stats.addFalseNegatives(instance.weight());
-            				}
         				}
         			} else {
         				if (labelAttribute.getValue() == 1) {
         					recallEval.addFalsePositives(instance.weight());
-        					
-        					if (false && stats != null) {
-            					stats.addFalsePositives(instance.weight());
-            				}
         				} else {
         					recallEval.addTrueNegatives(instance.weight());
-        					
-        					if (false && stats != null) {
-            					stats.addTrueNegatives(instance.weight());
-            				}
         				}
         			}
         		} else {
         			if (labelValue == 1) {
         				recallEval.addFalseNegatives(instance.weight());
-    					
-    					if (false && stats != null) {
-        					stats.addFalseNegatives(instance.weight());
-        				}
         			} else {
         				recallEval.addTrueNegatives(instance.weight());
-    					
-    					if (false && stats != null) {
-        					stats.addTrueNegatives(instance.weight());
-        				}
         			}
         		}
     		} else {
     			if (labelValue == 1) {
     				recallEval.addFalseNegatives(instance.weight());
-    				
-    				if (false && stats != null) {
-    					stats.addFalseNegatives(instance.weight());
-    				}
     			} else {
     				recallEval.addTrueNegatives(instance.weight());
-    				
-    				if (false && stats != null) {
-    					stats.addTrueNegatives(instance.weight());
-    				}
     			}
     		}
     		break;
@@ -423,45 +284,21 @@ public abstract class AveragingStrategy {
     			if (labelAttribute != null) {
                     if (labelAttribute.getValue() != labelValue) {
                     	recallEval.addFalsePositives(instance.weight());
-
-                        if (false && stats != null) {
-                            stats.addFalsePositives(instance.weight());
-                        }
                     } else {
                     	recallEval.addTruePositives(instance.weight());
-
-                        if (false && stats != null) {
-                            stats.addTruePositives(instance.weight());
-                        }
                     }
                 } else {
                     if (labelValue == 1) {
                     	recallEval.addFalsePositives(instance.weight());
-
-                        if (false && stats != null) {
-                            stats.addFalsePositives(instance.weight());
-                        }
                     } else {
                     	recallEval.addTruePositives(instance.weight());
-
-                        if (false && stats != null) {
-                            stats.addTruePositives(instance.weight());
-                        }
                     }
                 }
             } else {
             	if (labelValue == 1) {
             		recallEval.addFalseNegatives(instance.weight());
-
-                    if (false && stats != null) {
-                        stats.addFalseNegatives(instance.weight());
-                    }
                 } else {
                 	recallEval.addTrueNegatives(instance.weight());
-
-                    if (false && stats != null) {
-                        stats.addTrueNegatives(instance.weight());
-                    }
                 }
             }
     		break;
@@ -472,66 +309,34 @@ public abstract class AveragingStrategy {
     			if (labelAttribute != null) {
                     if (labelAttribute.getValue() != labelValue) {
                     	recallEval.addFalsePositives(instance.weight());
-
-                        if (false && stats != null) {
-                            stats.addFalsePositives(instance.weight());
-                        }
                     } else {
                     	recallEval.addTruePositives(instance.weight());
-
-                        if (false && stats != null) {
-                            stats.addTruePositives(instance.weight());
-                        }
                     }
                 } else {
                     if (labelValue == 1) {
                     	recallEval.addFalsePositives(instance.weight());
-
-                        if (false && stats != null) {
-                            stats.addFalsePositives(instance.weight());
-                        }
                     } else {
                     	recallEval.addTruePositives(instance.weight());
-
-                        if (false && stats != null) {
-                            stats.addTruePositives(instance.weight());
-                        }
                     }
                 }
     		} else {
     			if (labelAttribute != null) {
         			if (labelAttribute.getValue() != labelValue) {
         				recallEval.addTrueNegatives(instance.weight());
-        				
-        				if (false && stats != null) {
-        					stats.addTrueNegatives(instance.weight());
-        				}
         			} else {
         				recallEval.addFalseNegatives(instance.weight());
-
-                        if (false && stats != null) {
-                            stats.addFalseNegatives(instance.weight());
-                        }
                     }
         		} else {
                     if (labelValue == 1) {
                     	recallEval.addTrueNegatives(instance.weight());
-
-                        if (false && stats != null) {
-                            stats.addTrueNegatives(instance.weight());
-                        }
                     } else {
                     	recallEval.addFalseNegatives(instance.weight());
-
-                        if (false && stats != null) {
-                            stats.addFalseNegatives(instance.weight());
-                        }
                     }
                 }
     		}
     		break;
     		
-    		
+    	/*	
     	case "covered":
     		if (covers) {
     			if (labelAttribute != null) {
@@ -565,7 +370,7 @@ public abstract class AveragingStrategy {
                 }
     		}
     		break;
-    		
+    		*/
     		
     	default: throw new IllegalArgumentException("Given evaluation heuristic is not specified");
     

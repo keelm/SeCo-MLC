@@ -1299,7 +1299,6 @@ public class SeCoAlgorithm implements Serializable {
         	setHeuristic(new FMeasure(betaValue));
         }
         
-        MultiHeadRule r;
         MultiHeadRule bestRuleOfMulti;
         MultiHeadRuleSet theory = new MultiHeadRuleSet();
         theory.setLabelIndices(labelIndices); //so that tostring prints out mlc statistics
@@ -1425,9 +1424,8 @@ public class SeCoAlgorithm implements Serializable {
                     }
                 }
 
-                // TODO: make this more efficient!
                 // true means, the instance is not yet covered by a rule
-                // calculate # covered examples by rule
+                // calculate number of covered examples by rule
                 int rule_coverage = 0;
                 for (int i = 0; i < instanceStatus.length; i++) {
                 	if (instanceStatus[i] == true) {
@@ -1436,7 +1434,6 @@ public class SeCoAlgorithm implements Serializable {
                 			rule_coverage++;
                 		}
                 	}
-                	//System.out.println(instanceStatus[i]);
                 }
                 coverage += rule_coverage;
                 
@@ -1496,49 +1493,10 @@ public class SeCoAlgorithm implements Serializable {
                 			examples.addDirectly(coveredButLabelsNotFullyCoveredInstances.get(i));
                 		}
                 	}
-                }
-                
-                if (optimizationHeuristic.equals("covered")) {
-					//break;
-				}
-                
+                }                
             } else {
                 break;
             }
-        }
-        
-        // use a _sorted_ Decision List as aggregation function
-        
-        if (false && getEvaluationMethod().equals("DecisionList")) {
-        	Instances evalExamples = new Instances(originalExamples,
-                    originalExamples.numInstances()); //so that I can do what I want on this
-            examplesReferences = null; // only used for debugging
-            
-            if (DEBUG_STEP_BY_STEP)
-                examplesReferences = new ArrayList<>();
-
-            for (int i = 0; i < originalExamples.size(); i++) {
-                Instance inst = originalExamples.get(i);
-                Instance wrappedInstance;
-
-                if (inst instanceof SparseInstance) {
-                    wrappedInstance = new SparseInstanceWrapper(inst, labelIndices);
-                } else {
-                    wrappedInstance = new DenseInstanceWrapper(inst, labelIndices);
-                }
-
-                evalExamples.addDirectly(wrappedInstance); //now secured
-
-                if (DEBUG_STEP_BY_STEP)
-                    examplesReferences.add(wrappedInstance);
-            }
-        	EvaluationStrategy evaluationStrategy = EvaluationStrategy.create(getEvaluationStrategy());
-            AveragingStrategy averagingStrategy = AveragingStrategy.create(getAveragingStrategy());
-            MultiLabelEvaluation multiLabelEvaluation = new MultiLabelEvaluation(getHeuristic(), evaluationStrategy,
-                    averagingStrategy, getOptimizationHeuristic(), getEvaluationHeuristic());
-            MulticlassCovering multiclassCovering = new MulticlassCovering(multiLabelEvaluation, isPredictZero());
-            theory = multiclassCovering.sortTheory(theory, evalExamples, labelIndicesAsSet, getOptimizationHeuristic());
-            System.out.println(theory);
         }
         
         return theory;

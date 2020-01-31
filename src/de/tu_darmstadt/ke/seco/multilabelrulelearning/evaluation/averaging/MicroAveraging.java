@@ -48,13 +48,10 @@ public class MicroAveraging extends AveragingStrategy {
             }
         }
         
-        //////// ONLY for FMeasure tests ////////////
         double h = 0;
         try {
         	FMeasure fm = (FMeasure) heuristic;
-        	h = fm.evaluateMixedConfusionMatrix(stats, recall);  
-        	// System.out.println("FMeasure correctly calculated");
-        	
+        	h = fm.evaluateMixedConfusionMatrix(stats, recall);         	
         } catch(Exception e) {
         	h = heuristic.evaluateConfusionMatrix(stats);
         }        

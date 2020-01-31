@@ -14,50 +14,23 @@
 
 package de.tu_darmstadt.ke.seco.algorithm.components.heuristics;
 
-import de.tu_darmstadt.ke.seco.algorithm.components.ConfigurableProperty;
 import de.tu_darmstadt.ke.seco.models.Rule;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.averaging.AveragingStrategy;
-import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.averaging.ExampleBasedAveraging;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.EvaluationStrategy;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.RuleDependentEvaluation;
 import de.tu_darmstadt.ke.seco.stats.TwoClassConfusionMatrix;
 
-/**
- * The seco package implements generic functionality for simple separate-and-conquer rule learning. <p> <p> This file
- * implements a generic class for evaluating a rule with the F-Measure. The F-Measure origins from the Information
- * Retrieval community and is defined by (beta^2+1)*precision*recall / (beta^2)*precision+recall where precision = tp /
- * (tp + fp) and recal = tp / P. In (Janssen and F�rnkranz, Machine Learning 2010) an optimal parameter setting for beta
- * was determined and if beta is not given it is initialized to this derived best setting. It can be changed via
- * setProperty.
- *
- * @author Knowledge Engineering Group
- * @version $Revision: 354 $
- */
 public class Recall extends ValueHeuristic {
 
-    private static final long serialVersionUID = -3541563713409740796L;
-
-    @ConfigurableProperty
-    private double beta = 0.5;
-
-    private final Precision precision = new Precision();
-    private final TruePositiveRate truePositiveRate = new TruePositiveRate();
+	private static final long serialVersionUID = 1L;
+	
+	private final TruePositiveRate truePositiveRate = new TruePositiveRate();
 
     /**
      * empty Constructor
      */
     public Recall() {
 
-    }
-
-    /**
-     * Constructor
-     *
-     * @param beta The parameter of the F-Measure
-     * @throws Exception
-     */
-    public Recall(final double beta) throws Exception {
-        this.beta = beta;
     }
 
     /**
@@ -72,26 +45,8 @@ public class Recall extends ValueHeuristic {
     }
 
     @Override
-    public double evaluateConfusionMatrix(final TwoClassConfusionMatrix confusionMatrix) {
-        
-    	double TP = confusionMatrix.getNumberOfTruePositives();
-        double TN = confusionMatrix.getNumberOfTrueNegatives();
-        double FN = confusionMatrix.getNumberOfFalseNegatives();
-    	//return (TP + TN) / (TP + TN + FN);
-    	
+    public double evaluateConfusionMatrix(final TwoClassConfusionMatrix confusionMatrix) {    	
     	return truePositiveRate.evaluateConfusionMatrix(confusionMatrix);
-    	
-    	
-    	/*
-    	if ((precision.evaluateConfusionMatrix(confusionMatrix) +
-                truePositiveRate.evaluateConfusionMatrix(confusionMatrix)) == 0) {
-            return 0;
-        }
-        final double a = (Math.pow(beta, 2) + 1) * truePositiveRate.evaluateConfusionMatrix(confusionMatrix) *
-                precision.evaluateConfusionMatrix(confusionMatrix);
-        return a / (Math.pow(beta, 2) * precision.evaluateConfusionMatrix(confusionMatrix) +
-                truePositiveRate.evaluateConfusionMatrix(confusionMatrix));
-        */
     }
 
     @Override

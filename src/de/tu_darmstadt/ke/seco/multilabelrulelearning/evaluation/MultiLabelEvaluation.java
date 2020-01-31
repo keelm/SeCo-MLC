@@ -32,8 +32,6 @@ public class MultiLabelEvaluation {
 
     private final AveragingStrategy averagingStrategy;
     
-    private final String optimizationHeuristic;
-    
     private final String evaluationHeuristic;
 
     public MultiLabelEvaluation(final Heuristic heuristic, final EvaluationStrategy evaluationStrategy, final
@@ -41,7 +39,6 @@ public class MultiLabelEvaluation {
         this.heuristic = heuristic;
         this.evaluationStrategy = evaluationStrategy;
         this.averagingStrategy = averagingStrategy;
-        this.optimizationHeuristic = optimizationHeuristic;
         this.evaluationHeuristic = evaluationHeuristic;
     }
 

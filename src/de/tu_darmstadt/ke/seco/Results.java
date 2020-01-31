@@ -17,7 +17,7 @@ public class Results {
 	
 	public void printResults(double parameter, Weka379AdapterMultilabel multilabelLearner, List<Measure> eval_results, double coverage, String optimizationMethod) throws IOException {
         
-		// Specify csv file name and save path
+		// Specify csv file name and save path, does not automatically change according to parameters!
 		String filename = "emotions.csv";
         FileWriter csvWriter = new FileWriter("defaultsubset/" + filename, true);
         

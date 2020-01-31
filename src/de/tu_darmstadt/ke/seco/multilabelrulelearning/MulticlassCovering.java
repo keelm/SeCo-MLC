@@ -1,6 +1,5 @@
 package de.tu_darmstadt.ke.seco.multilabelrulelearning;
 
-import de.tu_darmstadt.ke.seco.algorithm.SeCoAlgorithm;
 import de.tu_darmstadt.ke.seco.algorithm.components.heuristics.Heuristic.Characteristic;
 import de.tu_darmstadt.ke.seco.models.*;
 import de.tu_darmstadt.ke.seco.models.Random;
@@ -9,12 +8,9 @@ import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.MultiLabelEvalu
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.MultiLabelEvaluation.MetaData;
 import de.tu_darmstadt.ke.seco.multilabelrulelearning.evaluation.strategy.RuleIndependentEvaluation;
 import weka.core.Attribute;
-import weka.core.DenseInstance;
 import weka.core.Instance;
 
 import javax.annotation.Nonnull;
-
-import com.sun.corba.se.pept.transport.Acceptor;
 
 import java.util.*;
 
@@ -259,11 +255,8 @@ public class MulticlassCovering {
 				}
 			}
 		} else {
-			// start with -1, because the first improve step initializes a new rule
+			// TODO: complete n-step implementation
 			int step = -1;
-			
-			// TODO for n-Step: to continue search after n-step is finished, set improved=true in refineRuleBottomUp, if the last step was an improvement
-			// otherwise, search will always terminate after n steps
 			while (improved) {
 				steps = step < n_step;
 				improved = refineRuleBottomUp(instances, labelIndices, predictedLabels, bestClosures, acceptEqual, useSeCo, steps, bestClosureOverall, numericGeneralization, useRandom, instanceStatus, optimizationHeuristic);
@@ -287,8 +280,6 @@ public class MulticlassCovering {
 	private boolean seco = true;
 	boolean newRule = true;
 	int n = 0;
-	private boolean previous_improved = false;
-	
 	public boolean refineRuleBottomUp(final Instances instances,
 									  final LinkedHashSet<Integer> labelIndices,
             						  final Set<Integer> predictedLabels,
@@ -341,12 +332,6 @@ public class MulticlassCovering {
 								closures.offer(cl);
 							}
 						}
-						
-						// return if after exactly n steps the rule shouldn't be further generalized, because the last generalization was not an improvement
-						/* (!previous_improved) {
-							return false;
-						}
-							*/
 						bestClosureOverAll.clear();
 					}
 					
@@ -365,11 +350,6 @@ public class MulticlassCovering {
 						// don't iterate if it's a label, redundant, can be removed
 						if (!labelIndices.contains(cond.getAttr().index())) {
 							int index = closure.rule.getBody().indexOf(cond);
-							
-								
-								// can't change a value in the copy without changing the original value
-								// instead remove and then readd condition with new value
-								// order of conditions in the rule will change, but this doesn't have any effect
 								MultiHeadRule refinedRule = (MultiHeadRule) closure.rule.copy();
 								
 								// remove condition
@@ -442,8 +422,6 @@ public class MulticlassCovering {
 									newRule = false;
 	                			}
 								
-								// ruleComparison: > or >=
-								// DO NOT USE !ACCEPT_EQUAL WITH BEAM WIDTH >1
 								if (steps) {
 									improved |= closures.offer(refinedClosure);
 								} else {
@@ -467,11 +445,6 @@ public class MulticlassCovering {
 				}			
 			}
 		}
-		/*
-		if (bestClosure == null) {
-			
-		}
-		*/
 		return improved;
 	}
 	
@@ -488,11 +461,9 @@ public class MulticlassCovering {
 		// choose a random instance
 		int seed = 1;
 		int i = 0;
-		//TODO: initialize new Random(seed) only once, not in every function call, since all the same first numbers get checked every time
 		random = new Random(seed);
 		do {
 			i = random.nextInt(instanceStatus.length);
-			//System.out.println(i);
 		}
 		// true means not yet covered and can therefore be chosen
 		while (instanceStatus[i]==false);
@@ -503,10 +474,6 @@ public class MulticlassCovering {
 				actualIndex++;
 			}
 		}
-		
-		//// TESTING: ALWAYS CHOSE IN THE SAME ORDER FOR THE SAME DATASET
-		//i = 0;
-		//// DELETE FOR REAL RESULTS
 		
 		Instance inst = instances.instance(actualIndex);
 		
@@ -523,19 +490,7 @@ public class MulticlassCovering {
 		MultiHeadRule rule = new MultiHeadRule(multiLabelEvaluation.getHeuristic());
 		
 		// set head
-		Head head = new Head();
-		
-		///// TESTING ONLY ONE LABEL SET
-		/*
-		int index = labelIndices.iterator().next();
-		Attribute attribute = inst.attribute(index);
-		double value = wrappedInstance.value(index);
-		if (value != 0) {
-			head.addCondition(new NominalCondition(toSeCoAttribute(attribute), value));
-		}
-		*/
-		///// END OF TESTING
-		
+		Head head = new Head();	
 		
 		for (int labelIndex : labelIndices) {
 			
@@ -561,18 +516,7 @@ public class MulticlassCovering {
 			}
 		}
 		
-		//////////////////
-		/*
-		if (head.size() == 0) {
-			//System.out.println(instances.size());
-			return createMultiHeadRuleFromRandomInstance(instances, labelIndices);
-		}
-		//if (instances.size() < 50) System.exit(0);
-		*/
-		 
 		rule.setHead(head);
-		
-		///////////////////
 		
 		// set body
 		
@@ -612,7 +556,6 @@ public class MulticlassCovering {
 					
 					// use true for <=, false for >=
 					// conditions are only added if they are not the lowest/highest value, in this case they would be deleted anyway
-					
 					
 				} else
 					throw new Exception("only numeric and nominal attributes supported !");

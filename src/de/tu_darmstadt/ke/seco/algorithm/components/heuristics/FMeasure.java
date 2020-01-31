@@ -84,7 +84,7 @@ public class FMeasure extends ValueHeuristic {
     }
 
     /*
-     * calculate FMeasure from two matrizes, because precision and recall are calculated separately with different counting schemes
+     * calculate FMeasure from two matrices, because precision and recall are calculated separately with different counting schemes
      */
     
     public double evaluateMixedConfusionMatrix(final TwoClassConfusionMatrix precisionMatrix, final TwoClassConfusionMatrix recallMatrix) {
