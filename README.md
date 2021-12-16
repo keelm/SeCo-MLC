@@ -1,4 +1,4 @@
-# README
+# Separate-and-Conquer Multi-label Rule Learning
 
 This repository provides the code of a separate-and-conquer rule-learning algorithm for learning multi-label head rules. The following instructions provide an overview on how to use the project.
 
